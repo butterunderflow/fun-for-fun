@@ -22,5 +22,7 @@ let%expect_test _ =
      |};
   [%expect {|
     ((Top_let (PVar x) (EConst (CInt 1))) (Top_let (PVar y) (EConst (CInt 2)))
-      (Top_letrec ((foo (x) (EApp (EVar foo) (EVar x)))))) |}]
+      (Top_letrec ((foo ((PBare x)) (EApp (EVar foo) (EVar x)))))) |}];
+  print_parsed_program {|let rec f (x:int) = 1|};
+  [%expect {| ((Top_letrec ((f ((PAnn x (TCons int ()))) (EConst (CInt 1)))))) |}]
 

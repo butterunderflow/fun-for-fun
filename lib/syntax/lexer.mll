@@ -43,6 +43,9 @@ rule token = parse
     | "end"             { END }
     | "="               { EQ }
     | "|"               { OR }
+    | '('               { LPAREN }
+    | ')'               { RPAREN }
+    | ':'               { COLON }
     | identifier as i   { IDENT i }
     | type_var as t     { TYPEVAR t } 
     | integers as n     { INT   (int_of_string n) }

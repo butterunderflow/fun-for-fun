@@ -21,6 +21,7 @@
 %token RBRACKET
 %token COMMA
 %token OF
+%token COLON
 %token LPAREN
 %token RPAREN
 
@@ -55,8 +56,12 @@ top_levels:
 pattern: 
     | n=IDENT { PVar n }
 
+parameter:
+    | n=IDENT { PBare n }
+    | LPAREN n=IDENT COLON t=type_expr RPAREN { PAnn (n, t) }
+
 function_bind:
-    | name=IDENT paras=list(IDENT) EQ b=expr
+    | name=IDENT paras=list(parameter) EQ b=expr
        { (name, paras, b) }
 
 variant: 
