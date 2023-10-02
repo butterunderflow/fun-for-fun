@@ -1,5 +1,5 @@
-open Parsing
-open Ast
+open Syntax.Parsing
+open Syntax.Ast
 
 
 let print_parsed_program str = 
