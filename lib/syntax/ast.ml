@@ -25,7 +25,8 @@ type expr =
 [@@deriving sexp]
 
 type variant = string * type_expr list [@@deriving sexp]
-type paras = string list [@@deriving sexp]
+type para = PAnn of string * type_expr | PBare of string [@@deriving sexp]
+type paras = para list [@@deriving sexp]
 type type_paras = string list [@@deriving sexp]
 
 type top_level =
