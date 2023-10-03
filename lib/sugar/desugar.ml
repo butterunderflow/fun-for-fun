@@ -1,5 +1,5 @@
-module E = Syntax.Ast
-module I = Ast
+module E = Syntax.Ast (* external syntax programmer faced *)
+module I = Ast (* internal syntax compiler see *)
 module IdentMap = Map.Make (Ident)
 
 let rec ds_type_expr (type_expr : E.type_expr) =
