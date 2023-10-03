@@ -13,6 +13,7 @@ type type_expr = TCons of string * type_expr list | TVar of string
 [@@deriving sexp]
 
 type para = PAnn of string * type_expr | PBare of string [@@deriving sexp]
+
 type paras = para list [@@deriving sexp]
 
 type expr =
@@ -25,10 +26,11 @@ type expr =
   | ECase of expr * (pattern * expr) list
   | EApp of expr * expr
   | EAnn of expr * type_expr
+  | ETuple of expr list
+  | EFetchTuple of expr * int
 [@@deriving sexp]
 
 type variant = string * type_expr list [@@deriving sexp]
-
 
 type type_paras = string list [@@deriving sexp]
 
