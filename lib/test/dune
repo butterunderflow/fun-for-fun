@@ -1,6 +1,6 @@
 (library
  (name test)
- (libraries sexplib syntax)
+ (libraries sexplib syntax sugar)
  (inline_tests)
  (wrapped false)
  (preprocess
