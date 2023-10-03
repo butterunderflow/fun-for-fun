@@ -36,10 +36,13 @@ type variant = Ident.t * type_expr list [@@deriving sexp]
 
 type type_paras = Ident.t list [@@deriving sexp]
 
+type type_def = Ident.t * type_paras * variant list
+[@@deriving sexp]
+
 type top_level =
   | Top_let of Ident.t * expr
   | Top_letrec of (Ident.t * lambda) list
-  | Top_type of Ident.t * type_paras * variant list
+  | Top_type of type_def
 [@@deriving sexp]
 
 type program = top_level list [@@deriving sexp]
