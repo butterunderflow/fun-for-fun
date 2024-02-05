@@ -34,18 +34,24 @@ type variant = string * type_expr list [@@deriving sexp]
 
 type type_paras = string list [@@deriving sexp]
 
+type functor_paras = string list [@@deriving sexp]
+
 type top_level =
   | Top_let of pattern * expr
   | Top_letrec of (string * paras * expr) list
   | Top_type of string * type_paras * variant list
+  | Top_mod of string * mod_body
+  | Top_modrec of (string * functor_paras * mod_body * path) list
 [@@deriving sexp]
 
-type mod_body = top_level list [@@deriving sexp]
+and mod_body = top_level list [@@deriving sexp]
 
-type program = top_level list [@@deriving sexp]
-
-type path =
+and path =
   | PName of string
   | PMem of path * string
   | PApply of path * path
 [@@deriving sexp]
+
+
+type program = top_level list [@@deriving sexp]
+

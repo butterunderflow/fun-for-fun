@@ -13,7 +13,6 @@ let print_parsed_path str =
 let print_parsed_type_expr str =
   parse_string_type_expr str |> sexp_of_type_expr |> print_sexp
 
-
 let%expect_test "Test: full program parsing" =
   print_parsed_program {|let x = 1|};
   [%expect {|
@@ -31,9 +30,9 @@ let%expect_test "Test: full program parsing" =
       (Top_letrec ((foo ((PBare x)) (EApp (EVar foo) (EVar x)))))) |}];
   print_parsed_program {|let rec f (x:int) = 1|};
   [%expect
-      {| ((Top_letrec ((f ((PAnn x (TCons int ()))) (EConst (CInt 1)))))) |}]
+    {| ((Top_letrec ((f ((PAnn x (TCons int ()))) (EConst (CInt 1)))))) |}]
 
-let%expect_test "Test: path parsing" = 
+let%expect_test "Test: path parsing" =
   print_parsed_path {|X|};
   [%expect {| (PName X) |}];
   print_parsed_path {|X.Y|};
@@ -41,11 +40,12 @@ let%expect_test "Test: path parsing" =
   print_parsed_path {|X(Y)|};
   [%expect {| (PApply (PName X) (PName Y)) |}];
   print_parsed_path {|X.Y(Z(N))(W.M.N)|};
-  [%expect {|
+  [%expect
+    {|
     (PApply (PApply (PMem (PName X) Y) (PApply (PName Z) (PName N)))
       (PMem (PMem (PName W) M) N)) |}]
 
-let%expect_test "Test: type expression parsing" = 
+let%expect_test "Test: type expression parsing" =
   print_parsed_type_expr "string";
   [%expect {| (TCons string ()) |}];
   print_parsed_type_expr "(string) list";
@@ -56,4 +56,26 @@ let%expect_test "Test: type expression parsing" =
   [%expect {| (TVar 'x) |}];
   print_parsed_type_expr "(string, 'x, 'y) list";
   [%expect {| (TCons list ((TCons string ()) (TVar 'x) (TVar 'y))) |}]
+
+let%expect_test "Test: top level module" =
+  print_parsed_program
+    {|
+     module X = struct
+     end
+     |};
+  [%expect {|
+    ((Top_mod X ())) |}];
+  print_parsed_program
+    {|
+     module X = struct
+       let x = 1
+       let rec y = 3
+       module Y = struct
+       end
+     end
+     |};
+  [%expect {|
+    ((Top_mod X
+       ((Top_let (PVar x) (EConst (CInt 1)))
+         (Top_letrec ((y () (EConst (CInt 3))))) (Top_mod Y ())))) |}]
 

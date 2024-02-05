@@ -43,6 +43,9 @@ rule token = parse
     | "rec"             { REC }
     | "type"            { TYPE }
     | "end"             { END }
+    | "module"          { MODULE }
+    | "struct"          { STRUCT }
+    | "sig"             { SIG }
     | "="               { EQ }
     | "|"               { OR }
     | '('               { LPAREN }

@@ -12,6 +12,9 @@
 %token LET
 %token REC
 %token END
+%token MODULE
+%token SIG
+%token STRUCT
 %token <string> IDENT
 %token <string> MIDENT
 %token <string> TYPEVAR
@@ -53,9 +56,10 @@ top_levels:
         rest=top_levels
         { Top_type (n, tvs, vs) :: rest }
     | LET p=pattern EQ e=expr rest=top_levels  { Top_let (p, e) :: rest }
-    | LET REC funcs=separated_list(AND, function_bind) 
-        rest=top_levels
-        { Top_letrec funcs :: rest }
+    | LET REC funcs=separated_list(AND, function_bind) rest=top_levels
+        { Top_letrec funcs :: rest } 
+    | MODULE m_name=MIDENT EQ STRUCT m_body=top_levels END rest=top_levels
+        { Top_mod (m_name, m_body) :: rest };
 
 pattern: 
     | n=IDENT { PVar n }
