@@ -1,4 +1,4 @@
-module E = Syntax.Ast (* external syntax programmer faced *)
+module E = Syntax.Parsetree (* external syntax programmer faced *)
 module I = Ast (* internal syntax compiler see *)
 module IdentMap = Map.Make (Ident)
 

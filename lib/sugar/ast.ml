@@ -1,6 +1,6 @@
 open Sexplib.Conv
 
-type constant = Syntax.Ast.constant
+type constant = Syntax.Parsetree.constant
 [@@deriving sexp]
 
 type pattern =

@@ -37,3 +37,5 @@ let gen_parse_string parse string =
 
 let parse_string_program = gen_parse_string Parser.program
 
+let parse_string_path = gen_parse_string Parser.path_dbg
+

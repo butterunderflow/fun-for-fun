@@ -18,9 +18,11 @@ let sign = ['+' '-']
 
 let alphanumerical = upper_case | underline | lower_case | digit
 
+(* module identifiers*)
+let mod_ident = (underline | upper_case) alphanumerical *
 
 (* Variables *)
-let identifier = (upper_case | underline | lower_case) alphanumerical *
+let ident = (underline | lower_case) alphanumerical *
 
 (* Type Variables *)
 let type_var = '\'' (upper_case | underline | lower_case) alphanumerical
@@ -46,10 +48,12 @@ rule token = parse
     | '('               { LPAREN }
     | ')'               { RPAREN }
     | ':'               { COLON }
-    | identifier as i   { IDENT i }
+    | mod_ident as m    { MIDENT m}
+    | ident as i        { IDENT i }
     | type_var as t     { TYPEVAR t } 
     | integers as n     { INT   (int_of_string n) }
     | boolean as b      { BOOL (bool_of_string b)}
+    | "."             { DOT}
     | strings as s      { STRING s}
 
 and tail acc = parse

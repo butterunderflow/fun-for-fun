@@ -40,4 +40,12 @@ type top_level =
   | Top_type of string * type_paras * variant list
 [@@deriving sexp]
 
+type mod_body = top_level list [@@deriving sexp]
+
 type program = top_level list [@@deriving sexp]
+
+type path =
+  | PName of string
+  | PMem of path * string
+  | PApply of path * path
+[@@deriving sexp]

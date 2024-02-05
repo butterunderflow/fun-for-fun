@@ -1,3 +1,3 @@
 
 
-val desugar : Syntax.Ast.program -> Ast.program
+val desugar : Syntax.Parsetree.program -> Ast.program

@@ -1,5 +1,5 @@
 %{
-    open Ast
+    open Parsetree
 %}
 
 /* Constants */
@@ -13,6 +13,7 @@
 %token REC
 %token END
 %token <string> IDENT
+%token <string> MIDENT
 %token <string> TYPEVAR
 %token EQ
 %token OR
@@ -20,23 +21,24 @@
 %token LBRACKET
 %token RBRACKET
 %token COMMA
+%token DOT
 %token OF
 %token COLON
 %token LPAREN
 %token RPAREN
 
 
-%type <Ast.program> program
-%type <Ast.top_level list> top_levels
-%type <Ast.constant> constant
-%type <Ast.variant> variant
+%type <Parsetree.program> program
+%type <Parsetree.path> path_dbg
+%type <Parsetree.top_level list> top_levels
+%type <Parsetree.constant> constant
+%type <Parsetree.variant> variant
 
 
 /* Start symbols */
-%start program
+%start program path_dbg
 %%
 
-  
 
 program:
     | tops=top_levels EOF { tops } ;
@@ -79,8 +81,19 @@ expr:
     | func=expr arg=expr { EApp (func, arg) };
 
 
+path:
+    | n = MIDENT { PName n } 
+    | p = path DOT n = MIDENT { PMem (p, n) } 
+    | p1 = path LPAREN p2 = path RPAREN { PApply (p1, p2) } ;
+  
+
 constant: 
     | i = INT { CInt i }
     | b = BOOL { CBool b }
     | s = STRING { CString s } ;
+
+(* debug rules: which are normal rulesi append with an eof *)
+path_dbg: 
+    | p=path EOF { p }
+
 
