@@ -1,0 +1,10 @@
+(library
+ (name type_check)
+ (libraries sexplib sugar common)
+ (inline_tests)
+ (preprocess
+  (pps ppx_sexp_conv ppx_inline_test ppx_jane)))
+
+(env
+  (dev
+    (flags (:standard -w -32))))
