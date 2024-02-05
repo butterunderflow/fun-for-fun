@@ -10,6 +10,10 @@ let print_parsed_program str =
 let print_parsed_path str =
   parse_string_path str |> sexp_of_path |> print_sexp
 
+let print_parsed_type_expr str =
+  parse_string_type_expr str |> sexp_of_type_expr |> print_sexp
+
+
 let%expect_test "Test: full program parsing" =
   print_parsed_program {|let x = 1|};
   [%expect {|
@@ -40,3 +44,16 @@ let%expect_test "Test: path parsing" =
   [%expect {|
     (PApply (PApply (PMem (PName X) Y) (PApply (PName Z) (PName N)))
       (PMem (PMem (PName W) M) N)) |}]
+
+let%expect_test "Test: type expression parsing" = 
+  print_parsed_type_expr "string";
+  [%expect {| (TCons string ()) |}];
+  print_parsed_type_expr "(string) list";
+  [%expect {| (TCons list ((TCons string ()))) |}];
+  print_parsed_type_expr "string list";
+  [%expect {| (TCons list ((TCons string ()))) |}];
+  print_parsed_type_expr "'x";
+  [%expect {| (TVar 'x) |}];
+  print_parsed_type_expr "(string, 'x, 'y) list";
+  [%expect {| (TCons list ((TCons string ()) (TVar 'x) (TVar 'y))) |}]
+

@@ -29,14 +29,16 @@
 
 
 %type <Parsetree.program> program
-%type <Parsetree.path> path_dbg
 %type <Parsetree.top_level list> top_levels
 %type <Parsetree.constant> constant
 %type <Parsetree.variant> variant
 
+%type <Parsetree.path> path_dbg
+%type <Parsetree.type_expr> type_expr_dbg
+
 
 /* Start symbols */
-%start program path_dbg
+%start program path_dbg type_expr_dbg
 %%
 
 
@@ -70,10 +72,11 @@ variant:
     | c=IDENT OF LPAREN arg_types=separated_list(COMMA, type_expr) RPAREN  { (c, arg_types) } ;
 
 type_expr: 
-    | n=IDENT LBRACKET t_args=separated_list(COMMA, type_expr) RBRACKET 
+    | LPAREN t_args = separated_list(COMMA, type_expr) RPAREN n=IDENT 
         { TCons(n, t_args) }
+    | t_arg = type_expr n=IDENT { TCons(n, [t_arg]) }
     | n=IDENT { TCons (n, []) }
-    | tv=TYPEVAR { TVar tv }
+    | tv=TYPEVAR { TVar tv } ;
 
 expr:
     | c = constant { EConst c }
@@ -96,4 +99,5 @@ constant:
 path_dbg: 
     | p=path EOF { p }
 
-
+type_expr_dbg: 
+    | te=type_expr EOF { te }
