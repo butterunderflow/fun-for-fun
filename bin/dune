@@ -1,0 +1,4 @@
+(executable
+ (public_name fun4fun)
+ (name main)
+ (libraries syntax))
