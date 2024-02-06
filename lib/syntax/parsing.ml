@@ -41,3 +41,5 @@ let parse_string_path = gen_parse_string Parser.path_dbg
 
 let parse_string_type_expr = gen_parse_string Parser.type_expr_dbg
 
+let parse_string_mod_expr = gen_parse_string Parser.mod_expr_dbg
+

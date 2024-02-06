@@ -66,7 +66,7 @@ let%expect_test "Test: top level module" =
   [%expect {|
     ((TopMod X (MEStruct ()))) |}];
   print_parsed_program
-    {|
+     {|
      module X = struct
        let x = 1
        let rec y = 3
@@ -79,4 +79,29 @@ let%expect_test "Test: top level module" =
        (MEStruct
          ((TopLet (PVar x) (EConst (CInt 1)))
            (TopLetRec ((y () (EConst (CInt 3))))) (TopMod Y (MEStruct ())))))) |}]
+
+
+
+
+let%expect_test "Test: module expression" = 
+  let print_parsed str =
+    parse_string_mod_expr str |> sexp_of_mod_expr |> print_sexp
+  in
+  print_parsed 
+    {|
+     struct 
+       let x = 1
+       type t = int
+       type () a 
+         = Cons of int
+         | Nil 
+       end
+     end
+     |};
+  [%expect {|
+    (MEStruct
+      ((TopLet (PVar x) (EConst (CInt 1)))
+        (TopTypeDef (TDAlias t (TCons int ())))
+        (TopTypeDef (TDAdt a () ((Cons ((TCons int ()))) (Nil ())))))) |}]
+
 

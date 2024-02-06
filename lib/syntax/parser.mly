@@ -39,10 +39,10 @@
 
 %type <Parsetree.path> path_dbg
 %type <Parsetree.type_expr> type_expr_dbg
-
+%type <Parsetree.mod_expr> mod_expr_dbg
 
 /* Start symbols */
-%start program path_dbg type_expr_dbg
+%start program path_dbg type_expr_dbg mod_expr_dbg
 %%
 
 
@@ -75,8 +75,7 @@ functor_bind:
 
 type_def: 
     | TYPE LPAREN tvs=separated_list(COMMA, TYPEVAR) RPAREN n=IDENT 
-        EQ vs=separated_list(OR, variant) 
-      END { TDAdt (n, tvs, vs) }
+        EQ vs=separated_list(OR, variant) END { TDAdt (n, tvs, vs) }
     | TYPE n=IDENT EQ te=type_expr { TDAlias(n, te) } ;
 
 pattern: 
@@ -91,7 +90,8 @@ function_bind:
        { (name, paras, b) }
 
 variant: 
-    | c=IDENT OF LPAREN arg_types=separated_list(COMMA, type_expr) RPAREN  { (c, arg_types) } ;
+    | c=MIDENT OF payload=type_expr  { (c, Some payload) } 
+    | c=MIDENT                       { (c, None) };
 
 type_expr: 
     | LPAREN t_args = separated_list(COMMA, type_expr) RPAREN n=IDENT 
@@ -126,3 +126,6 @@ path_dbg:
 
 type_expr_dbg: 
     | te=type_expr EOF { te }
+
+mod_expr_dbg:
+    | me=mod_expr EOF { me }

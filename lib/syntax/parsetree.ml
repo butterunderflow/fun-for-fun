@@ -33,7 +33,7 @@ type expr =
   | EFetchTuple of expr * int
 [@@deriving sexp]
 
-type variant = string * type_expr list [@@deriving sexp]
+type variant = string * type_expr option [@@deriving sexp]
 
 type type_paras = string list [@@deriving sexp]
 
