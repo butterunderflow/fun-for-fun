@@ -15,6 +15,7 @@
 %token MODULE
 %token SIG
 %token STRUCT
+%token ARROW
 %token <string> IDENT
 %token <string> MIDENT
 %token <string> TYPEVAR
@@ -50,16 +51,33 @@ program:
 
 top_levels:
     | (* empty *) { [] }
-    | TYPE n=IDENT LBRACKET tvs=separated_list(COMMA, TYPEVAR) RBRACKET
-        EQ vs=separated_list(OR, variant) 
-      END 
-        rest=top_levels
-        { Top_type (n, tvs, vs) :: rest }
-    | LET p=pattern EQ e=expr rest=top_levels  { Top_let (p, e) :: rest }
+    | td=type_def rest=top_levels
+        { TopTypeDef td :: rest }
+    | LET p=pattern EQ e=expr rest=top_levels  { TopLet (p, e) :: rest }
     | LET REC funcs=separated_list(AND, function_bind) rest=top_levels
-        { Top_letrec funcs :: rest } 
-    | MODULE m_name=MIDENT EQ STRUCT m_body=top_levels END rest=top_levels
-        { Top_mod (m_name, m_body) :: rest };
+        { TopLetRec funcs :: rest } 
+    | MODULE m_name=MIDENT 
+        EQ m_body=mod_expr rest=top_levels
+        { TopMod (m_name, m_body) :: rest }
+    | MODULE REC functors=separated_list(AND, functor_bind) rest=top_levels { TopModRec functors :: rest } ;
+
+mod_expr : 
+    | m_name=MIDENT { MEName m_name }
+    | STRUCT m_body=top_levels END { MEStruct m_body }
+
+mod_para : 
+    | m_name=MIDENT COLON m_type=mod_type { (m_name, m_type) }
+
+functor_bind: 
+    | m_name=MIDENT LPAREN m_paras=separated_list(COMMA, mod_para) RPAREN ARROW m_body=mod_expr 
+       { (m_name, (m_paras, m_body)) }
+
+
+type_def: 
+    | TYPE LPAREN tvs=separated_list(COMMA, TYPEVAR) RPAREN n=IDENT 
+        EQ vs=separated_list(OR, variant) 
+      END { TDAdt (n, tvs, vs) }
+    | TYPE n=IDENT EQ te=type_expr { TDAlias(n, te) } ;
 
 pattern: 
     | n=IDENT { PVar n }
@@ -94,12 +112,15 @@ path:
     | p1 = path LPAREN p2 = path RPAREN { PApply (p1, p2) } ;
   
 
+mod_type: 
+    | SIG END { MTSig [] }
+
 constant: 
     | i = INT { CInt i }
     | b = BOOL { CBool b }
     | s = STRING { CString s } ;
 
-(* debug rules: which are normal rulesi append with an eof *)
+(* debug rules: which are normal rules append with an eof *)
 path_dbg: 
     | p=path EOF { p }
 

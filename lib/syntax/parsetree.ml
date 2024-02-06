@@ -9,7 +9,10 @@ type pattern =
   | PVar of string
 [@@deriving sexp]
 
-type type_expr = TCons of string * type_expr list | TVar of string
+type type_expr =
+  | TCons of string * type_expr list
+  | TVar of string
+  | TArrow of type_expr * type_expr
 [@@deriving sexp]
 
 type para = PAnn of string * type_expr | PBare of string [@@deriving sexp]
@@ -34,24 +37,45 @@ type variant = string * type_expr list [@@deriving sexp]
 
 type type_paras = string list [@@deriving sexp]
 
-type functor_paras = string list [@@deriving sexp]
-
 type top_level =
-  | Top_let of pattern * expr
-  | Top_letrec of (string * paras * expr) list
-  | Top_type of string * type_paras * variant list
-  | Top_mod of string * mod_body
-  | Top_modrec of (string * functor_paras * mod_body * path) list
+  | TopLet of pattern * expr
+  | TopLetRec of (string * paras * expr) list
+  | TopTypeDef of type_def
+  | TopMod of string * mod_expr
+  | TopModRec of (string * functor_expr) list
+[@@deriving sexp]
+
+and type_def =
+  | TDAdt of string * type_paras * variant list
+  | TDAlias of string * type_expr
 [@@deriving sexp]
 
 and mod_body = top_level list [@@deriving sexp]
 
-and path =
-  | PName of string
-  | PMem of path * string
-  | PApply of path * path
+and path = PName of string | PMem of path * string | PApply of path * path
 [@@deriving sexp]
 
+and mod_expr =
+  | MEName of string
+  | MEStruct of mod_body
+  | MEFunctor of functor_expr
+  | MEField of path * string
+  | MEApply of mod_expr * mod_expr list
+  | MERestrict of mod_expr * mod_type
+[@@deriving sexp]
+
+and functor_expr = (string * mod_type) list * mod_expr [@@deriving sexp]
+
+and mod_type =
+  | MTSig of type_comp list
+  | MTFunctor of (string * mod_type) list * mod_type
+[@@deriving sexp]
+
+and adt_def = string * type_paras * variant list [@@deriving sexp]
+
+and type_comp =
+  | TValueSpec of string * type_expr
+  | TAbstTySpec of string
+  | TManiTySpec of type_def
 
 type program = top_level list [@@deriving sexp]
-

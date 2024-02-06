@@ -46,6 +46,7 @@ rule token = parse
     | "module"          { MODULE }
     | "struct"          { STRUCT }
     | "sig"             { SIG }
+    | "->"              { ARROW }
     | "="               { EQ }
     | "|"               { OR }
     | '('               { LPAREN }

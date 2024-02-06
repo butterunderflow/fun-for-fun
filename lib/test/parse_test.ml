@@ -16,7 +16,7 @@ let print_parsed_type_expr str =
 let%expect_test "Test: full program parsing" =
   print_parsed_program {|let x = 1|};
   [%expect {|
-    ((Top_let (PVar x) (EConst (CInt 1))))
+    ((TopLet (PVar x) (EConst (CInt 1))))
   |}];
   print_parsed_program
     {|
@@ -26,11 +26,11 @@ let%expect_test "Test: full program parsing" =
      |};
   [%expect
     {|
-    ((Top_let (PVar x) (EConst (CInt 1))) (Top_let (PVar y) (EConst (CInt 2)))
-      (Top_letrec ((foo ((PBare x)) (EApp (EVar foo) (EVar x)))))) |}];
+    ((TopLet (PVar x) (EConst (CInt 1))) (TopLet (PVar y) (EConst (CInt 2)))
+      (TopLetRec ((foo ((PBare x)) (EApp (EVar foo) (EVar x)))))) |}];
   print_parsed_program {|let rec f (x:int) = 1|};
   [%expect
-    {| ((Top_letrec ((f ((PAnn x (TCons int ()))) (EConst (CInt 1)))))) |}]
+    {| ((TopLetRec ((f ((PAnn x (TCons int ()))) (EConst (CInt 1)))))) |}]
 
 let%expect_test "Test: path parsing" =
   print_parsed_path {|X|};
@@ -64,7 +64,7 @@ let%expect_test "Test: top level module" =
      end
      |};
   [%expect {|
-    ((Top_mod X ())) |}];
+    ((TopMod X (MEStruct ()))) |}];
   print_parsed_program
     {|
      module X = struct
@@ -75,7 +75,8 @@ let%expect_test "Test: top level module" =
      end
      |};
   [%expect {|
-    ((Top_mod X
-       ((Top_let (PVar x) (EConst (CInt 1)))
-         (Top_letrec ((y () (EConst (CInt 3))))) (Top_mod Y ())))) |}]
+    ((TopMod X
+       (MEStruct
+         ((TopLet (PVar x) (EConst (CInt 1)))
+           (TopLetRec ((y () (EConst (CInt 3))))) (TopMod Y (MEStruct ())))))) |}]
 
