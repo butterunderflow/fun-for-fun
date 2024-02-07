@@ -1,26 +1,37 @@
 open Sexplib.Conv
 
-type constant = CBool of bool | CInt of int | CString of string
+type program = top_level list [@@deriving sexp]
+
+and top_level =
+  | TopLet of pattern * expr
+  | TopLetRec of (string * lambda) list
+  | TopTypeDef of type_def
+  | TopMod of string * mod_expr
+  | TopModRec of (string * functor_expr) list
 [@@deriving sexp]
 
-type pattern =
+and pattern =
   | PVal of constant
   | PCons of string * pattern list
   | PVar of string
 [@@deriving sexp]
 
-type type_expr =
+and type_expr =
   | TCons of string * type_expr list
   | TVar of string
+  | TField of path * string
   | TArrow of type_expr * type_expr
   | TTuple of type_expr list
 [@@deriving sexp]
 
-type para = PAnn of string * type_expr | PBare of string [@@deriving sexp]
+and para = PAnn of string * type_expr | PBare of string [@@deriving sexp]
 
-type paras = para list [@@deriving sexp]
+and paras = para list [@@deriving sexp]
 
-type expr =
+and constant = CBool of bool | CInt of int | CString of string
+[@@deriving sexp]
+
+and expr =
   | EConst of constant
   | EVar of string
   | ELet of pattern * expr * expr
@@ -36,17 +47,9 @@ type expr =
 
 and lambda = para * expr
 
-type variant = string * type_expr option [@@deriving sexp]
+and variant = string * type_expr option [@@deriving sexp]
 
-type type_paras = string list [@@deriving sexp]
-
-type top_level =
-  | TopLet of pattern * expr
-  | TopLetRec of (string * lambda) list
-  | TopTypeDef of type_def
-  | TopMod of string * mod_expr
-  | TopModRec of (string * functor_expr) list
-[@@deriving sexp]
+and type_paras = string list [@@deriving sexp]
 
 and type_def =
   | TDAdt of string * type_paras * variant list
@@ -84,5 +87,3 @@ and type_comp =
   | TValueSpec of string * type_expr
   | TAbstTySpec of string
   | TManiTySpec of type_def
-
-type program = top_level list [@@deriving sexp]
