@@ -23,6 +23,7 @@
 %token <string> MIDENT
 %token <string> TYPEVAR
 %token EQ
+%token STAR
 %token OR
 %token AND
 %token LBRACKET
@@ -33,6 +34,9 @@
 %token COLON
 %token LPAREN
 %token RPAREN
+
+%nonassoc below_STAR
+%left     STAR                         /* (e * e * e) */
 
 
 %type <Parsetree.program> program
@@ -102,10 +106,14 @@ variant:
 type_expr: 
     | LPAREN t_args = separated_list(COMMA, type_expr) RPAREN n=IDENT 
         { TCons(n, t_args) }
+    | LPAREN te=type_expr RPAREN { te }
+    | t=type_expr ts=nonempty_list(star_pre_type_expr) %prec below_STAR { TTuple (t::ts) }
     | t_arg = type_expr n=IDENT { TCons(n, [t_arg]) }
     | n=IDENT { TCons (n, []) }
     | tv=TYPEVAR { TVar tv }
     | arg=type_expr ARROW ret=type_expr { TArrow (arg, ret) };
+
+star_pre_type_expr : STAR te=type_expr { te }
 
 expr:
     | c = constant { EConst c }

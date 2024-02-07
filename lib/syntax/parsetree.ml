@@ -13,6 +13,7 @@ type type_expr =
   | TCons of string * type_expr list
   | TVar of string
   | TArrow of type_expr * type_expr
+  | TTuple of type_expr list
 [@@deriving sexp]
 
 type para = PAnn of string * type_expr | PBare of string [@@deriving sexp]

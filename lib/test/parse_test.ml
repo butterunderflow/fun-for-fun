@@ -65,7 +65,15 @@ let%expect_test "Test: type expression parsing" =
   print_parsed_type_expr "'x";
   [%expect {| (TVar 'x) |}];
   print_parsed_type_expr "(string, 'x, 'y) list";
-  [%expect {| (TCons list ((TCons string ()) (TVar 'x) (TVar 'y))) |}]
+  [%expect {| (TCons list ((TCons string ()) (TVar 'x) (TVar 'y))) |}];
+  print_parsed_type_expr "int * int";
+  [%expect {| (TTuple ((TCons int ()) (TCons int ()))) |}];
+  print_parsed_type_expr "int * i list * (x * y) list * (t1 * t2)";
+  [%expect {|
+    (TTuple
+      ((TCons int ()) (TCons list ((TCons i ())))
+        (TCons list ((TTuple ((TCons x ()) (TCons y ())))))
+        (TTuple ((TCons t1 ()) (TCons t2 ()))))) |}]
 
 let%expect_test "Test: top level module" =
   print_parsed_program {|
