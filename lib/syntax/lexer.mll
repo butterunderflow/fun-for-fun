@@ -43,9 +43,13 @@ rule token = parse
     | "rec"             { REC }
     | "type"            { TYPE }
     | "end"             { END }
+    | "and"             { AND }
     | "module"          { MODULE }
     | "struct"          { STRUCT }
     | "sig"             { SIG }
+    | "val"             { VAL }
+    | "functor"         { FUNCTOR }
+    | "fun"             { FUN }
     | "of"              { OF }
     | "->"              { ARROW }
     | "="               { EQ }

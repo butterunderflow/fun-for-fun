@@ -15,6 +15,9 @@
 %token MODULE
 %token SIG
 %token STRUCT
+%token VAL
+%token FUNCTOR
+%token FUN
 %token ARROW
 %token <string> IDENT
 %token <string> MIDENT
@@ -64,13 +67,15 @@ top_levels:
 mod_expr : 
     | m_name=MIDENT { MEName m_name }
     | STRUCT m_body=top_levels END { MEStruct m_body }
+    | FUNCTOR LPAREN mp=mod_para RPAREN ARROW f_body=mod_expr { MEFunctor (mp, f_body) }
+    
 
 mod_para : 
     | m_name=MIDENT COLON m_type=mod_type { (m_name, m_type) }
 
 functor_bind: 
-    | m_name=MIDENT LPAREN m_paras=separated_list(COMMA, mod_para) RPAREN ARROW m_body=mod_expr 
-       { (m_name, (m_paras, m_body)) }
+    | m_name=MIDENT LPAREN mp=mod_para RPAREN ARROW m_body=mod_expr 
+       { (m_name, (mp, m_body)) }
 
 
 type_def: 
@@ -86,8 +91,8 @@ parameter:
     | LPAREN n=IDENT COLON t=type_expr RPAREN { PAnn (n, t) }
 
 function_bind:
-    | name=IDENT paras=list(parameter) EQ b=expr
-       { (name, paras, b) }
+    | name=IDENT EQ FUN para=parameter ARROW b=expr
+       { (name, (para, b)) }
 
 variant: 
     | c=MIDENT OF payload=type_expr  { (c, Some payload) } 
@@ -98,7 +103,8 @@ type_expr:
         { TCons(n, t_args) }
     | t_arg = type_expr n=IDENT { TCons(n, [t_arg]) }
     | n=IDENT { TCons (n, []) }
-    | tv=TYPEVAR { TVar tv } ;
+    | tv=TYPEVAR { TVar tv }
+    | arg=type_expr ARROW ret=type_expr { TArrow (arg, ret) };
 
 expr:
     | c = constant { EConst c }
@@ -113,7 +119,18 @@ path:
   
 
 mod_type: 
-    | SIG END { MTSig [] }
+    | m=MIDENT                      { MTName m }
+    | p=path DOT m=MIDENT           { MTField (p, m) }
+    | SIG comps=list(sig_comp) END  { MTSig comps }
+    | FUNCTOR 
+        LPAREN p=MIDENT COLON p_ty=mod_type RPAREN
+        ARROW body=mod_type         { MTFunctor (p, p_ty, body) }
+                                    
+
+sig_comp:
+    | VAL v=IDENT COLON ty=type_expr { TValueSpec (v, ty) }
+    | TYPE t=IDENT                   { TAbstTySpec t }
+    | def=type_def                   { TManiTySpec def }
 
 constant: 
     | i = INT { CInt i }

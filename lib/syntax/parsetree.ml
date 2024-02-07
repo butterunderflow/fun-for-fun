@@ -23,8 +23,8 @@ type expr =
   | EConst of constant
   | EVar of string
   | ELet of pattern * expr * expr
-  | ELetrec of (string * paras * expr) list * expr
-  | ELam of para * expr
+  | ELetrec of (string * lambda) list * expr
+  | ELam of lambda
   | EIf of expr * expr * expr
   | ECase of expr * (pattern * expr) list
   | EApp of expr * expr
@@ -33,13 +33,15 @@ type expr =
   | EFetchTuple of expr * int
 [@@deriving sexp]
 
+and lambda = para * expr
+
 type variant = string * type_expr option [@@deriving sexp]
 
 type type_paras = string list [@@deriving sexp]
 
 type top_level =
   | TopLet of pattern * expr
-  | TopLetRec of (string * paras * expr) list
+  | TopLetRec of (string * lambda) list
   | TopTypeDef of type_def
   | TopMod of string * mod_expr
   | TopModRec of (string * functor_expr) list
@@ -64,11 +66,15 @@ and mod_expr =
   | MERestrict of mod_expr * mod_type
 [@@deriving sexp]
 
-and functor_expr = (string * mod_type) list * mod_expr [@@deriving sexp]
+and functor_para = string * mod_type [@@deriving sexp]
+
+and functor_expr = functor_para * mod_expr [@@deriving sexp]
 
 and mod_type =
+  | MTName of string
+  | MTField of path * string
   | MTSig of type_comp list
-  | MTFunctor of (string * mod_type) list * mod_type
+  | MTFunctor of string * mod_type * mod_type
 [@@deriving sexp]
 
 and adt_def = string * type_paras * variant list [@@deriving sexp]
