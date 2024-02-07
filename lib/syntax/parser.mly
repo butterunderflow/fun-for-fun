@@ -43,9 +43,10 @@
 %type <Parsetree.path> path_dbg
 %type <Parsetree.type_expr> type_expr_dbg
 %type <Parsetree.mod_expr> mod_expr_dbg
+%type <Parsetree.mod_type> mod_type_dbg
 
 /* Start symbols */
-%start program path_dbg type_expr_dbg mod_expr_dbg
+%start program path_dbg type_expr_dbg mod_expr_dbg mod_type_dbg
 %%
 
 
@@ -146,3 +147,7 @@ type_expr_dbg:
 
 mod_expr_dbg:
     | me=mod_expr EOF { me }
+
+mod_type_dbg:
+    | me=mod_type EOF { me }
+
