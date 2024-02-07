@@ -40,6 +40,7 @@ rule token = parse
     | [' ' '\t' '\n']   { token lexbuf }
     | eof               { EOF }
     | "let"             { LET }
+    | "in"              { IN }
     | "rec"             { REC }
     | "type"            { TYPE }
     | "end"             { END }

@@ -25,6 +25,7 @@
 %token EQ
 %token STAR
 %token OR
+%token IN
 %token AND
 %token LBRACKET
 %token RBRACKET
@@ -35,7 +36,8 @@
 %token LPAREN
 %token RPAREN
 
-%nonassoc below_STAR
+%nonassoc below_COMMA
+%left     COMMA                        /* (e , e , e) */
 %left     STAR                         /* (e * e * e) */
 
 
@@ -48,9 +50,10 @@
 %type <Parsetree.type_expr> type_expr_dbg
 %type <Parsetree.mod_expr> mod_expr_dbg
 %type <Parsetree.mod_type> mod_type_dbg
+%type <Parsetree.expr> expr_dbg
 
 /* Start symbols */
-%start program path_dbg type_expr_dbg mod_expr_dbg mod_type_dbg
+%start program path_dbg type_expr_dbg mod_expr_dbg mod_type_dbg expr_dbg
 %%
 
 
@@ -107,25 +110,30 @@ type_expr:
     | LPAREN t_args = separated_list(COMMA, type_expr) RPAREN n=IDENT 
         { TCons(n, t_args) }
     | LPAREN te=type_expr RPAREN { te }
-    | t=type_expr ts=nonempty_list(star_pre_type_expr) %prec below_STAR { TTuple (t::ts) }
+    | ts=separated_nontrivial_llist(STAR, type_expr) { TTuple ts }
     | t_arg = type_expr n=IDENT { TCons(n, [t_arg]) }
     | n=IDENT { TCons (n, []) }
     | tv=TYPEVAR { TVar tv }
     | arg=type_expr ARROW ret=type_expr { TArrow (arg, ret) };
 
-star_pre_type_expr : STAR te=type_expr { te }
-
 expr:
-    | c = constant { EConst c }
-    | v = IDENT { EVar v }
-    | func=expr arg=expr { EApp (func, arg) };
+    | c=constant { EConst c }
+    | v=IDENT { EVar v }
+    | LET p=pattern EQ e1=expr IN e2=expr { ELet (p, e1, e2) }
+    | tu=tuple_expr { tu }
+    | func=expr arg=expr { EApp (func, arg) }
+    | LPAREN e=expr RPAREN { e }
+    ;
 
+tuple_expr: 
+    | es = separated_nontrivial_llist(COMMA, expr) %prec below_COMMA
+        { ETuple es }
 
 path:
     | n = MIDENT { PName n } 
     | p = path DOT n = MIDENT { PMem (p, n) } 
     | p1 = path LPAREN p2 = path RPAREN { PApply (p1, p2) } ;
-  
+
 
 mod_type: 
     | m=MIDENT                      { MTName m }
@@ -159,3 +167,30 @@ mod_expr_dbg:
 mod_type_dbg:
     | me=mod_type EOF { me }
 
+expr_dbg:
+    | e=expr EOF      { e }
+
+
+
+(* [reversed_separated_nontrivial_llist(separator, X)] recognizes a list of at
+   least two [X]s, separated with [separator]s, and produces an OCaml list in
+   reverse order -- that is, the last element in the input text appears first
+   in this list. Its definition is left-recursive. *)
+
+reversed_separated_nontrivial_llist(separator, X):
+  xs = reversed_separated_nontrivial_llist(separator, X)
+  separator
+  x = X
+    { x :: xs }
+| x1 = X
+  separator
+  x2 = X
+    { [ x2; x1 ] }
+
+(* [separated_nontrivial_llist(separator, X)] recognizes a list of at least
+   two [X]s, separated with [separator]s, and produces an OCaml list in direct
+   order -- that is, the first element in the input text appears first in this
+   list. *)
+%inline separated_nontrivial_llist(separator, X):
+  xs = rev(reversed_separated_nontrivial_llist(separator, X))
+    { xs }

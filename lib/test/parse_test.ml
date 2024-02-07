@@ -13,6 +13,20 @@ let print_parsed_path str =
 let print_parsed_type_expr str =
   parse_string_type_expr str |> sexp_of_type_expr |> print_sexp
 
+let%expect_test "Test: expression parsing" =
+  let print_parsed str =
+    parse_string_expr str |> sexp_of_expr |> print_sexp
+  in
+  print_parsed "x";
+  [%expect {| (EVar x) |}];
+  print_parsed "let x = 1 in y";
+  [%expect {| (ELet (PVar x) (EConst (CInt 1)) (EVar y)) |}];
+  print_parsed "1,3,4,(5,6),7";
+  [%expect {|
+    (ETuple
+      ((EConst (CInt 1)) (EConst (CInt 3)) (EConst (CInt 4))
+        (ETuple ((EConst (CInt 5)) (EConst (CInt 6)))) (EConst (CInt 7)))) |}]
+
 let%expect_test "Test: full program parsing" =
   print_parsed_program {|let x = 1|};
   [%expect {|
@@ -69,7 +83,8 @@ let%expect_test "Test: type expression parsing" =
   print_parsed_type_expr "int * int";
   [%expect {| (TTuple ((TCons int ()) (TCons int ()))) |}];
   print_parsed_type_expr "int * i list * (x * y) list * (t1 * t2)";
-  [%expect {|
+  [%expect
+    {|
     (TTuple
       ((TCons int ()) (TCons list ((TCons i ())))
         (TCons list ((TTuple ((TCons x ()) (TCons y ())))))
@@ -134,12 +149,15 @@ let%expect_test "Test: module type" =
   print_parsed {|sig val x : int end|};
   [%expect {| (MTSig ((TValueSpec x (TCons int ())))) |}];
   print_parsed {|functor (M:M) -> sig val x: int end|};
-  [%expect {| (MTFunctor M (MTName M) (MTSig ((TValueSpec x (TCons int ()))))) |}];
+  [%expect
+    {| (MTFunctor M (MTName M) (MTSig ((TValueSpec x (TCons int ()))))) |}];
   print_parsed {|functor (M:M) -> M1|};
   [%expect {| (MTFunctor M (MTName M) (MTName M1)) |}];
   print_parsed {|functor (M:functor (X:M)->M) -> M1|};
-  [%expect {| (MTFunctor M (MTFunctor X (MTName M) (MTName M)) (MTName M1)) |}];
-  print_parsed {|
+  [%expect
+    {| (MTFunctor M (MTFunctor X (MTName M) (MTName M)) (MTName M1)) |}];
+  print_parsed
+    {|
                 sig
                   val x : int
                   type t
@@ -150,9 +168,9 @@ let%expect_test "Test: module type" =
                   end
                 end
                 |};
-  [%expect {|
+  [%expect
+    {|
     (MTSig
       ((TValueSpec x (TCons int ())) (TAbstTySpec t)
         (TValueSpec m (TArrow (TCons t ()) (TCons t ())))
         (TManiTySpec (TDAdt i_list () ((Cons ((TCons int ()))) (Nil ())))))) |}]
-
