@@ -36,7 +36,8 @@ let%expect_test "Test: full program parsing" =
     let rec odd = fun x -> even x
     and even = fun x -> odd x
      |};
-  [%expect {|
+  [%expect
+    {|
     ((TopLetRec
        ((odd ((PBare x) (EApp (EVar even) (EVar x))))
          (even ((PBare x) (EApp (EVar odd) (EVar x))))))) |}]
@@ -110,4 +111,40 @@ let%expect_test "Test: module expression" =
     (MEStruct
       ((TopLet (PVar x) (EConst (CInt 1)))
         (TopTypeDef (TDAlias t (TCons int ())))
-        (TopTypeDef (TDAdt a () ((Cons ((TCons int ()))) (Nil ())))))) |}]
+        (TopTypeDef (TDAdt a () ((Cons ((TCons int ()))) (Nil ())))))) |}];
+  print_parsed {|functor (X: M) -> struct end|};
+  [%expect {| (MEFunctor ((X (MTName M)) (MEStruct ()))) |}]
+
+let%expect_test "Test: module type" =
+  let print_parsed str =
+    parse_string_mod_type str |> sexp_of_mod_type |> print_sexp
+  in
+  print_parsed {|M|};
+  [%expect {| (MTName M) |}];
+  print_parsed {|M.X(M).E|};
+  [%expect {| (MTField (PApply (PMem (PName M) X) (PName M)) E) |}];
+  print_parsed {|sig val x : int end|};
+  [%expect {| (MTSig ((TValueSpec x (TCons int ())))) |}];
+  print_parsed {|functor (M:M) -> sig val x: int end|};
+  [%expect {| (MTFunctor M (MTName M) (MTSig ((TValueSpec x (TCons int ()))))) |}];
+  print_parsed {|functor (M:M) -> M1|};
+  [%expect {| (MTFunctor M (MTName M) (MTName M1)) |}];
+  print_parsed {|functor (M:functor (X:M)->M) -> M1|};
+  [%expect {| (MTFunctor M (MTFunctor X (MTName M) (MTName M)) (MTName M1)) |}];
+  print_parsed {|
+                sig
+                  val x : int
+                  type t
+                  val m: t -> t
+                  type () i_list = 
+                    Cons of int 
+                    | Nil
+                  end
+                end
+                |};
+  [%expect {|
+    (MTSig
+      ((TValueSpec x (TCons int ())) (TAbstTySpec t)
+        (TValueSpec m (TArrow (TCons t ()) (TCons t ())))
+        (TManiTySpec (TDAdt i_list () ((Cons ((TCons int ()))) (Nil ())))))) |}]
+
