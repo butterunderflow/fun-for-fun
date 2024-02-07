@@ -120,6 +120,7 @@ expr:
     | c=constant { EConst c }
     | v=IDENT { EVar v }
     | LET p=pattern EQ e1=expr IN e2=expr { ELet (p, e1, e2) }
+    | LET REC binds=separated_nonempty_list(AND, function_bind) IN body=expr { ELetrec (binds, body) }
     | tu=tuple_expr { tu }
     | func=expr arg=expr { EApp (func, arg) }
     | LPAREN e=expr RPAREN { e }

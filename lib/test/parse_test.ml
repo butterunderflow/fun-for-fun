@@ -22,10 +22,24 @@ let%expect_test "Test: expression parsing" =
   print_parsed "let x = 1 in y";
   [%expect {| (ELet (PVar x) (EConst (CInt 1)) (EVar y)) |}];
   print_parsed "1,3,4,(5,6),7";
-  [%expect {|
+  [%expect
+    {|
     (ETuple
       ((EConst (CInt 1)) (EConst (CInt 3)) (EConst (CInt 4))
-        (ETuple ((EConst (CInt 5)) (EConst (CInt 6)))) (EConst (CInt 7)))) |}]
+        (ETuple ((EConst (CInt 5)) (EConst (CInt 6)))) (EConst (CInt 7)))) |}];
+  print_parsed
+    {|
+     let rec odd = fun x -> even x
+     and even = fun (x:int) -> odd x
+     in
+     odd 1
+     |};
+  [%expect
+    {|
+    (ELetrec
+      ((odd ((PBare x) (EApp (EVar even) (EVar x))))
+        (even ((PAnn x (TCons int ())) (EApp (EVar odd) (EVar x)))))
+      (EApp (EVar odd) (EConst (CInt 1)))) |}]
 
 let%expect_test "Test: full program parsing" =
   print_parsed_program {|let x = 1|};
