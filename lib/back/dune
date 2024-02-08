@@ -1,0 +1,9 @@
+(library
+ (name back)
+ (libraries sexplib FrontC)
+ (preprocess
+  (pps ppx_sexp_conv)))
+
+(env
+  (dev
+    (flags (:standard -w -32))))
