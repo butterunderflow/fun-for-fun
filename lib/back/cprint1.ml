@@ -1,60 +1,64 @@
 (* cprint -- pretty printer of C program from abstract syntax *)
 
 open Cabs
+
 let version = "Cprint 4.0 Hugues Cassé et al."
 
-(*
-** FrontC Pretty printer
-*)
+(* ** FrontC Pretty printer *)
 let out = ref (Buffer.create 50)
+
 let width = ref 80
+
 let tab = ref 8
+
 let max_indent = ref 60
 
 let line = ref ""
+
 let line_len = ref 0
+
 let current = ref ""
+
 let current_len = ref 0
+
 let spaces = ref 0
+
 let follow = ref 0
+
 let roll = ref 0
 
 (* override output_string in stdlib *)
 let output_string = Buffer.add_string
-let output_char = Buffer.add_char
 
+let output_char = Buffer.add_char
 
 let print_tab size =
   output_string !out (String.make (size / 8) '\t');
   output_string !out (String.make (size mod 8) ' ')
 
 let flush _ =
-  if !line <> "" then begin
+  if !line <> "" then (
     print_tab (!spaces + !follow);
     output_string !out !line;
     line := "";
-    line_len := 0
-  end
+    line_len := 0)
 
 let commit _ =
-  if !current <> "" then begin
-    if !line = "" then begin
+  if !current <> "" then (
+    if !line = "" then (
       line := !current;
-      line_len := !current_len
-    end else begin
-      line := (!line ^ " " ^ !current);
-      line_len := !line_len + 1 + !current_len
-    end;
+      line_len := !current_len)
+    else (
+      line := !line ^ " " ^ !current;
+      line_len := !line_len + 1 + !current_len);
     current := "";
-    current_len := 0
-  end
+    current_len := 0)
 
 let new_line _ =
   commit ();
-  if !line <> "" then begin
+  if !line <> "" then (
     flush ();
-    output_char !out '\n'
-  end;
+    output_char !out '\n');
   follow := 0
 
 let force_new_line _ =
@@ -66,107 +70,104 @@ let force_new_line _ =
 let indent _ =
   new_line ();
   spaces := !spaces + !tab;
-  if !spaces >= !max_indent then begin
+  if !spaces >= !max_indent then (
     spaces := !tab;
-    roll := !roll + 1
-  end
+    roll := !roll + 1)
 
 let unindent _ =
   new_line ();
   spaces := !spaces - !tab;
-  if (!spaces <= 0) && (!roll > 0) then begin
-    spaces := ((!max_indent - 1) / !tab) * !tab;
-    roll := !roll - 1
-  end
+  if !spaces <= 0 && !roll > 0 then (
+    spaces := (!max_indent - 1) / !tab * !tab;
+    roll := !roll - 1)
 
 let space _ = commit ()
 
 let print str =
   current := !current ^ str;
-  current_len := !current_len + (String.length str);
-  if (!spaces + !follow + !line_len + 1 + !current_len) > !width
-  then begin
+  current_len := !current_len + String.length str;
+  if !spaces + !follow + !line_len + 1 + !current_len > !width then (
     if !line_len = 0 then commit ();
     flush ();
     output_char !out '\n';
-    if !follow = 0 then follow := !tab
-  end
+    if !follow = 0 then follow := !tab)
 
-
-(*
-** Useful primitives
-*)
+(* ** Useful primitives *)
 let print_commas nl fct lst =
-  let _ = List.fold_left
+  let _ =
+    List.fold_left
       (fun com elt ->
-	 if com then begin
-	   print ",";
-	   if nl then new_line () else space ()
-	 end else ();
-	 fct elt;
-	 true)
-      false
-      lst in
+        if com then (
+          print ",";
+          if nl then new_line () else space ())
+        else ();
+        fct elt;
+        true)
+      false lst
+  in
   ()
-
 
 let escape_string str =
   let lng = String.length str in
-  let conv value = String.make 1 (Char.chr (value +
-			                    (if value < 10 then (Char.code '0') else (Char.code 'a' - 10)))) in
+  let conv value =
+    String.make 1
+      (Char.chr
+         (value + if value < 10 then Char.code '0' else Char.code 'a' - 10))
+  in
   let rec build idx =
     if idx >= lng then ""
     else
       let sub = String.sub str idx 1 in
-      let res = match sub with
-	  "\n" -> "\\n"
-	| "\"" -> "\\\""
-	| "'" -> "\\'"
-	| "\r" -> "\\r"
-	| "\t" -> "\\t"
-	| "\b" -> "\\b"
-	| "\000" -> "\\0"
-	| _ -> if sub = (Char.escaped (String.get sub 0))
-	  then sub
-	  else let code = Char.code (String.get sub 0) in
-	    "\\"
-	    ^ (conv (code / 64))
-	    ^ (conv ((code mod 64) / 8))
-	    ^ (conv (code mod 8)) in
-      res ^ (build (idx + 1)) in
+      let res =
+        match sub with
+        | "\n" -> "\\n"
+        | "\"" -> "\\\""
+        | "'" -> "\\'"
+        | "\r" -> "\\r"
+        | "\t" -> "\\t"
+        | "\b" -> "\\b"
+        | "\000" -> "\\0"
+        | _ ->
+            if sub = Char.escaped (String.get sub 0) then sub
+            else
+              let code = Char.code (String.get sub 0) in
+              "\\"
+              ^ conv (code / 64)
+              ^ conv (code mod 64 / 8)
+              ^ conv (code mod 8)
+      in
+      res ^ build (idx + 1)
+  in
   build 0
 
 let rec has_extension attrs =
   match attrs with
-    [] -> false
-  | GNU_EXTENSION::_ -> true
-  | _::attrs -> has_extension attrs
+  | [] -> false
+  | GNU_EXTENSION :: _ -> true
+  | _ :: attrs -> has_extension attrs
 
-
-(*
-** Base Type Printing
-*)
+(* ** Base Type Printing *)
 let get_sign si =
   match si with
-    NO_SIGN -> ""
+  | NO_SIGN -> ""
   | SIGNED -> "signed "
   | UNSIGNED -> "unsigned "
 
 let get_size siz =
   match siz with
-    NO_SIZE -> ""
+  | NO_SIZE -> ""
   | SHORT -> "short "
   | LONG -> "long "
   | LONG_LONG -> "long long "
 
 let rec print_base_type typ =
   match typ with
-    NO_TYPE -> ()
+  | NO_TYPE -> ()
   | VOID -> print "void"
   | BOOL -> print "_Bool"
-  | CHAR sign -> print ((get_sign sign) ^ "char")
-  | INT (size, sign) -> print ((get_sign sign) ^ (get_size size) ^ "int")
-  | BITFIELD (sign, _) -> print ((get_sign sign) ^ "int")
+  | CHAR sign -> print (get_sign sign ^ "char")
+  | INT (size, sign) -> print (get_sign sign ^ get_size size ^ "int")
+  | BITFIELD (sign, _) -> print (get_sign sign ^ "int")
   | FLOAT size -> print ((if size then "long " else "") ^ "float")
   | DOUBLE size -> print ((if size then "long " else "") ^ "double")
   | COMPLEX_FLOAT -> print "float _Complex"
@@ -183,52 +184,49 @@ let rec print_base_type typ =
   | ARRAY (typ, _) -> print_base_type typ
   | CONST typ -> print_base_type typ
   | VOLATILE typ -> print_base_type typ
-  | GNU_TYPE (attrs, typ) ->  print_attributes attrs; print_base_type typ
+  | GNU_TYPE (attrs, typ) ->
+      print_attributes attrs;
+      print_base_type typ
   | BUILTIN_TYPE t -> print t
   | TYPE_LINE (_, _, _type) -> print_base_type _type
 
 and print_fields id (flds : name_group list) =
   print id;
-  if flds = []
-  then ()
-  else begin
+  if flds = [] then ()
+  else (
     print " {";
     indent ();
     List.iter
-      (fun fld -> print_name_group fld; print ";"; new_line ())
+      (fun fld ->
+        print_name_group fld;
+        print ";";
+        new_line ())
       flds;
     unindent ();
-    print "}"
-  end
+    print "}")
 
 and print_enum id items =
   print ("enum " ^ id);
-  if items = []
-  then ()
-  else begin
+  if items = [] then ()
+  else (
     print " {";
     indent ();
-    print_commas
-      true
-      (fun (id, exp) -> print id;
-	if exp = NOTHING then ()
-	else begin
-	  space ();
-	  print "= ";
-	  print_expression exp 1
-	end)
+    print_commas true
+      (fun (id, exp) ->
+        print id;
+        if exp = NOTHING then ()
+        else (
+          space ();
+          print "= ";
+          print_expression exp 1))
       items;
     unindent ();
-    print "}";
-  end
+    print "}")
 
-
-(*
-** Declaration Printing
-*)
+(* ** Declaration Printing *)
 and get_base_type typ =
   match typ with
-    PTR typ -> get_base_type typ
+  | PTR typ -> get_base_type typ
   | RESTRICT_PTR typ -> get_base_type typ
   | CONST typ -> get_base_type typ
   | VOLATILE typ -> get_base_type typ
@@ -237,57 +235,70 @@ and get_base_type typ =
 
 and print_pointer typ =
   match typ with
-    PTR typ -> print_pointer typ; print "*"
+  | PTR typ ->
+      print_pointer typ;
+      print "*"
   | RESTRICT_PTR typ ->
-    print_pointer typ; print "* __restrict";
-    space ()
-  | CONST typ -> print_pointer typ; print " const "
-  | VOLATILE typ -> print_pointer typ; print " volatile "
+      print_pointer typ;
+      print "* __restrict";
+      space ()
+  | CONST typ ->
+      print_pointer typ;
+      print " const "
+  | VOLATILE typ ->
+      print_pointer typ;
+      print " volatile "
   | ARRAY (typ, _) -> print_pointer typ
   | _ -> (*print_base_type typ*) ()
 
 and print_array typ =
   match typ with
-    ARRAY (typ, dim) ->
-    print_array typ;
-    print "[";
-    print_expression dim 0;
-    print "]"
+  | ARRAY (typ, dim) ->
+      print_array typ;
+      print "[";
+      print_expression dim 0;
+      print "]"
   | _ -> ()
 
 (**	Print a type.
    @param fct	Function called to display the name of the.
    @param typ	Type to display.
 *)
-and print_type (fct : unit -> unit) (typ : base_type ) =
+and print_type (fct : unit -> unit) (typ : base_type) =
   let base = get_base_type typ in
   match base with
-    BITFIELD (_, exp) -> fct (); print " : "; print_expression exp 1
+  | BITFIELD (_, exp) ->
+      fct ();
+      print " : ";
+      print_expression exp 1
   | PROTO (typ', pars, ell) ->
-    print_type
-      (fun _ ->
-	 if base <> typ then print "(";
-	 print_pointer typ;
-	 fct ();
-	 print_array typ;
-	 if base <> typ then print ")";
-	 print "(";
-	 print_params pars ell;
-	 print ")")
-      typ'
+      print_type
+        (fun _ ->
+          if base <> typ then print "(";
+          print_pointer typ;
+          fct ();
+          print_array typ;
+          if base <> typ then print ")";
+          print "(";
+          print_params pars ell;
+          print ")")
+        typ'
   | OLD_PROTO (typ', pars, ell) ->
-    print_type
-      (fun _ ->
-	 if base <> typ then print "(";
-	 print_pointer typ;
-	 fct ();
-	 print_array typ;
-	 if base <> typ then print ")";
-	 print "(";
-	 print_old_params pars ell;
-	 print ")")
-      typ'
-  | _ -> print_pointer typ; fct (); print_array typ
+      print_type
+        (fun _ ->
+          if base <> typ then print "(";
+          print_pointer typ;
+          fct ();
+          print_array typ;
+          if base <> typ then print ")";
+          print "(";
+          print_old_params pars ell;
+          print ")")
+        typ'
+  | _ ->
+      print_pointer typ;
+      fct ();
+      print_array typ
 
 and print_onlytype typ =
   print_base_type typ;
@@ -296,41 +307,38 @@ and print_onlytype typ =
 and print_name ((id, typ, attr, exp) : name) =
   print_type (fun _ -> print id) typ;
   print_attributes attr;
-  if exp <> NOTHING then begin
+  if exp <> NOTHING then (
     space ();
     print "= ";
-    print_expression exp 1
-  end else ()
+    print_expression exp 1)
+  else ()
 
 and get_storage sto =
   match sto with
-    NO_STORAGE -> ""
+  | NO_STORAGE -> ""
   | AUTO -> "auto"
   | STATIC -> "static"
   | EXTERN -> "extern"
   | REGISTER -> "register"
 
 and print_name_group (typ, sto, names) =
-  let extension = List.exists
-      (fun (_, _, attrs, _) -> has_extension attrs)
-      names in
-  if extension then begin
+  let extension =
+    List.exists (fun (_, _, attrs, _) -> has_extension attrs) names
+  in
+  if extension then (
     print "__extension__";
-    space ()
-  end;
-  if sto <> NO_STORAGE then begin
+    space ());
+  if sto <> NO_STORAGE then (
     print (get_storage sto);
-    space ()
-  end;
+    space ());
   print_base_type typ;
   space ();
   print_commas false print_name names
 
 and print_single_name (typ, sto, name) =
-  if sto <> NO_STORAGE then begin
+  if sto <> NO_STORAGE then (
     print (get_storage sto);
-    space ()
-  end;
+    space ());
   print_base_type typ;
   space ();
   print_name name
@@ -343,74 +351,56 @@ and print_old_params pars ell =
   print_commas false (fun id -> print id) pars;
   if ell then print (if pars = [] then "..." else ", ...") else ()
 
-
-(*
-** Expression printing
-**		Priorities
-**		16	variables
-**		15	. -> [] call()
-**		14  ++, -- (post)
-**		13	++ -- (pre) ~ ! - + & *(cast)
-**		12	* / %
-**		11	+ -
-**		10	<< >>
-**		9	< <= > >=
-**		8	== !=
-**		7	&
-**		6	^
-**		5	|
-**		4	&&
-**		3	||
-**		2	? :
-**		1	= ?=
-**		0	,
-*)
+(* ** Expression printing ** Priorities ** 16 variables ** 15 . -> [] call()
+   ** 14 ++, -- (post) ** 13 ++ -- (pre) ~ ! - + & *(cast) ** 12 * / % ** 11
+   + - ** 10 << >> ** 9 < <= > >= ** 8 == != ** 7 & ** 6 ^ ** 5 | ** 4 && **
+   3 || ** 2 ? : ** 1 = ?= ** 0 , *)
 and get_operator exp =
   match exp with
-    NOTHING -> ("", 16)
-  | UNARY (op, _) ->
-    (match op with
-       MINUS -> ("-", 13)
-     | PLUS -> ("+", 13)
-     | NOT -> ("!", 13)
-     | BNOT -> ("~", 13)
-     | MEMOF -> ("*", 13)
-     | ADDROF -> ("&", 13)
-     | PREINCR -> ("++", 13)
-     | PREDECR -> ("--", 13)
-     | POSINCR -> ("++", 14)
-     | POSDECR -> ("--", 14))
-  | BINARY (op, _, _) ->
-    (match op with
-       MUL -> ("*", 12)
-     | DIV -> ("/", 12)
-     | MOD -> ("%", 12)
-     | ADD -> ("+", 11)
-     | SUB -> ("-", 11)
-     | SHL -> ("<<", 10)
-     | SHR -> (">>", 10)
-     | LT -> ("<", 9)
-     | LE -> ("<=", 9)
-     | GT -> (">", 9)
-     | GE -> (">=", 9)
-     | EQ -> ("==", 8)
-     | NE -> ("!=", 8)
-     | BAND -> ("&", 7)
-     | XOR -> ("^", 6)
-     | BOR -> ("|", 5)
-     | AND -> ("&&", 4)
-     | OR -> ("||", 3)
-     | ASSIGN -> ("=", 1)
-     | ADD_ASSIGN -> ("+=", 1)
-     | SUB_ASSIGN -> ("-=", 1)
-     | MUL_ASSIGN -> ("*=", 1)
-     | DIV_ASSIGN -> ("/=", 1)
-     | MOD_ASSIGN -> ("%=", 1)
-     | BAND_ASSIGN -> ("&=", 1)
-     | BOR_ASSIGN -> ("|=", 1)
-     | XOR_ASSIGN -> ("^=", 1)
-     | SHL_ASSIGN -> ("<<=", 1)
-     | SHR_ASSIGN -> (">>=", 1))
+  | NOTHING -> ("", 16)
+  | UNARY (op, _) -> (
+      match op with
+      | MINUS -> ("-", 13)
+      | PLUS -> ("+", 13)
+      | NOT -> ("!", 13)
+      | BNOT -> ("~", 13)
+      | MEMOF -> ("*", 13)
+      | ADDROF -> ("&", 13)
+      | PREINCR -> ("++", 13)
+      | PREDECR -> ("--", 13)
+      | POSINCR -> ("++", 14)
+      | POSDECR -> ("--", 14))
+  | BINARY (op, _, _) -> (
+      match op with
+      | MUL -> ("*", 12)
+      | DIV -> ("/", 12)
+      | MOD -> ("%", 12)
+      | ADD -> ("+", 11)
+      | SUB -> ("-", 11)
+      | SHL -> ("<<", 10)
+      | SHR -> (">>", 10)
+      | LT -> ("<", 9)
+      | LE -> ("<=", 9)
+      | GT -> (">", 9)
+      | GE -> (">=", 9)
+      | EQ -> ("==", 8)
+      | NE -> ("!=", 8)
+      | BAND -> ("&", 7)
+      | XOR -> ("^", 6)
+      | BOR -> ("|", 5)
+      | AND -> ("&&", 4)
+      | OR -> ("||", 3)
+      | ASSIGN -> ("=", 1)
+      | ADD_ASSIGN -> ("+=", 1)
+      | SUB_ASSIGN -> ("-=", 1)
+      | MUL_ASSIGN -> ("*=", 1)
+      | DIV_ASSIGN -> ("/=", 1)
+      | MOD_ASSIGN -> ("%=", 1)
+      | BAND_ASSIGN -> ("&=", 1)
+      | BOR_ASSIGN -> ("|=", 1)
+      | XOR_ASSIGN -> ("^=", 1)
+      | SHL_ASSIGN -> ("<<=", 1)
+      | SHR_ASSIGN -> (">>=", 1))
   | QUESTION _ -> ("", 2)
   | CAST _ -> ("", 13)
   | CALL _ -> ("", 15)
@@ -430,336 +420,299 @@ and print_comma_exps exps =
   print_commas false (fun exp -> print_expression exp 1) exps
 
 and print_expression (exp : expression) (lvl : int) =
-  let (txt, lvl') = get_operator exp in
+  let txt, lvl' = get_operator exp in
   let _ = if lvl > lvl' then print "(" else () in
-  let _ = match exp with
-      NOTHING -> ()
-    | UNARY (op, exp') ->
-      (match op with
-	 POSINCR | POSDECR ->
-	 print_expression exp' lvl';
-	 print txt
-       | _ ->
-	 print txt;
-	 print_expression exp' lvl')
+  let _ =
+    match exp with
+    | NOTHING -> ()
+    | UNARY (op, exp') -> (
+        match op with
+        | POSINCR | POSDECR ->
+            print_expression exp' lvl';
+            print txt
+        | _ ->
+            print txt;
+            print_expression exp' lvl')
     | BINARY (_, exp1, exp2) ->
-      (*if (op = SUB) && (lvl <= lvl') then print "(";*)
-      print_expression exp1 lvl';
-      space ();
-      print txt;
-      space ();
-      (*print_expression exp2 (if op = SUB then (lvl' + 1) else lvl');*)
-      print_expression exp2 (lvl' + 1)
+        (*if (op = SUB) && (lvl <= lvl') then print "(";*)
+        print_expression exp1 lvl';
+        space ();
+        print txt;
+        space ();
+        (*print_expression exp2 (if op = SUB then (lvl' + 1) else lvl');*)
+        print_expression exp2 (lvl' + 1)
     (*if (op = SUB) && (lvl <= lvl') then print ")"*)
     | QUESTION (exp1, exp2, exp3) ->
-      print_expression exp1 2;
-      space ();
-      print "? ";
-      print_expression exp2 2;
-      space ();
-      print ": ";
-      print_expression exp3 2;
+        print_expression exp1 2;
+        space ();
+        print "? ";
+        print_expression exp2 2;
+        space ();
+        print ": ";
+        print_expression exp3 2
     | CAST (typ, exp) ->
-      print "(";
-      print_onlytype typ;
-      print ")";
-      print_expression exp 15
+        print "(";
+        print_onlytype typ;
+        print ")";
+        print_expression exp 15
     | CALL (exp, args) ->
-      print_expression exp 16;
-      print "(";
-      print_comma_exps args;
-      print ")"
-    | COMMA exps ->
-      print_comma_exps exps
-    | CONSTANT cst ->
-      print_constant cst
-    | VARIABLE name ->
-      print name
+        print_expression exp 16;
+        print "(";
+        print_comma_exps args;
+        print ")"
+    | COMMA exps -> print_comma_exps exps
+    | CONSTANT cst -> print_constant cst
+    | VARIABLE name -> print name
     | EXPR_SIZEOF exp ->
-      print "sizeof(";
-      print_expression exp 0;
-      print ")"
+        print "sizeof(";
+        print_expression exp 0;
+        print ")"
     | TYPE_SIZEOF typ ->
-      print "sizeof(";
-      print_onlytype typ;
-      print ")"
+        print "sizeof(";
+        print_onlytype typ;
+        print ")"
     | INDEX (exp, idx) ->
-      print_expression exp 16;
-      print "[";
-      print_expression idx 0;
-      print "]"
+        print_expression exp 16;
+        print "[";
+        print_expression idx 0;
+        print "]"
     | MEMBEROF (exp, fld) ->
-      print_expression exp 16;
-      print ("." ^ fld)
+        print_expression exp 16;
+        print ("." ^ fld)
     | MEMBEROFPTR (exp, fld) ->
-      print_expression exp 16;
-      print ("->" ^ fld)
+        print_expression exp 16;
+        print ("->" ^ fld)
     | GNU_BODY (decs, stat) ->
-      print "(";
-      print_statement (BLOCK (decs, stat));
-      print ")"
+        print "(";
+        print_statement (BLOCK (decs, stat));
+        print ")"
     | DESIGNATED (member, exp) ->
-      print ".";
-      print member;
-      print "=";
-      print_expression exp 16;
-    | EXPR_LINE (expr, _, _) ->
-      print_expression expr lvl in
+        print ".";
+        print member;
+        print "=";
+        print_expression exp 16
+    | EXPR_LINE (expr, _, _) -> print_expression expr lvl
+  in
   if lvl > lvl' then print ")" else ()
 
 and print_constant cst =
   match cst with
-    CONST_INT i ->
-    print i
-  | CONST_FLOAT r ->
-    print r
-  | CONST_CHAR c ->
-    print ("'" ^ (escape_string c) ^ "'")
-  | CONST_STRING s ->
-    print ("\"" ^ (escape_string s) ^ "\"")
+  | CONST_INT i -> print i
+  | CONST_FLOAT r -> print r
+  | CONST_CHAR c -> print ("'" ^ escape_string c ^ "'")
+  | CONST_STRING s -> print ("\"" ^ escape_string s ^ "\"")
   | CONST_COMPOUND exps ->
-    begin
       print "{";
       print_comma_exps exps;
       print "}"
-    end
 
-
-(*
-** Statement printing
-*)
+(* ** Statement printing *)
 and print_statement stat =
   match stat with
-    NOP ->
-    print ";";
-    new_line ()
+  | NOP ->
+      print ";";
+      new_line ()
   | COMPUTATION exp ->
-    print_expression exp 0;
-    print ";";
-    new_line ()
+      print_expression exp 0;
+      print ";";
+      new_line ()
   | BLOCK (defs, stat) ->
-    new_line ();
-    print "{";
-    indent ();
-    print_defs defs;
-    if stat <> NOP then print_statement stat else ();
-    unindent ();
-    print "}";
-    new_line ();
+      new_line ();
+      print "{";
+      indent ();
+      print_defs defs;
+      if stat <> NOP then print_statement stat else ();
+      unindent ();
+      print "}";
+      new_line ()
   | SEQUENCE (s1, s2) ->
-    print_statement s1;
-    print_statement s2;
+      print_statement s1;
+      print_statement s2
   | IF (exp, s1, s2) ->
-    print "if(";
-    print_expression exp 0;
-    print ")";
-    print_substatement s1;
-    if s2 = NOP
-    then ()
-    else begin
-      print "else";
-      print_substatement s2;
-    end
+      print "if(";
+      print_expression exp 0;
+      print ")";
+      print_substatement s1;
+      if s2 = NOP then ()
+      else (
+        print "else";
+        print_substatement s2)
   | WHILE (exp, stat) ->
-    print "while(";
-    print_expression exp 0;
-    print ")";
-    print_substatement stat
+      print "while(";
+      print_expression exp 0;
+      print ")";
+      print_substatement stat
   | DOWHILE (exp, stat) ->
-    print "do";
-    print_substatement stat;
-    print "while(";
-    print_expression exp 0;
-    print ");";
-    new_line ();
+      print "do";
+      print_substatement stat;
+      print "while(";
+      print_expression exp 0;
+      print ");";
+      new_line ()
   | FOR (exp1, exp2, exp3, stat) ->
-    print "for(";
-    print_expression exp1 0;
-    print ";";
-    space ();
-    print_expression exp2 0;
-    print ";";
-    space ();
-    print_expression exp3 0;
-    print ")";
-    print_substatement stat
+      print "for(";
+      print_expression exp1 0;
+      print ";";
+      space ();
+      print_expression exp2 0;
+      print ";";
+      space ();
+      print_expression exp3 0;
+      print ")";
+      print_substatement stat
   | BREAK ->
-    print "break;"; new_line ()
+      print "break;";
+      new_line ()
   | CONTINUE ->
-    print "continue;"; new_line ()
+      print "continue;";
+      new_line ()
   | RETURN exp ->
-    print "return";
-    if exp = NOTHING
-    then ()
-    else begin
-      print " ";
-      print_expression exp 1
-    end;
-    print ";";
-    new_line ()
+      print "return";
+      if exp = NOTHING then ()
+      else (
+        print " ";
+        print_expression exp 1);
+      print ";";
+      new_line ()
   | SWITCH (exp, stat) ->
-    print "switch(";
-    print_expression exp 0;
-    print ")";
-    print_substatement stat
+      print "switch(";
+      print_expression exp 0;
+      print ")";
+      print_substatement stat
   | CASE (exp, stat) ->
-    unindent ();
-    print "case ";
-    print_expression exp 1;
-    print ":";
-    indent ();
-    print_substatement stat
+      unindent ();
+      print "case ";
+      print_expression exp 1;
+      print ":";
+      indent ();
+      print_substatement stat
   | DEFAULT stat ->
-    unindent ();
-    print "default :";
-    indent ();
-    print_substatement stat
+      unindent ();
+      print "default :";
+      indent ();
+      print_substatement stat
   | LABEL (name, stat) ->
-    print (name ^ ":");
-    space ();
-    print_substatement stat
+      print (name ^ ":");
+      space ();
+      print_substatement stat
   | GOTO name ->
-    print ("goto " ^ name ^ ";");
-    new_line ()
-  | ASM desc ->
-    print ("asm(\"" ^ (escape_string desc) ^ "\");")
+      print ("goto " ^ name ^ ";");
+      new_line ()
+  | ASM desc -> print ("asm(\"" ^ escape_string desc ^ "\");")
   | GNU_ASM (desc, output, input, mods) ->
-    print ("asm(" ^ (escape_string desc) ^ "\"");
-    print " : ";
-    print_commas false print_gnu_asm_arg output;
-    print " : ";
-    print_commas false print_gnu_asm_arg input;
-    if mods <> [] then begin
+      print ("asm(" ^ escape_string desc ^ "\"");
       print " : ";
-      print_commas false print mods
-    end;
-    print ");"
-  | STAT_LINE (stat, _, _) ->
-    print_statement stat
+      print_commas false print_gnu_asm_arg output;
+      print " : ";
+      print_commas false print_gnu_asm_arg input;
+      if mods <> [] then (
+        print " : ";
+        print_commas false print mods);
+      print ");"
+  | STAT_LINE (stat, _, _) -> print_statement stat
 
 and print_gnu_asm_arg (id, desc, exp) =
   if id <> "" then print ("[" ^ id ^ "]");
-  print ("\"" ^ (escape_string desc) ^ "\"(");
+  print ("\"" ^ escape_string desc ^ "\"(");
   print_expression exp 0;
-  print ("\"")
+  print "\""
 
 and print_substatement stat =
   match stat with
-    IF _
-  | SEQUENCE _
-  | DOWHILE _ ->
-    new_line ();
-    print "{";
-    indent ();
-    print_statement stat;
-    unindent ();
-    print "}";
-    new_line ();
-  | BLOCK _ ->
-    print_statement stat
+  | IF _ | SEQUENCE _ | DOWHILE _ ->
+      new_line ();
+      print "{";
+      indent ();
+      print_statement stat;
+      unindent ();
+      print "}";
+      new_line ()
+  | BLOCK _ -> print_statement stat
   | _ ->
-    indent ();
-    print_statement stat;
-    unindent ()
+      indent ();
+      print_statement stat;
+      unindent ()
 
-
-(*
-** GCC Attributes
-*)
+(* ** GCC Attributes *)
 and print_attributes attrs =
   match attrs with
-    [] ->
-    ()
-  | [GNU_EXTENSION] ->
-    ()
+  | [] -> ()
+  | [ GNU_EXTENSION ] -> ()
   | _ ->
-    if attrs <> [] then
-      begin
-	print " __attribute__ ((";
-	print_commas false print_attribute attrs;
-	print ")) "
-      end
+      if attrs <> [] then (
+        print " __attribute__ ((";
+        print_commas false print_attribute attrs;
+        print ")) ")
 
 and print_attribute attr =
   match attr with
-    GNU_NONE ->
-    ()
-  | GNU_ID id ->
-    print id
+  | GNU_NONE -> ()
+  | GNU_ID id -> print id
   | GNU_CALL (id, args) ->
-    print id;
-    print "(";
-    print_commas false print_attribute args;
-    print ")"
-  | GNU_CST cst ->
-    print_constant cst
-  | GNU_EXTENSION ->
-    print "__extension__"
-  | GNU_INLINE ->
-    print "__inline__"
-  | GNU_TYPE_ARG (typ,sto) ->
-    if sto <> NO_STORAGE then begin
-      print (get_storage sto);
-      space ()
-    end;
-    print_base_type typ
+      print id;
+      print "(";
+      print_commas false print_attribute args;
+      print ")"
+  | GNU_CST cst -> print_constant cst
+  | GNU_EXTENSION -> print "__extension__"
+  | GNU_INLINE -> print "__inline__"
+  | GNU_TYPE_ARG (typ, sto) ->
+      if sto <> NO_STORAGE then (
+        print (get_storage sto);
+        space ());
+      print_base_type typ
 
-
-(*
-** Declaration printing
-*)
+(* ** Declaration printing *)
 and print_defs defs =
   let prev = ref false in
   List.iter
     (fun def ->
-       (match def with
-	  DECDEF _ -> prev := false
-	| _ ->
-	  if not !prev then force_new_line ();
-	  prev := true);
-       print_def def)
+      (match def with
+      | DECDEF _ -> prev := false
+      | _ ->
+          if not !prev then force_new_line ();
+          prev := true);
+      print_def def)
     defs
 
 and print_def def =
   match def with
-
-    FUNDEF (proto, body) ->
-    print_single_name proto;
-    let (decs, stat) = body in print_statement (BLOCK (decs, stat));
-    force_new_line ();
-
+  | FUNDEF (proto, body) ->
+      print_single_name proto;
+      let decs, stat = body in
+      print_statement (BLOCK (decs, stat));
+      force_new_line ()
   | OLDFUNDEF (proto, decs, body) ->
-    print_single_name proto;
-    force_new_line ();
-    List.iter
-      (fun dec -> print_name_group dec; print ";"; new_line ())
-      decs;
-    let (decs, stat) = body in print_statement (BLOCK (decs, stat));
-    force_new_line ();
-
+      print_single_name proto;
+      force_new_line ();
+      List.iter
+        (fun dec ->
+          print_name_group dec;
+          print ";";
+          new_line ())
+        decs;
+      let decs, stat = body in
+      print_statement (BLOCK (decs, stat));
+      force_new_line ()
   | DECDEF names ->
-    print_name_group names;
-    print ";";
-    new_line ()
-
+      print_name_group names;
+      print ";";
+      new_line ()
   | TYPEDEF (names, attrs) ->
-    if has_extension attrs then begin
-      print "__extension__";
-      space ();
-    end;
-    print "typedef ";
-    print_name_group names;
-    print ";";
-    new_line ();
-    force_new_line ()
-
+      if has_extension attrs then (
+        print "__extension__";
+        space ());
+      print "typedef ";
+      print_name_group names;
+      print ";";
+      new_line ();
+      force_new_line ()
   | ONLYTYPEDEF names ->
-    print_name_group names;
-    print ";";
-    new_line ();
-    force_new_line ()
-
-
+      print_name_group names;
+      print ";";
+      new_line ();
+      force_new_line ()
 
 let set_tab t = tab := t
+
 let set_width w = width := w

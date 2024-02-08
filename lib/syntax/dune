@@ -12,5 +12,6 @@
  (flags --explain --inspection --table --dump))
 
 (env
-  (dev
-    (flags (:standard -w -32))))
+ (dev
+  (flags
+   (:standard -w -32))))

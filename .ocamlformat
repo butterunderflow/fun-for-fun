@@ -3,3 +3,4 @@ break-cases = fit
 margin = 77
 wrap-comments = true
 module-item-spacing = sparse
+type-decl = sparse

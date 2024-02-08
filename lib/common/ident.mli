@@ -1,5 +1,4 @@
-type t
-[@@deriving sexp, compare]
+type t [@@deriving sexp, compare]
 
 val same : t -> t -> bool
 

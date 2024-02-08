@@ -104,7 +104,8 @@ let%expect_test "Test: type expression parsing" =
         (TCons list ((TTuple ((TCons x ()) (TCons y ())))))
         (TTuple ((TCons t1 ()) (TCons t2 ()))))) |}];
   print_parsed_type_expr "{x: int; y: float; z: int -> float }";
-  [%expect {|
+  [%expect
+    {|
     (TRecord
       ((x (TCons int ())) (y (TCons float ()))
         (z (TArrow (TCons int ()) (TCons float ()))))) |}]

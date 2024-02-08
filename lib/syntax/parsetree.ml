@@ -25,11 +25,17 @@ and type_expr =
   | TRecord of (string * type_expr) list
 [@@deriving sexp]
 
-and para = PAnn of string * type_expr | PBare of string [@@deriving sexp]
+and para =
+  | PAnn of string * type_expr
+  | PBare of string
+[@@deriving sexp]
 
 and paras = para list [@@deriving sexp]
 
-and constant = CBool of bool | CInt of int | CString of string
+and constant =
+  | CBool of bool
+  | CInt of int
+  | CString of string
 [@@deriving sexp]
 
 and expr =
@@ -59,7 +65,10 @@ and type_def =
 
 and mod_body = top_level list [@@deriving sexp]
 
-and path = PName of string | PMem of path * string | PApply of path * path
+and path =
+  | PName of string
+  | PMem of path * string
+  | PApply of path * path
 [@@deriving sexp]
 
 and mod_expr =
