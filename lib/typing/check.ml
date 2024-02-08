@@ -1,4 +1,4 @@
-[@@@warning "-27"] 
+[@@@warning "-27"]
 
 type ty = Syntax.Parsetree.type_expr
 
