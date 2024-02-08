@@ -48,11 +48,13 @@ jobs:
         run: opam install menhir
 
       - name: "Install OPAM dependencies"
-        run: opam install . --deps-only
-          
+        run: opam install . --deps-only          
 
       - name: "Build whole project"
         run: opam exec -- dune build
+
+      - name: "Check format"
+        run: opam exec -- dune build @fmt
 
       - name: Run tests
         run: opam exec -- dune runtest
