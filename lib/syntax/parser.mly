@@ -35,6 +35,9 @@
 %token COLON
 %token LPAREN
 %token RPAREN
+%token LBRACE
+%token RBRACE
+%token SEMI
 
 %nonassoc below_COMMA
 %left     COMMA                        /* (e , e , e) */
@@ -106,6 +109,9 @@ variant:
     | c=MIDENT OF payload=type_expr  { (c, Some payload) } 
     | c=MIDENT                       { (c, None) };
 
+field_def: 
+    | n=IDENT COLON t=type_expr  { (n, t) }
+
 type_expr: 
     | LPAREN t_args = separated_list(COMMA, type_expr) RPAREN n=IDENT 
         { TCons(n, t_args) }
@@ -114,7 +120,8 @@ type_expr:
     | t_arg = type_expr n=IDENT { TCons(n, [t_arg]) }
     | n=IDENT { TCons (n, []) }
     | tv=TYPEVAR { TVar tv }
-    | arg=type_expr ARROW ret=type_expr { TArrow (arg, ret) };
+    | arg=type_expr ARROW ret=type_expr { TArrow (arg, ret) }
+    | LBRACE fields=separated_nontrivial_llist(SEMI, field_def) RBRACE { TRecord fields }
 
 expr:
     | c=constant { EConst c }

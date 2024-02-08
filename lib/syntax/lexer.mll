@@ -60,8 +60,11 @@ rule token = parse
     | ')'               { RPAREN }
     | '['               { LBRACKET }
     | ']'               { RBRACKET }
+    | '{'               { LBRACE }
+    | '}'               { RBRACE }
     | ','               { COMMA }
     | ':'               { COLON }
+    | ';'               { SEMI }
     | mod_ident as m    { MIDENT m}
     | ident as i        { IDENT i }
     | type_var as t     { TYPEVAR t } 

@@ -22,6 +22,7 @@ and type_expr =
   | TField of path * string
   | TArrow of type_expr * type_expr
   | TTuple of type_expr list
+  | TRecord of (string * type_expr) list
 [@@deriving sexp]
 
 and para = PAnn of string * type_expr | PBare of string [@@deriving sexp]
