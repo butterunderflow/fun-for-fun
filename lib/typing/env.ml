@@ -18,5 +18,8 @@ let get_module_sig m env = List.assoc m env.modules
 
 let get_type_def tn env =
   List.find
-    (function Syntax.Parsetree.TDAdt (x, _, _) | TDAlias (x, _) -> x = tn)
+    (function
+      | Syntax.Parsetree.TDAdt (x, _, _)
+      | TDAlias (x, _) ->
+          x = tn)
     env.types

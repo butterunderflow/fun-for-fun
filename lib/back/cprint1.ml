@@ -427,7 +427,8 @@ and print_expression (exp : expression) (lvl : int) =
     | NOTHING -> ()
     | UNARY (op, exp') -> (
         match op with
-        | POSINCR | POSDECR ->
+        | POSINCR
+        | POSDECR ->
             print_expression exp' lvl';
             print txt
         | _ ->
@@ -619,7 +620,9 @@ and print_gnu_asm_arg (id, desc, exp) =
 
 and print_substatement stat =
   match stat with
-  | IF _ | SEQUENCE _ | DOWHILE _ ->
+  | IF _
+  | SEQUENCE _
+  | DOWHILE _ ->
       new_line ();
       print "{";
       indent ();

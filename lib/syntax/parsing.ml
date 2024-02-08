@@ -25,13 +25,14 @@ let gen_parse_string parse string =
   try
     let out = parse Lexer.token lexbuf in
     out
-  with exn ->
-    let curr = lexbuf.Lexing.lex_curr_p in
-    let line = curr.Lexing.pos_lnum in
-    let cnum = curr.Lexing.pos_cnum - curr.Lexing.pos_bol in
-    let tok = Lexing.lexeme lexbuf in
-    let tail = Lexer.tail "" lexbuf in
-    raise (ParseError { exn; line; cnum; tok; tail })
+  with
+  | exn ->
+      let curr = lexbuf.Lexing.lex_curr_p in
+      let line = curr.Lexing.pos_lnum in
+      let cnum = curr.Lexing.pos_cnum - curr.Lexing.pos_bol in
+      let tok = Lexing.lexeme lexbuf in
+      let tail = Lexer.tail "" lexbuf in
+      raise (ParseError { exn; line; cnum; tok; tail })
 
 let parse_string_expr = gen_parse_string Parser.expr_dbg
 
