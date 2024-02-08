@@ -1,6 +1,6 @@
 (library
  (name test)
- (libraries sexplib syntax)
+ (libraries sexplib syntax back)
  (inline_tests)
  (wrapped false)
  (preprocess

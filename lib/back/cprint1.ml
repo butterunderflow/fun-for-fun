@@ -6,7 +6,7 @@ let version = "Cprint 4.0 Hugues Cassé et al."
 (*
 ** FrontC Pretty printer
 *)
-let out = ref stdout
+let out = ref (Buffer.create 50)
 let width = ref 80
 let tab = ref 8
 let max_indent = ref 60
@@ -18,6 +18,11 @@ let current_len = ref 0
 let spaces = ref 0
 let follow = ref 0
 let roll = ref 0
+
+(* override output_string in stdlib *)
+let output_string = Buffer.add_string
+let output_char = Buffer.add_char
+
 
 let print_tab size =
   output_string !out (String.make (size / 8) '\t');
@@ -755,12 +760,6 @@ and print_def def =
     force_new_line ()
 
 
-(*  print abstrac_syntax -> ()
- **		Pretty printing the given abstract syntax program.
-*)
-let print (result : out_channel) (defs : file) =
-  out := result;
-  print_defs defs
 
 let set_tab t = tab := t
 let set_width w = width := w
