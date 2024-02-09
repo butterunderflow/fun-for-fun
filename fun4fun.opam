@@ -7,6 +7,7 @@ depends: [
   "ppx_sexp_conv"
   "ppx_inline_test"
   "ppx_jane"
+  "visitors"
   "FrontC"
   "odoc" {with-doc}
 ]

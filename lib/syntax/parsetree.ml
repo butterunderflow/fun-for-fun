@@ -23,7 +23,7 @@ and type_expr =
   | TArrow of type_expr * type_expr
   | TTuple of type_expr list
   | TRecord of (string * type_expr) list
-[@@deriving sexp]
+[@@deriving sexp, visitors { variety = "iter" }]
 
 and para =
   | PAnn of string * type_expr
