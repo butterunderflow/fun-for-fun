@@ -27,3 +27,5 @@ let create ~(hint : string) =
   (!index, hint)
 
 let rename (_, name) = create ~hint:name
+
+let to_string x = Printf.sprintf "%s/%d" (snd x) (fst x)

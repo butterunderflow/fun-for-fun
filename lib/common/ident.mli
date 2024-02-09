@@ -7,3 +7,5 @@ val from : string -> t
 val create : hint:string -> t
 
 val rename : t -> t
+
+val to_string : t -> string

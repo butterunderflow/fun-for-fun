@@ -61,6 +61,7 @@ and type_paras = string list [@@deriving sexp]
 and type_def =
   | TDAdt of string * type_paras * variant list
   | TDAlias of string * type_expr
+  | TDRecord of string * type_paras * (string * type_expr) list
 [@@deriving sexp]
 
 and mod_body = top_level list [@@deriving sexp]

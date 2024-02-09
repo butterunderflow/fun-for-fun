@@ -1,7 +1,7 @@
 open Types
 
 type t = {
-  values : (string * ty) list;
+  values : (string * bind_ty) list;
   types : ty_def list;
   modules : (string * mod_ty) list;
 }
@@ -20,6 +20,7 @@ let get_type_def tn env =
   List.find
     (function
       | Syntax.Parsetree.TDAdt (x, _, _)
-      | TDAlias (x, _) ->
+      | TDAlias (x, _)
+      | TDRecord (x, _, _) ->
           x = tn)
     env.types

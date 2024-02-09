@@ -1,6 +1,6 @@
 (library
  (name typing)
- (libraries sexplib syntax)
+ (libraries sexplib syntax common)
  (preprocess
   (pps ppx_sexp_conv)))
 
