@@ -49,7 +49,7 @@ and expr =
   | EApp of expr * expr
   | EAnn of expr * type_expr
   | ETuple of expr list
-  | EFetchTuple of expr * int
+  | EField of path * string
 [@@deriving sexp]
 
 and lambda = para * expr
