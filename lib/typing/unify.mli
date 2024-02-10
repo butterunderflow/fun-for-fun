@@ -14,8 +14,8 @@ val apply_lst : t -> Types.ty list -> Types.ty list
 
 val apply_env : t -> Env.t -> Env.t
 
-val unify : Types.ty -> Types.ty -> t
-
 val make_subst : string -> Types.ty -> t
 
 val make_subst_lst : string list -> Types.ty list -> t
+
+val unify : Types.ty -> Types.ty -> t

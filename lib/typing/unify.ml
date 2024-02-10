@@ -36,8 +36,46 @@ let apply_env (u : t) (env : Env.t) : Env.t =
     modules = env.modules;
   }
 
-let[@warning "-27"] unify (t0 : ty) (t1 : ty) : t = failwith "todo"
+exception UnificationError of (ty * ty)
 
-let[@warning "-27"] make_subst x t : t = failwith "todo"
+let make_subst x t : t = SMap.(add x t empty)
 
-let[@warning "-27"] make_subst_lst xs ts : t = failwith "todo"
+let make_subst_lst xs ts : t =
+  List.combine xs ts |> List.to_seq |> SMap.of_seq
+
+exception OccurError of (string * ty)
+
+exception IllFormType
+
+let occur x te =
+  let occured = ref false in
+  let visitor =
+    object (_ : 'self)
+      inherit ['self] Tree.iter
+
+      method! visit_TVar _ x' = if x = x' then occured := true
+    end
+  in
+  visitor#visit_type_expr () te;
+  if !occured then raise (OccurError (x, te))
+
+let rec unify (t0 : ty) (t1 : ty) : t =
+  if t0 = t1 then identity
+  else
+    match (t0, t1) with
+    | TVar x, t1 ->
+        occur x t1;
+        make_subst x t1
+    | _, TVar _y -> unify t1 t0
+    | TCons (tc0, tes0), TCons (tc1, tes1) when tc0 = tc1 ->
+        unify_lst tes0 tes1
+    (* by default raise an exception *)
+    | _ -> raise (UnificationError (t0, t1))
+
+and unify_lst t0 t1 =
+  match (t0, t1) with
+  | [], [] -> identity
+  | t0 :: tes0, t1 :: tes1 ->
+      let u0 = unify t0 t1 in
+      unify_lst (apply_lst u0 tes0) (apply_lst u0 tes1)
+  | _ -> raise IllFormType
