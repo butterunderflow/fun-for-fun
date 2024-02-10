@@ -1,18 +1,36 @@
 open Types
+module SMap = Map.Make (String)
 
-type t = ty -> ty
+type t = ty SMap.t
 
-let compose (u0 : t) (u1 : t) : t = fun t -> t |> u0 |> u1
+let apply u x =
+  let mapper =
+    object (_ : 'self)
+      inherit ['self] Syntax.Parsetree.map
 
-let identity x = x
+      method! visit_TVar _ x =
+        SMap.find_opt x u |> Option.value ~default:(Tree.TVar x)
+    end
+  in
+  mapper#visit_type_expr () x
 
-let ( <$> ) = compose
+let ( <$> ) = apply
 
-let apply_lst : t -> ty list -> ty list = List.map
+let compose (u0 : t) (u1 : t) : t =
+  let renewed = SMap.map (fun te -> u1 <$> te) u0 in
+  SMap.fold
+    (fun x te acc -> SMap.(if mem x acc then acc else add x te acc))
+    u1 renewed
 
-let apply_env u (env : Env.t) : Env.t =
+let identity = SMap.empty
+
+let ( <.> ) = compose
+
+let apply_lst (u : t) : ty list -> ty list = List.map (apply u)
+
+let apply_env (u : t) (env : Env.t) : Env.t =
   {
-    values = List.map (fun (x, te) -> (x, u te)) env.values;
+    values = List.map (fun (x, (qvs, te)) -> (x, (qvs, u <$> te))) env.values;
     (* types and modules have no space for inference *)
     types = env.types;
     modules = env.modules;
@@ -21,4 +39,5 @@ let apply_env u (env : Env.t) : Env.t =
 let[@warning "-27"] unify (t0 : ty) (t1 : ty) : t = failwith "todo"
 
 let[@warning "-27"] make_subst x t : t = failwith "todo"
-let [@warning "-27"] make_subst_lst xs ts: t = failwith "todo"
+
+let[@warning "-27"] make_subst_lst xs ts : t = failwith "todo"

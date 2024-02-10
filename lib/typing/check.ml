@@ -1,9 +1,14 @@
 [@@@warning "-27"]
 
 open Types
-module T = Tree
-module U = Unify
 open Typedtree
+module U = Unify
+module T = Tree
+module StrSet = Set.Make (String)
+
+let ( <$> ) = U.( <$> )
+
+let ( <.> ) = U.( <.> )
 
 let tv_index = ref 0
 
@@ -25,11 +30,27 @@ let eq (t1 : ty) (t2 : ty) env =
   if t1 == t2 then true else normalize t1 env = normalize t2 env
 
 let inst (t : bind_ty) : ty =
+  (* Make sure captured type variables will never duplicated with free type
+     variables *)
   let qvs, te = t in
   let new_tvs = List.map make_tv_of qvs in
-  te |> U.make_subst_lst qvs new_tvs
+  U.make_subst_lst qvs new_tvs <$> te
 
-let generalize (t : ty) : bind_ty = failwith "todo"
+let get_all_tvs (e : ty) : string list =
+  let tvs = ref StrSet.empty in
+  let collector =
+    object (self : 'self)
+      inherit ['self] Syntax.Parsetree.iter
+
+      method! visit_TVar _env tv = tvs := StrSet.add tv !tvs
+    end
+  in
+  collector#visit_type_expr () e;
+  StrSet.fold (fun tv acc -> tv :: acc) !tvs []
+
+let generalize (t : ty) : bind_ty =
+  let tvs = get_all_tvs t in
+  (tvs, t)
 
 let rec type_check (e : T.expr) (env : Env.t) : expr * U.t =
   match e with
