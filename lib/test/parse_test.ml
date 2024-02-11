@@ -108,7 +108,13 @@ let%expect_test "Test: type expression parsing" =
     {|
     (TRecord
       ((x (TCons int ())) (y (TCons float ()))
-        (z (TArrow (TCons int ()) (TCons float ()))))) |}]
+        (z (TArrow (TCons int ()) (TCons float ()))))) |}];
+  print_parsed_type_expr "(int, float) T.t";
+  [%expect {| (TField (PName T) t ((TCons int ()) (TCons float ()))) |}];
+  print_parsed_type_expr "int T(M).t";
+  [%expect {| (TField (PApply (PName T) (PName M)) t ((TCons int ()))) |}];
+  print_parsed_type_expr "(int) T.t";
+  [%expect {| (TField (PName T) t ((TCons int ()))) |}]
 
 let%expect_test "Test: top level module" =
   print_parsed_program {|

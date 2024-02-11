@@ -15,9 +15,9 @@ and pattern =
   | PVar of string
 
 and type_expr =
+  | TField of path * string * type_expr list
   | TCons of string * type_expr list
   | TVar of string
-  | TField of path * string
   | TArrow of type_expr * type_expr
   | TTuple of type_expr list
   | TRecord of (string * type_expr) list

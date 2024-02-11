@@ -1,5 +1,10 @@
 %{
-    open Parsetree
+open Parsetree
+let mk_type_ref fon t_args =
+  match fon with
+  | Some p, n -> TField(p, n, t_args)
+  | None, n ->  TCons(n, t_args)
+
 %}
 
 /* Constants */
@@ -112,12 +117,16 @@ variant:
 field_def: 
     | n=IDENT COLON t=type_expr  { (n, t) }
 
+field_or_name: 
+    | p=path DOT n=IDENT  { (Some p, n) }
+    | n=IDENT             { (None, n) }
+
 type_expr: 
-    | LPAREN t_args = separated_list(COMMA, type_expr) RPAREN n=IDENT 
-        { TCons(n, t_args) }
+    | LPAREN t_args = separated_list(COMMA, type_expr) RPAREN fon=field_or_name
+        { mk_type_ref fon t_args }
     | LPAREN te=type_expr RPAREN { te }
     | ts=separated_nontrivial_llist(STAR, type_expr) { TTuple ts }
-    | t_arg = type_expr n=IDENT { TCons(n, [t_arg]) }
+    | t_arg = type_expr fon=field_or_name { mk_type_ref fon [t_arg] }
     | n=IDENT { TCons (n, []) }
     | tv=TYPEVAR { TVar tv }
     | arg=type_expr ARROW ret=type_expr { TArrow (arg, ret) }
