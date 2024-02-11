@@ -39,7 +39,14 @@ let%expect_test "Test: expression parsing" =
     (ELetrec
       ((odd ((PBare x) (EApp (EVar even) (EVar x))))
         (even ((PAnn x (TCons int ())) (EApp (EVar odd) (EVar x)))))
-      (EApp (EVar odd) (EConst (CInt 1)))) |}]
+      (EApp (EVar odd) (EConst (CInt 1)))) |}];
+  print_parsed {|E.f y|};
+  [%expect {| (EApp (EField (PName E) f) (EVar y)) |}];
+  print_parsed {|Cons (x, y)|};
+  [%expect {| (EApp (ECons Cons) (ETuple ((EVar x) (EVar y)))) |}];
+  print_parsed {|L.Cons (x, y)|};
+  [%expect
+    {| (EApp (EFieldCons (PName L) Cons) (ETuple ((EVar x) (EVar y)))) |}]
 
 let%expect_test "Test: full program parsing" =
   print_parsed_program {|let x = 1|};

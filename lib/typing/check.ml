@@ -65,6 +65,8 @@ let rec type_check (e : T.expr) (env : Env.t) : expr * U.t =
   | T.EAnn (e, te) -> tc_ann e te
   | T.ETuple es -> tc_tuple es
   | T.EField (p, x) -> tc_field p x
+  | T.ECons _ -> failwith ""
+  | T.EFieldCons _ -> failwith ""
 
 and tc_const c =
   match c with

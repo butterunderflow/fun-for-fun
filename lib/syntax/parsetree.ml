@@ -36,6 +36,7 @@ and constant =
 and expr =
   | EConst of constant
   | EVar of string
+  | ECons of string
   | ELet of pattern * expr * expr
   | ELetrec of (string * lambda) list * expr
   | ELam of lambda
@@ -45,6 +46,7 @@ and expr =
   | EAnn of expr * type_expr
   | ETuple of expr list
   | EField of path * string
+  | EFieldCons of path * string
 
 and lambda = para * expr
 

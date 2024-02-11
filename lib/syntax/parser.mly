@@ -134,7 +134,10 @@ type_expr:
 
 expr:
     | c=constant { EConst c }
+    | p=path DOT v=IDENT { EField (p, v) }
+    | p=path DOT v=MIDENT { EFieldCons (p, v) }
     | v=IDENT { EVar v }
+    | c=MIDENT { ECons c }
     | LET p=pattern EQ e1=expr IN e2=expr { ELet (p, e1, e2) }
     | LET REC binds=separated_nonempty_list(AND, function_bind) IN body=expr { ELetrec (binds, body) }
     | tu=tuple_expr { tu }
