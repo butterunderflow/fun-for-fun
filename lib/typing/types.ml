@@ -1,12 +1,13 @@
+open Sexplib.Conv
 module Tree = Syntax.Parsetree
 
 type ty = Tree.type_expr
 
-type mod_ty = Tree.mod_type
+and mod_ty = Tree.mod_type
 
-type ty_def = Tree.type_def
+and ty_def = Tree.type_def
 
-type bind_ty = string list * ty
+and bind_ty = string list * ty [@@deriving sexp]
 
 let int_ty = Tree.TCons ("int", [])
 

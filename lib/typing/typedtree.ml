@@ -1,14 +1,14 @@
+open Sexplib.Conv
 open Types
 module T = Tree
 
-type constant = T.constant
+type constant = T.constant [@@deriving sexp]
 
-type pattern =
-  | PVal of constant
-  | PCons of string * pattern list
-  | PVar of string
+type pattern = T.pattern [@@deriving sexp]
 
-type path = T.path
+type path = T.path [@@deriving sexp]
+
+[@@@warning "-17"]
 
 type expr =
   | EConst of constant * ty
@@ -24,6 +24,23 @@ type expr =
   | EField of path * ty
 
 and lambda_typed = string * expr * ty
+[@@deriving
+  sexp,
+    visitors { variety = "iter"; name = "tree_iter" },
+    visitors { variety = "map"; name = "tree_map" }]
+
+class virtual ['self] map =
+  object (_self : 'self)
+    inherit ['self] Syntax.Parsetree.constant_map
+
+    inherit! ['self] Syntax.Parsetree.pattern_map
+
+    inherit! ['self] Syntax.Parsetree.path_map
+
+    inherit! ['self] Syntax.Parsetree.type_map
+
+    inherit! ['self] tree_map
+  end
 
 let get_ty = function
   | EConst (_, ty)

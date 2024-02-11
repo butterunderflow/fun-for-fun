@@ -3,16 +3,31 @@ module SMap = Map.Make (String)
 
 type t = ty SMap.t
 
-let apply u x =
+let apply u te =
   let mapper =
     object (_ : 'self)
       inherit ['self] Syntax.Parsetree.map
 
       method! visit_TVar _ x =
         SMap.find_opt x u |> Option.value ~default:(Tree.TVar x)
+
+      method! visit_type_def _ def = def
     end
   in
-  mapper#visit_type_expr () x
+  mapper#visit_type_expr () te
+
+let apply_expr u (e : Typedtree.expr) =
+  let mapper =
+    object (self : 'self)
+      inherit ['self] Typedtree.map
+
+      method visit_ty = self#visit_type_expr
+
+      method! visit_TVar _ x =
+        SMap.find_opt x u |> Option.value ~default:(Tree.TVar x)
+    end
+  in
+  mapper#visit_expr () e
 
 let ( <$> ) = apply
 

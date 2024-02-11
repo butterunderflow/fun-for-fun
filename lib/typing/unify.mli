@@ -2,6 +2,8 @@ type t
 
 val apply : t -> Types.ty -> Types.ty
 
+val apply_expr : t -> Typedtree.expr -> Typedtree.expr
+
 val ( <$> ) : t -> Types.ty -> Types.ty
 
 val compose : t -> t -> t
