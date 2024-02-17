@@ -24,3 +24,5 @@ let get_type_def tn env =
       | TDRecord (x, _, _) ->
           x = tn)
     env.types
+
+let empty = { values = []; types = []; modules = [] }
