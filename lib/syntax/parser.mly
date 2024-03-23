@@ -93,11 +93,9 @@ functor_bind:
     | m_name=MIDENT LPAREN mp=mod_para RPAREN ARROW m_body=mod_expr 
        { (m_name, (mp, m_body)) }
 
-
 type_def: 
     | TYPE LPAREN tvs=separated_list(COMMA, TYPEVAR) RPAREN n=IDENT 
         EQ vs=separated_list(OR, variant) END { TDAdt (n, tvs, vs) }
-    | TYPE n=IDENT EQ te=type_expr { TDAlias(n, te) } ;
 
 pattern: 
     | n=IDENT { PVar n }

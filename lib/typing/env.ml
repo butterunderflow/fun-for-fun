@@ -20,7 +20,6 @@ let get_type_def tn env =
   List.find
     (function
       | Syntax.Parsetree.TDAdt (x, _, _)
-      | TDAlias (x, _)
       | TDRecord (x, _, _) ->
           x = tn)
     env.types

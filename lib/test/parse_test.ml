@@ -155,7 +155,6 @@ let%expect_test "Test: module expression" =
     {|
      struct 
        let x = 1
-       type t = int
        type () a 
          = Cons of int
          | Nil 
@@ -166,7 +165,6 @@ let%expect_test "Test: module expression" =
     {|
     (MEStruct
       ((TopLet (PVar x) (EConst (CInt 1)))
-        (TopTypeDef (TDAlias t (TCons int ())))
         (TopTypeDef (TDAdt a () ((Cons ((TCons int ()))) (Nil ())))))) |}];
   print_parsed {|functor (X: M) -> struct end|};
   [%expect {| (MEFunctor ((X (MTName M)) (MEStruct ()))) |}]

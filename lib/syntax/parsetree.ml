@@ -44,7 +44,6 @@ and type_expr =
 
 and type_def =
   | TDAdt of string * type_paras * variant list
-  | TDAlias of string * type_expr
   | TDRecord of string * type_paras * (string * type_expr) list
 
 and type_paras = string list
