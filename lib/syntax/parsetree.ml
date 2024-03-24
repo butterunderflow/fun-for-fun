@@ -12,6 +12,7 @@ type constant =
     visitors { variety = "map"; name = "constant_map" }]
 
 type path =
+  | PRoot
   | PName of string
   | PMem of path * string
   | PApply of path * path
@@ -82,7 +83,7 @@ and expr =
   | EAnn of expr * type_expr
   | ETuple of expr list
   | EField of path * string
-  | EFieldCons of path * string
+  | EFieldCons of path * string (* cosntructor of a module *)
 
 and lambda = para * expr
 
