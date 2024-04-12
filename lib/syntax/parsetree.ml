@@ -61,7 +61,7 @@ and top_level =
   | TopLetRec of (string * lambda) list
   | TopTypeDef of type_def
   | TopMod of string * mod_expr
-  | TopModRec of (string * functor_expr) list
+
 
 and para =
   | PAnn of string * type_expr
@@ -89,12 +89,13 @@ and lambda = para * expr
 and mod_body = top_level list
 
 and mod_expr =
-  | MEName of string
-  | MEStruct of mod_body
-  | MEFunctor of functor_expr
-  | MEField of path * string
-  | MEApply of mod_expr * mod_expr list
-  | MERestrict of mod_expr * mod_type
+  | MERoot
+  | MEName of string (* M *)
+  | MEStruct of mod_body (* struct ... end *)
+  | MEFunctor of functor_expr (* functor (M: MT) -> ... *)
+  | MEField of path * string (* M1.M2 *)
+  | MEApply of mod_expr * mod_expr (* M1(...) *)
+  | MERestrict of mod_expr * mod_type (* M: M_ty *)
 
 and functor_para = string * mod_type
 

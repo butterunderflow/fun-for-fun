@@ -78,7 +78,6 @@ top_levels:
     | MODULE m_name=MIDENT 
         EQ m_body=mod_expr rest=top_levels
         { TopMod (m_name, m_body) :: rest }
-    | MODULE REC functors=separated_list(AND, functor_bind) rest=top_levels { TopModRec functors :: rest } ;
 
 mod_expr : 
     | m_name=MIDENT { MEName m_name }
