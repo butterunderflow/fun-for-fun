@@ -27,11 +27,37 @@ let get_type_def tn env =
 let empty = { values = []; types = []; modules = [] }
 
 let dbg env =
-  env.values
-  |> List.map (fun (x, (tvs, te)) ->
-         ( x,
-           List.map Ident.to_string tvs,
-           Sexplib.Sexp.to_string_hum ?indent:(Some 2) (sexp_of_ty te) ))
-  |> List.map (fun (x, tvs, te) ->
-         (Printf.sprintf "%s |-> forall %s . %s" x (String.concat ";" tvs) te))
-  |> String.concat ";"
+  let values =
+    env.values
+    |> List.map (fun (x, (tvs, te)) ->
+           ( x,
+             List.map Ident.to_string tvs,
+             Sexplib.Sexp.to_string_hum ?indent:(Some 2) (sexp_of_ty te) ))
+    |> List.map (fun (x, tvs, te) ->
+           Printf.sprintf "%s |-> forall %s . %s" x (String.concat ";" tvs)
+             te)
+    |> String.concat "; \n  "
+  in
+  let ty_defs =
+    env.types
+    |> List.map (fun def ->
+           match def with
+           | Tree.TDAdt (name, _, _) -> (name, def)
+           | TDRecord (name, _, _) -> (name, def))
+    |> List.map (fun (name, def) ->
+           ( name,
+             sexp_of_ty_def def
+             |> Sexplib.Sexp.to_string_hum ?indent:(Some 2) ))
+    |> List.map (fun (name, def) -> Printf.sprintf "%s |-> %s" name def)
+    |> String.concat "; \n  "
+  in
+  Printf.sprintf
+{|
+------------------Envirment Debug Info Begin------------------------
+Value Bindings: 
+  %s
+Type Definitions:
+  %s
+------------------Envirment Debug Info End--------------------------
+|}
+values ty_defs
