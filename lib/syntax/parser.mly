@@ -140,6 +140,7 @@ expr:
     | tu=tuple_expr { tu }
     | func=expr arg=expr { EApp (func, arg) }
     | LPAREN e=expr RPAREN { e }
+    | FUN para=parameter ARROW body=expr { ELam (para, body) }
     ;
 
 tuple_expr: 

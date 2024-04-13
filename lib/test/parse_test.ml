@@ -46,7 +46,9 @@ let%expect_test "Test: expression parsing" =
   [%expect {| (EApp (ECons Cons) (ETuple ((EVar x) (EVar y)))) |}];
   print_parsed {|L.Cons (x, y)|};
   [%expect
-    {| (EApp (EFieldCons (PName L) Cons) (ETuple ((EVar x) (EVar y)))) |}]
+    {| (EApp (EFieldCons (PName L) Cons) (ETuple ((EVar x) (EVar y)))) |}];
+  print_parsed {|fun x -> x|};
+  [%expect {| (ELam ((PBare x) (EVar x))) |}]
 
 let%expect_test "Test: full program parsing" =
   print_parsed_program {|let x = 1|};
