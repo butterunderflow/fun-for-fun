@@ -7,7 +7,8 @@ and mod_ty = Tree.mod_type
 
 and ty_def = Tree.type_def
 
-and bind_ty = string list * ty [@@deriving sexp]
+(* forall x y z. x -> y -> z *)
+and bind_ty = Ident.ident list * ty [@@deriving sexp]
 
 let int_ty = Tree.TCons ("int", [])
 

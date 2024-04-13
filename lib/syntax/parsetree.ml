@@ -47,7 +47,13 @@ and type_def =
   | TDAdt of string * type_paras * variant list
   | TDRecord of string * type_paras * (string * type_expr) list
 
-and type_paras = string list
+and type_paras = Ident.ident list
+
+and mod_type =
+  | MTName of string
+  | MTField of path * string
+  | MTSig of type_comp list
+  | MTFunctor of string * mod_type * mod_type
 
 and variant = string * type_expr option
 [@@deriving
@@ -89,7 +95,6 @@ and lambda = para * expr
 and mod_body = top_level list
 
 and mod_expr =
-  | MERoot
   | MEName of string (* M *)
   | MEStruct of mod_body (* struct ... end *)
   | MEFunctor of functor_expr (* functor (M: MT) -> ... *)
@@ -100,12 +105,6 @@ and mod_expr =
 and functor_para = string * mod_type
 
 and functor_expr = functor_para * mod_expr
-
-and mod_type =
-  | MTName of string
-  | MTField of path * string
-  | MTSig of type_comp list
-  | MTFunctor of string * mod_type * mod_type
 
 and adt_def = string * type_paras * variant list
 [@@deriving

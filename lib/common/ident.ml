@@ -5,11 +5,23 @@ let compare_string = String.compare
 
 let compare_int = Int.compare
 
-type t = int * string [@@deriving compare]
+type ident = int * string [@@deriving sexp, compare]
 
-let sexp_of_t t = S.Atom (Printf.sprintf "%s/%d" (snd t) (fst t))
+type t = ident
 
-let t_of_sexp s =
+let compare (index0, name0) (index1, name1) =
+  let index_cmp = compare_int index0 index1 in
+  if index_cmp <> 0 then index_cmp else compare_string name0 name1
+
+let sexp_of_ident id = S.Atom (Printf.sprintf "%s/%d" (snd id) (fst id))
+
+let name_of_ident (_index, name) = name
+
+let index_of_ident (index, _name) = index
+
+let mk_ident index name = (index, name)
+
+let ident_of_sexp s =
   match s with
   | S.Atom s ->
       let splited = String.split_on_char '/' s in
@@ -29,3 +41,5 @@ let create ~(hint : string) =
 let rename (_, name) = create ~hint:name
 
 let to_string x = Printf.sprintf "%s/%d" (snd x) (fst x)
+
+let refresh () = index := 0
