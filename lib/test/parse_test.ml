@@ -31,6 +31,11 @@ let%expect_test "Test: expression parsing" =
     (ETuple
       ((EConst (CInt 1)) (EConst (CInt 3)) (EConst (CInt 4))
         (ETuple ((EConst (CInt 5)) (EConst (CInt 6)))) (EConst (CInt 7)))) |}];
+  print_parsed "f 1, f true";
+  [%expect
+    {|
+    (ETuple
+      ((EApp (EVar f) (EConst (CInt 1))) (EApp (EVar f) (EConst (CBool true))))) |}];
   print_parsed
     {|
      let rec odd = fun x -> even x

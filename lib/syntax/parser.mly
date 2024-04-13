@@ -48,6 +48,7 @@ let mk_type_ref fon t_args =
 %left     COMMA                        /* (e , e , e) */
 %left     STAR                         /* (e * e * e) */
 
+%nonassoc below_APP
 
 %type <Parsetree.program> program
 %type <Parsetree.top_level list> top_levels
@@ -125,7 +126,7 @@ type_expr:
     | ts=separated_nontrivial_llist(STAR, type_expr) { TTuple ts }
     | t_arg = type_expr fon=field_or_name { mk_type_ref fon [t_arg] }
     | n=IDENT { TCons (n, []) }
-    | tv=TYPEVAR { TVar tv }
+    | tv=TYPEVAR { TVar (Ident.from tv) }
     | arg=type_expr ARROW ret=type_expr { TArrow (arg, ret) }
     | LBRACE fields=separated_nontrivial_llist(SEMI, field_def) RBRACE { TRecord fields }
 
@@ -138,7 +139,7 @@ expr:
     | LET p=pattern EQ e1=expr IN e2=expr { ELet (p, e1, e2) }
     | LET REC binds=separated_nonempty_list(AND, function_bind) IN body=expr { ELetrec (binds, body) }
     | tu=tuple_expr { tu }
-    | func=expr arg=expr { EApp (func, arg) }
+    | func=expr arg=expr { EApp (func, arg) } %prec below_APP
     | LPAREN e=expr RPAREN { e }
     | FUN para=parameter ARROW body=expr { ELam (para, body) }
     ;
