@@ -2,7 +2,7 @@ open Syntax.Parsing
 open Syntax.Parsetree
 
 let print_sexp s =
-  Sexplib.Sexp.to_string_hum ?indent:(Some 2) s |> print_string
+  Printf.printf "%s\n" (Sexplib.Sexp.to_string_hum ?indent:(Some 2) s)
 
 let print_parsed_program str =
   parse_string_program str |> sexp_of_program |> print_sexp
@@ -19,6 +19,10 @@ let%expect_test "Test: expression parsing" =
   in
   print_parsed "x";
   [%expect {| (EVar x) |}];
+  print_parsed "1";
+  [%expect {| (EConst (CInt 1)) |}];
+  print_parsed "true";
+  [%expect {| (EConst (CBool true)) |}];
   print_parsed "let x = 1 in y";
   [%expect {| (ELet (PVar x) (EConst (CInt 1)) (EVar y)) |}];
   print_parsed "1,3,4,(5,6),7";
@@ -48,7 +52,9 @@ let%expect_test "Test: expression parsing" =
   [%expect
     {| (EApp (EFieldCons (PName L) Cons) (ETuple ((EVar x) (EVar y)))) |}];
   print_parsed {|fun x -> x|};
-  [%expect {| (ELam ((PBare x) (EVar x))) |}]
+  [%expect {| (ELam ((PBare x) (EVar x))) |}];
+  print_parsed {|f 1|};
+  [%expect {| (EApp (EVar f) (EConst (CInt 1))) |}]
 
 let%expect_test "Test: full program parsing" =
   print_parsed_program {|let x = 1|};
@@ -100,9 +106,9 @@ let%expect_test "Test: type expression parsing" =
   print_parsed_type_expr "string list";
   [%expect {| (TCons list ((TCons string ()))) |}];
   print_parsed_type_expr "'x";
-  [%expect {| (TVar 'x) |}];
+  [%expect {| (TVar 'x/0) |}];
   print_parsed_type_expr "(string, 'x, 'y) list";
-  [%expect {| (TCons list ((TCons string ()) (TVar 'x) (TVar 'y))) |}];
+  [%expect {| (TCons list ((TCons string ()) (TVar 'x/0) (TVar 'y/0))) |}];
   print_parsed_type_expr "int * int";
   [%expect {| (TTuple ((TCons int ()) (TCons int ()))) |}];
   print_parsed_type_expr "int * i list * (x * y) list * (t1 * t2)";
