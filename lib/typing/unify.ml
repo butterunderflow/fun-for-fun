@@ -1,5 +1,5 @@
 open Types
-module SMap = Map.Make (String)
+module SMap = Map.Make (Ident)
 
 type t = ty SMap.t
 
@@ -29,6 +29,19 @@ let apply_expr u (e : Typedtree.expr) =
   in
   mapper#visit_expr () e
 
+let apply_expr_untypd u (e : Syntax.Parsetree.expr) =
+  let mapper =
+    object (self : 'self)
+      inherit ['self] Syntax.Parsetree.map
+
+      method visit_ty = self#visit_type_expr
+
+      method! visit_TVar _ x =
+        SMap.find_opt x u |> Option.value ~default:(Tree.TVar x)
+    end
+  in
+  mapper#visit_expr () e
+
 let ( <$> ) = apply
 
 let compose (u0 : t) (u1 : t) : t =
@@ -41,7 +54,7 @@ let identity = SMap.empty
 
 let ( <.> ) = compose
 
-let apply_lst (u : t) : ty list -> ty list = List.map (apply u)
+let apply_lst (u : t) lst : ty list = List.map (apply u) lst
 
 let apply_env (u : t) (env : Env.t) : Env.t =
   {
@@ -58,7 +71,7 @@ let make_subst x t : t = SMap.(add x t empty)
 let make_subst_lst xs ts : t =
   List.combine xs ts |> List.to_seq |> SMap.of_seq
 
-exception OccurError of (string * ty)
+exception OccurError of (Ident.ident * ty)
 
 exception IllFormType
 
@@ -84,6 +97,8 @@ let rec unify (t0 : ty) (t1 : ty) : t =
     | _, TVar _y -> unify t1 t0
     | TCons (tc0, tes0), TCons (tc1, tes1) when tc0 = tc1 ->
         unify_lst tes0 tes1
+    | TArrow (op0, arg0), TArrow (op1, arg1) ->
+        unify_lst [ op0; arg0 ] [ op1; arg1 ]
     (* by default raise an exception *)
     | _ -> raise (UnificationError (t0, t1))
 
@@ -92,5 +107,5 @@ and unify_lst t0 t1 =
   | [], [] -> identity
   | t0 :: tes0, t1 :: tes1 ->
       let u0 = unify t0 t1 in
-      unify_lst (apply_lst u0 tes0) (apply_lst u0 tes1)
+      u0 <.> unify_lst (apply_lst u0 tes0) (apply_lst u0 tes1)
   | _ -> raise IllFormType
