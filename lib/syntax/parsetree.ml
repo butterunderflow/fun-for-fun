@@ -22,7 +22,8 @@ type path =
 
 type pattern =
   | PVal of constant
-  | PCons of string * pattern list
+  | PCons of string * pattern option (* Cons (1, 2) *)
+  | PFieldCons of path * string * pattern option (* T.M(M2).C (1, 2) *)
   | PVar of string
 [@@deriving
   sexp,
@@ -35,9 +36,9 @@ type type_comp =
   | TManiTySpec of type_def
 
 and type_expr =
-  | TField of path * string * type_expr list
-  | TCons of string * type_expr list
-  | TVar of string
+  | TField of path * string * type_expr list (* T.Cons *)
+  | TCons of string * type_expr list (* Cons x *)
+  | TVar of Ident.ident (* 'var *)
   | TArrow of type_expr * type_expr
   | TTuple of type_expr list
   | TRecord of (string * type_expr) list
@@ -57,11 +58,10 @@ and variant = string * type_expr option
 type program = top_level list
 
 and top_level =
-  | TopLet of pattern * expr
+  | TopLet of string * expr
   | TopLetRec of (string * lambda) list
   | TopTypeDef of type_def
   | TopMod of string * mod_expr
-
 
 and para =
   | PAnn of string * type_expr
@@ -73,7 +73,7 @@ and expr =
   | EConst of constant
   | EVar of string
   | ECons of string
-  | ELet of pattern * expr * expr
+  | ELet of string * expr * expr
   | ELetrec of (string * lambda) list * expr
   | ELam of lambda
   | EIf of expr * expr * expr
@@ -114,7 +114,7 @@ and adt_def = string * type_paras * variant list
     visitors { variety = "map"; name = "tree_map" }]
 
 class virtual ['self] map =
-  object (_self : 'self)
+  object (self : 'self)
     inherit ['self] constant_map
 
     inherit! ['self] pattern_map
@@ -124,10 +124,15 @@ class virtual ['self] map =
     inherit! ['self] tree_map
 
     inherit! ['self] type_map
+
+    method visit_ident env id =
+      Ident.mk_ident
+        (self#visit_int env (Ident.index_of_ident id))
+        (self#visit_string env (Ident.name_of_ident id))
   end
 
 class virtual ['self] iter =
-  object (_self : 'self)
+  object (self : 'self)
     inherit ['self] constant_iter
 
     inherit! ['self] pattern_iter
@@ -137,4 +142,8 @@ class virtual ['self] iter =
     inherit! ['self] tree_iter
 
     inherit! ['self] type_iter
+
+    method visit_ident env id =
+      self#visit_int env (Ident.index_of_ident id);
+      self#visit_string env (Ident.name_of_ident id)
   end

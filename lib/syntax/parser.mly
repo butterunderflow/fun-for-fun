@@ -73,7 +73,7 @@ top_levels:
     | (* empty *) { [] }
     | td=type_def rest=top_levels
         { TopTypeDef td :: rest }
-    | LET p=pattern EQ e=expr rest=top_levels  { TopLet (p, e) :: rest }
+    | LET x=IDENT EQ e=expr rest=top_levels  { TopLet (x, e) :: rest }
     | LET REC funcs=separated_list(AND, function_bind) rest=top_levels
         { TopLetRec funcs :: rest } 
     | MODULE m_name=MIDENT 
@@ -136,7 +136,7 @@ expr:
     | p=path DOT v=MIDENT { EFieldCons (p, v) }
     | v=IDENT { EVar v }
     | c=MIDENT { ECons c }
-    | LET p=pattern EQ e1=expr IN e2=expr { ELet (p, e1, e2) }
+    | LET x=IDENT EQ e1=expr IN e2=expr { ELet (x, e1, e2) }
     | LET REC binds=separated_nonempty_list(AND, function_bind) IN body=expr { ELetrec (binds, body) }
     | tu=tuple_expr { tu }
     | func=expr arg=expr { EApp (func, arg) } %prec below_APP

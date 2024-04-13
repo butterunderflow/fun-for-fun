@@ -24,7 +24,7 @@ let%expect_test "Test: expression parsing" =
   print_parsed "true";
   [%expect {| (EConst (CBool true)) |}];
   print_parsed "let x = 1 in y";
-  [%expect {| (ELet (PVar x) (EConst (CInt 1)) (EVar y)) |}];
+  [%expect {| (ELet x (EConst (CInt 1)) (EVar y)) |}];
   print_parsed "1,3,4,(5,6),7";
   [%expect
     {|
@@ -64,7 +64,7 @@ let%expect_test "Test: expression parsing" =
 let%expect_test "Test: full program parsing" =
   print_parsed_program {|let x = 1|};
   [%expect {|
-    ((TopLet (PVar x) (EConst (CInt 1))))
+    ((TopLet x (EConst (CInt 1))))
   |}];
   print_parsed_program
     {|
@@ -74,7 +74,7 @@ let%expect_test "Test: full program parsing" =
      |};
   [%expect
     {|
-    ((TopLet (PVar x) (EConst (CInt 1))) (TopLet (PVar y) (EConst (CInt 2)))
+    ((TopLet x (EConst (CInt 1))) (TopLet y (EConst (CInt 2)))
       (TopLetRec ((foo ((PBare x) (EApp (EVar foo) (EVar x))))))) |}];
   print_parsed_program {|let rec f = fun (x:int) -> 1|};
   [%expect
@@ -156,7 +156,7 @@ let%expect_test "Test: top level module" =
     {|
     ((TopMod X
        (MEStruct
-         ((TopLet (PVar x) (EConst (CInt 1)))
+         ((TopLet x (EConst (CInt 1)))
            (TopLetRec ((y ((PBare x) (EConst (CInt 3))))))
            (TopMod Y (MEStruct ())))))) |}]
 
@@ -177,7 +177,7 @@ let%expect_test "Test: module expression" =
   [%expect
     {|
     (MEStruct
-      ((TopLet (PVar x) (EConst (CInt 1)))
+      ((TopLet x (EConst (CInt 1)))
         (TopTypeDef (TDAdt a () ((Cons ((TCons int ()))) (Nil ())))))) |}];
   print_parsed {|functor (X: M) -> struct end|};
   [%expect {| (MEFunctor ((X (MTName M)) (MEStruct ()))) |}]
