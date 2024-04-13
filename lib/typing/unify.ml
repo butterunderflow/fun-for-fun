@@ -16,6 +16,21 @@ let apply u te =
   in
   mapper#visit_type_expr () te
 
+let apply_top u top =
+  let mapper =
+    object (self : 'self)
+      inherit ['self] Typedtree.map
+
+      method visit_ty = self#visit_type_expr
+
+      method! visit_TVar _ x =
+        SMap.find_opt x u |> Option.value ~default:(Tree.TVar x)
+
+      method! visit_type_def _ def = def
+    end
+  in
+  mapper#visit_top_level () top
+
 let apply_expr u (e : Typedtree.expr) =
   let mapper =
     object (self : 'self)
