@@ -109,3 +109,11 @@ and unify_lst t0 t1 =
       let u0 = unify t0 t1 in
       u0 <.> unify_lst (apply_lst u0 tes0) (apply_lst u0 tes1)
   | _ -> raise IllFormType
+
+let dbg (u : t) : string =
+  SMap.to_seq u |> List.of_seq
+  |> List.map (fun (id, te) ->
+         ( Ident.to_string id,
+           sexp_of_ty te |> Sexplib.Sexp.to_string_hum ?indent:(Some 2) ))
+  |> List.map (fun (id, te) -> Printf.sprintf "%s |-> %s" id te)
+  |> String.concat ";"

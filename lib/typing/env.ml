@@ -25,3 +25,13 @@ let get_type_def tn env =
     env.types
 
 let empty = { values = []; types = []; modules = [] }
+
+let dbg env =
+  env.values
+  |> List.map (fun (x, (tvs, te)) ->
+         ( x,
+           List.map Ident.to_string tvs,
+           Sexplib.Sexp.to_string_hum ?indent:(Some 2) (sexp_of_ty te) ))
+  |> List.map (fun (x, tvs, te) ->
+         (Printf.sprintf "%s |-> forall %s . %s" x (String.concat ";" tvs) te))
+  |> String.concat ";"
