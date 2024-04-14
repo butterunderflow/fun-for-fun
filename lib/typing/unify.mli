@@ -27,3 +27,5 @@ val make_subst_lst : Ident.t list -> Types.ty list -> t
 val unify : Types.ty -> Types.ty -> t
 
 val dbg : t -> string
+
+exception UnificationError of (string * string)

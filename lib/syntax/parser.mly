@@ -24,6 +24,8 @@ let mk_type_ref fon t_args =
 %token FUNCTOR
 %token FUN
 %token ARROW
+%token MATCH
+%token WITH
 %token <string> IDENT
 %token <string> MIDENT
 %token <string> TYPEVAR
@@ -60,9 +62,10 @@ let mk_type_ref fon t_args =
 %type <Parsetree.mod_expr> mod_expr_dbg
 %type <Parsetree.mod_type> mod_type_dbg
 %type <Parsetree.expr> expr_dbg
+%type <Parsetree.pattern> pattern_dbg
 
 /* Start symbols */
-%start program path_dbg type_expr_dbg mod_expr_dbg mod_type_dbg expr_dbg
+%start program path_dbg type_expr_dbg mod_expr_dbg mod_type_dbg expr_dbg pattern_dbg
 %%
 
 
@@ -99,7 +102,13 @@ type_def:
                 { TDAdt (n, (List.map (fun x -> Ident.from x) tvs), vs) }
 
 pattern: 
-    | n=IDENT { PVar n }
+    | n=IDENT { PVar n } (* variable pattern *)
+    | c=constant { PVal c } 
+    | c=MIDENT pat=pattern? { PCons (c, pat) }
+    | p=path DOT n=MIDENT pat=pattern? { PFieldCons (p, n, pat) }
+    | LPAREN pats=separated_nontrivial_llist(COMMA, pattern) RPAREN 
+         { PTuple (pats) }
+    ;
 
 parameter:
     | n=IDENT { PBare n }
@@ -143,7 +152,13 @@ expr:
     | func=expr arg=expr { EApp (func, arg) } %prec below_APP
     | LPAREN e=expr RPAREN { e }
     | FUN para=parameter ARROW body=expr { ELam (para, body) }
+    | MATCH e=expr WITH OR? branches=separated_nonempty_list(OR, branch) 
+           { ECase (e, branches) }
     ;
+
+branch: p=pattern ARROW e=expr { ( p, e ) }
+
+
 
 tuple_expr: 
     | es = separated_nontrivial_llist(COMMA, expr) %prec below_COMMA
@@ -183,6 +198,9 @@ type_expr_dbg:
 
 mod_expr_dbg:
     | me=mod_expr EOF { me }
+
+pattern_dbg: 
+    | p=pattern EOF { p }
 
 mod_type_dbg:
     | me=mod_type EOF { me }

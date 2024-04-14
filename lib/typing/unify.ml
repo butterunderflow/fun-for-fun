@@ -79,7 +79,7 @@ let apply_env (u : t) (env : Env.t) : Env.t =
     modules = env.modules;
   }
 
-exception UnificationError of (ty * ty)
+exception UnificationError of (string * string)
 
 let make_subst x t : t = SMap.(add x t empty)
 
@@ -115,7 +115,14 @@ let rec unify (t0 : ty) (t1 : ty) : t =
     | TArrow (op0, arg0), TArrow (op1, arg1) ->
         unify_lst [ op0; arg0 ] [ op1; arg1 ]
     (* by default raise an exception *)
-    | _ -> raise (UnificationError (t0, t1))
+    | _ ->
+        let t0_str =
+          sexp_of_ty t0 |> Sexplib.Sexp.to_string_hum ?indent:(Some 2)
+        in
+        let t1_str =
+          sexp_of_ty t1 |> Sexplib.Sexp.to_string_hum ?indent:(Some 2)
+        in
+        raise (UnificationError (t0_str, t1_str))
 
 and unify_lst t0 t1 =
   match (t0, t1) with

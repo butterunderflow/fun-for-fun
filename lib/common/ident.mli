@@ -2,7 +2,7 @@ val compare_string : String.t -> String.t -> int
 
 val compare_int : int -> int -> int
 
-type ident [@@deriving sexp]
+type ident [@@deriving sexp, show]
 
 type t = ident [@@deriving compare]
 

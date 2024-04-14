@@ -80,8 +80,9 @@ and tc_pattern p te env : (string * ty) list * U.t =
     | T.TArrow (pay_ty (* payload type *), te1) ->
         let u0 = U.unify te1 te0 in
         let env = U.apply_env u0 env in
-        let te1 = U.apply u0 te1 in
-        tc_pattern p te1 env
+        let pay_ty = U.apply u0 pay_ty in
+        let vars, u1 = tc_pattern p pay_ty env in
+        (vars, u0 <.> u1)
     | _ -> failwith "wrong type"
   in
   match (p, te) with
@@ -111,6 +112,21 @@ and tc_pattern p te env : (string * ty) list * U.t =
       let v_typed = tc_const v in
       let _ = U.unify (get_ty v_typed) te in
       ([], U.identity)
+  | T.PTuple pats, te -> (
+      let u = U.unify te (T.TTuple (List.map (fun _ -> make_tv ()) pats)) in
+      let env = U.apply_env u env in
+      match te with
+      | T.TTuple tes ->
+          let vars, u, _ =
+            List.fold_left2
+              (fun (vars_acc, u_acc, env) pat te ->
+                let vars, u = tc_pattern pat te env in
+                let env = U.apply_env u env in
+                (vars_acc @ vars, u_acc <.> u, env))
+              ([], u, env) pats tes
+          in
+          (vars, u)
+      | _ -> failwith "wrong")
 
 and tc_let x e0 e1 env =
   let e0_typed0, u0, env = tc_let_binding x e0 env in
@@ -240,7 +256,11 @@ and tc_cases e bs env =
         in
         let e_ty3 = U.apply (u1 <.> u2 <.> u3) e_ty in
         let res_ty3 = U.apply u3 res_ty2 in
-        (env, (p, res_typed2) :: acc3, u <.> u1 <.> u2 <.> u3, e_ty3, res_ty3))
+        ( env,
+          acc3 @ [ (p, res_typed2) ],
+          u <.> u1 <.> u2 <.> u3,
+          e_ty3,
+          res_ty3 ))
       (env, [], u0, e_ty0, make_tv_of "res")
       bs
   in

@@ -16,7 +16,7 @@ type path =
   | PMem of path * string
   | PApply of path * path
 [@@deriving
-  sexp,
+  sexp, show,
     visitors { variety = "iter"; name = "path_iter" },
     visitors { variety = "map"; name = "path_map" }]
 
@@ -25,6 +25,7 @@ type pattern =
   | PCons of string * pattern option (* Cons (1, 2) *)
   | PFieldCons of path * string * pattern option (* T.M(M2).C (1, 2) *)
   | PVar of string
+  | PTuple of pattern list      (* (x, y, z) *)
 [@@deriving
   sexp,
     visitors { variety = "iter"; name = "pattern_iter" },
@@ -58,6 +59,7 @@ and mod_type =
 and variant = string * type_expr option
 [@@deriving
   sexp,
+  show,
     visitors { variety = "iter"; name = "type_iter" },
     visitors { variety = "map"; name = "type_map" }]
 

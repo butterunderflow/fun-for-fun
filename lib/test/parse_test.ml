@@ -61,6 +61,23 @@ let%expect_test "Test: expression parsing" =
   print_parsed {|f 1|};
   [%expect {| (EApp (EVar f) (EConst (CInt 1))) |}]
 
+let%expect_test "Test: pattern parsing" =
+  let print_parsed str =
+    parse_string_pattern str |> sexp_of_pattern |> print_sexp
+  in
+  print_parsed {| x |};
+  [%expect {| (PVar x) |}];
+  print_parsed {| 1 |};
+  [%expect {| (PVal (CInt 1)) |}];
+  print_parsed {| Nil |};
+  [%expect {| (PCons Nil ()) |}];
+  print_parsed {| Cons 1 |};
+  [%expect {| (PCons Cons ((PVal (CInt 1)))) |}];
+  print_parsed {| Cons x |};
+  [%expect {| (PCons Cons ((PVar x))) |}];
+  print_parsed {| Cons (x, y, z) |};
+  [%expect {| (PCons Cons ((PTuple ((PVar x) (PVar y) (PVar z))))) |}]
+
 let%expect_test "Test: full program parsing" =
   print_parsed_program {|let x = 1|};
   [%expect {|

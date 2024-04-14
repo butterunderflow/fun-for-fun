@@ -5,7 +5,7 @@ let compare_string = String.compare
 
 let compare_int = Int.compare
 
-type ident = int * string [@@deriving sexp, compare]
+type ident = int * string [@@deriving sexp, compare, show]
 
 type t = ident
 

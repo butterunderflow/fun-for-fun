@@ -120,8 +120,12 @@ let%expect_test "Test: program toplevel typing" =
   let print_typed str =
     Ident.refresh ();
     let prog = parse_string_program str in
-    let typed, _u, _env = Typing.Check.tc_program prog Typing.Env.empty in
-    typed |> T.sexp_of_program |> print_sexp
+    try
+      let typed, _u, _env = Typing.Check.tc_program prog Typing.Env.empty in
+      typed |> T.sexp_of_program |> print_sexp
+    with
+    | Unify.UnificationError (t0, t1) ->
+        Printf.printf "Can't unify %s with %s" t0 t1
   in
   let print_effect str =
     Ident.refresh ();
@@ -156,7 +160,8 @@ let%expect_test "Test: program toplevel typing" =
      | Nil 
      end
      |};
-  [%expect {|
+  [%expect
+    {|
     ------------------Envirment Debug Info Begin------------------------
     Value Bindings:
       Cons |-> forall  . (TArrow (TCons int ()) (TCons a ()));
@@ -173,7 +178,8 @@ let%expect_test "Test: program toplevel typing" =
      let c = Nil
      let co = Cons 1
      |};
-  [%expect {|
+  [%expect
+    {|
     ((TopTypeDef (TDAdt int_l () ((Cons ((TCons int ()))) (Nil ()))))
       (TopLet c (ECons Nil (TCons int_l ())) (TCons int_l ()))
       (TopLet co
@@ -189,7 +195,8 @@ let%expect_test "Test: program toplevel typing" =
      let c = Nil
      let co = Cons 1
      |};
-  [%expect {|
+  [%expect
+    {|
     ------------------Envirment Debug Info Begin------------------------
     Value Bindings:
       co |-> forall  . (TCons int_l ());
@@ -198,4 +205,26 @@ let%expect_test "Test: program toplevel typing" =
       Nil |-> forall  . (TCons int_l ())
     Type Definitions:
       int_l |-> (TDAdt int_l () ((Cons ((TCons int ()))) (Nil ())))
-    ------------------Envirment Debug Info End-------------------------- |}]
+    ------------------Envirment Debug Info End-------------------------- |}];
+  print_typed
+    {|
+     type () int_l
+     = Cons of int
+     | Nil
+     end
+     let x = Nil
+     let f =
+         match x with
+        | Cons x -> x
+        | Nil    -> 0
+|};
+  [%expect
+    {|
+    ((TopTypeDef (TDAdt int_l () ((Cons ((TCons int ()))) (Nil ()))))
+      (TopLet x (ECons Nil (TCons int_l ())) (TCons int_l ()))
+      (TopLet f
+        (ECase (EVar x (TCons int_l ()))
+          (((PCons Cons ((PVar x))) (EVar x (TCons int ())))
+            ((PCons Nil ()) (EConst (CInt 0) (TCons int ()))))
+          (TCons int ()))
+        (TCons int ()))) |}]

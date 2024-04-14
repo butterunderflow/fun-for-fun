@@ -42,6 +42,8 @@ rule token = parse
     | "let"             { LET }
     | "in"              { IN }
     | "rec"             { REC }
+    | "match"           { MATCH }
+    | "with"            { WITH }
     | "type"            { TYPE }
     | "end"             { END }
     | "and"             { AND }
