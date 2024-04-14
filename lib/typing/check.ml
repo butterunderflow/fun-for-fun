@@ -75,7 +75,7 @@ and tc_var x env =
 
 (* pattern will create bindings under context's type *)
 and tc_pattern p te env : (string * ty) list * U.t =
-  let tc_PCons_aux (cons_ty : ty) p te0 =
+  let tc_PCons_aux (cons_ty : ty) (p (* payload pattern *) : pattern) te0 =
     match cons_ty with
     | T.TArrow (pay_ty (* payload type *), te1) ->
         let u0 = U.unify te1 te0 in
@@ -114,6 +114,7 @@ and tc_pattern p te env : (string * ty) list * U.t =
       ([], U.identity)
   | T.PTuple pats, te -> (
       let u = U.unify te (T.TTuple (List.map (fun _ -> make_tv ()) pats)) in
+      let te = u <$> te in
       let env = U.apply_env u env in
       match te with
       | T.TTuple tes ->
@@ -121,8 +122,11 @@ and tc_pattern p te env : (string * ty) list * U.t =
             List.fold_left2
               (fun (vars_acc, u_acc, env) pat te ->
                 let vars, u = tc_pattern pat te env in
+                let var_acc =
+                  List.map (fun (x, t) -> (x, u <$> t)) vars_acc
+                in
                 let env = U.apply_env u env in
-                (vars_acc @ vars, u_acc <.> u, env))
+                (var_acc @ vars, u_acc <.> u, env))
               ([], u, env) pats tes
           in
           (vars, u)
@@ -236,12 +240,17 @@ and tc_app op arg env =
 and tc_cases e bs env =
   let e_typed0, u0 = tc_expr e env in
   let e_ty0 = get_ty e_typed0 in
+  let env = U.apply_env u0 env in
+  let res_ty = make_tv_of "res" in
   let env, bs_typed1, u1, e_ty1, res_ty1 =
     List.fold_left
-      (fun (env, acc, u, e_ty, res_ty) (p (* pattern *), res) ->
+      (fun (env, acc, u, e_ty, expect_res_ty) (p (* pattern *), res) ->
+        (* get binding created by pattern *)
         let vars, u1 = tc_pattern p e_ty env in
+        let expect_res_ty = u1 <$> expect_res_ty in
         let env = U.apply_env u1 env in
         let res = U.apply_expr_untypd u1 res in
+        (* check result expression *)
         let env' =
           List.fold_left
             (fun env (v, ty) ->
@@ -250,18 +259,23 @@ and tc_cases e bs env =
         in
         let res_typed2, u2 = tc_expr res env' in
         let res_ty2 = get_ty res_typed2 in
-        let u3 = U.unify res_ty2 res_ty in
+        let env = U.apply_env u2 env in
+        let expect_res_ty = u2 <$> expect_res_ty in
+        (* unify checked result type with current result type *)
+        let u3 = U.unify res_ty2 expect_res_ty in
         let acc3 =
           List.map (fun (p, res) -> (p, u1 <.> u2 <.> u3 <$$> res)) acc
         in
+        let env = U.apply_env u3 env in
+        let res_typed3 = u3 <$$> res_typed2 in
         let e_ty3 = U.apply (u1 <.> u2 <.> u3) e_ty in
         let res_ty3 = U.apply u3 res_ty2 in
         ( env,
-          acc3 @ [ (p, res_typed2) ],
+          acc3 @ [ (p, res_typed3) ],
           u <.> u1 <.> u2 <.> u3,
           e_ty3,
           res_ty3 ))
-      (env, [], u0, e_ty0, make_tv_of "res")
+      (env, [], u0, e_ty0, res_ty)
       bs
   in
   let e_typed1 = u1 <$$> e_typed0 in
@@ -273,7 +287,7 @@ and tc_tuple es env =
       (fun (env, acc, u) e ->
         let e = U.apply_expr_untypd u e in
         let e_typed0, u0 = tc_expr e env in
-        (U.apply_env u0 env, e_typed0 :: acc, u <.> u0))
+        (U.apply_env u0 env, acc @ [ e_typed0 ], u <.> u0))
       (env, [], U.identity) es
   in
   let tu_te = T.TTuple (List.map get_ty es_typed) in

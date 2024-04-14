@@ -114,6 +114,8 @@ let rec unify (t0 : ty) (t1 : ty) : t =
         unify_lst tes0 tes1
     | TArrow (op0, arg0), TArrow (op1, arg1) ->
         unify_lst [ op0; arg0 ] [ op1; arg1 ]
+    | TTuple tes0, TTuple tes1 ->
+       unify_lst tes0 tes1
     (* by default raise an exception *)
     | _ ->
         let t0_str =

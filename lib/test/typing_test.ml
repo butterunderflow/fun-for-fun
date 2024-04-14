@@ -59,20 +59,20 @@ let%expect_test "Test: expression typing" =
   [%expect
     {|
     (ETuple
-      ((EConst (CBool true) (TCons bool ())) (EConst (CInt 1) (TCons int ())))
-      (TTuple ((TCons bool ()) (TCons int ())))) |}];
+      ((EConst (CInt 1) (TCons int ())) (EConst (CBool true) (TCons bool ())))
+      (TTuple ((TCons int ()) (TCons bool ())))) |}];
 
   print_typed "let f = (fun x -> x) in (f 1, f true)";
   [%expect
     {|
     (ELet f (ELam (x (EVar x (TVar '_t/1)) (TArrow (TVar '_t/1) (TVar '_t/1))))
       (ETuple
-        ((EApp (EVar f (TArrow (TCons bool ()) (TCons bool ())))
-           (EConst (CBool true) (TCons bool ())) (TCons bool ()))
-          (EApp (EVar f (TArrow (TCons int ()) (TCons int ())))
-            (EConst (CInt 1) (TCons int ())) (TCons int ())))
-        (TTuple ((TCons bool ()) (TCons int ()))))
-      (TTuple ((TCons bool ()) (TCons int ())))) |}];
+        ((EApp (EVar f (TArrow (TCons int ()) (TCons int ())))
+           (EConst (CInt 1) (TCons int ())) (TCons int ()))
+          (EApp (EVar f (TArrow (TCons bool ()) (TCons bool ())))
+            (EConst (CBool true) (TCons bool ())) (TCons bool ())))
+        (TTuple ((TCons int ()) (TCons bool ()))))
+      (TTuple ((TCons int ()) (TCons bool ())))) |}];
   print_typed
     {|
      let rec f = fun x -> g x
@@ -227,4 +227,51 @@ let%expect_test "Test: program toplevel typing" =
           (((PCons Cons ((PVar x))) (EVar x (TCons int ())))
             ((PCons Nil ()) (EConst (CInt 0) (TCons int ()))))
           (TCons int ()))
-        (TCons int ()))) |}]
+        (TCons int ()))) |}];
+  print_typed
+    {|
+     type ('a, 'b) int_l
+     = Cons of ('a * 'b)
+     | Nil
+     end
+     let x = Nil
+     let f =
+         match x with
+        | Cons (a, b) -> (b, a)
+     |};
+  [%expect {|
+    ((TopTypeDef
+       (TDAdt int_l ('a/0 'b/0)
+         ((Cons ((TTuple ((TVar 'a/0) (TVar 'b/0))))) (Nil ()))))
+      (TopLet x (ECons Nil (TCons int_l ((TVar 'a/5) (TVar 'b/6))))
+        (TCons int_l ((TVar 'a/5) (TVar 'b/6))))
+      (TopLet f
+        (ECase (EVar x (TCons int_l ((TVar '_t/12) (TVar '_t/13))))
+          (((PCons Cons ((PTuple ((PVar a) (PVar b)))))
+             (ETuple ((EVar b (TVar '_t/13)) (EVar a (TVar '_t/12)))
+               (TTuple ((TVar '_t/13) (TVar '_t/12))))))
+          (TTuple ((TVar '_t/13) (TVar '_t/12))))
+        (TTuple ((TVar '_t/13) (TVar '_t/12))))) |}];
+  print_effect
+    {|
+     type ('a, 'b) int_l
+     = Cons of ('a * 'b)
+     | Nil
+     end
+     let x = Nil
+     let f =
+         match x with
+        | Cons (a, b) -> (b, a)
+     |};
+  [%expect {|
+    ------------------Envirment Debug Info Begin------------------------
+    Value Bindings:
+      f |-> forall '_t/13;'_t/12 . (TTuple ((TVar '_t/13) (TVar '_t/12)));
+      x |-> forall 'b/6;'a/5 . (TCons int_l ((TVar 'a/5) (TVar 'b/6)));
+      Cons |-> forall 'a/1;'b/2 . (TArrow (TTuple ((TVar 'a/1) (TVar 'b/2)))
+      (TCons int_l ((TVar 'a/1) (TVar 'b/2))));
+      Nil |-> forall 'a/3;'b/4 . (TCons int_l ((TVar 'a/3) (TVar 'b/4)))
+    Type Definitions:
+      int_l |-> (TDAdt int_l ('a/0 'b/0)
+      ((Cons ((TTuple ((TVar 'a/0) (TVar 'b/0))))) (Nil ())))
+    ------------------Envirment Debug Info End-------------------------- |}]
