@@ -10,6 +10,9 @@ and ty_def = Tree.type_def
 (* forall x y z. x -> y -> z *)
 and bind_ty = Ident.ident list * ty [@@deriving sexp]
 
+
+let same ty0 ty1 = ty0 = ty1
+
 let int_ty = Tree.TCons ("int", [])
 
 let string_ty = Tree.TCons ("string", [])

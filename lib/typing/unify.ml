@@ -103,7 +103,7 @@ let occur x te =
   if !occured then raise (OccurError (x, te))
 
 let rec unify (t0 : ty) (t1 : ty) : t =
-  if t0 = t1 then identity
+  if same t0 t1 then identity
   else
     match (t0, t1) with
     | TVar x, t1 ->

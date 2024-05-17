@@ -275,3 +275,21 @@ let%expect_test "Test: program toplevel typing" =
       int_l |-> (TDAdt int_l ('a/0 'b/0)
       ((Cons ((TTuple ((TVar 'a/0) (TVar 'b/0))))) (Nil ())))
     ------------------Envirment Debug Info End-------------------------- |}]
+
+
+
+let%expect_test "Test: type check pattern" = 
+  let print_typed str =
+    Ident.refresh ();
+    let prog = parse_string_program str in
+    try
+      let typed, _u, _env = Typing.Check.tc_program prog Typing.Env.empty in
+      typed |> T.sexp_of_program |> print_sexp
+    with
+    | Unify.UnificationError (t0, t1) ->
+        Printf.printf "Can't unify %s with %s" t0 t1
+  in
+  ()
+  
+
+  
