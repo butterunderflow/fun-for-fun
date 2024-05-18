@@ -4,6 +4,7 @@ type t = {
   values : (string * bind_ty) list;
   types : ty_def list;
   modules : (string * mod_ty) list;
+  curr : int
 }
 
 let add_value x ty env = { env with values = (x, ty) :: env.values }
@@ -24,7 +25,7 @@ let get_type_def tn env =
           x = tn)
     env.types
 
-let empty = { values = []; types = []; modules = [] }
+let init = { values = []; types = []; modules = [] ; curr = 0}
 
 let dbg env =
   let values =
@@ -58,6 +59,8 @@ Value Bindings:
   %s
 Type Definitions:
   %s
+Current Module Index:
+  %d 
 ------------------Envirment Debug Info End--------------------------
 |}
-values ty_defs
+values ty_defs env.curr

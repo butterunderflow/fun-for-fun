@@ -11,13 +11,13 @@ let%expect_test "Test: expression typing" =
   let print_typed str =
     Ident.refresh ();
     let e = parse_string_expr str in
-    let typed, _ = Typing.Check.tc_expr e Typing.Env.empty in
+    let typed, _ = Typing.Check.tc_expr e Typing.Env.init in
     typed |> T.sexp_of_expr |> print_sexp
   in
   let print_type str =
     Ident.refresh ();
     let e = parse_string_expr str in
-    let typed, _ = Typing.Check.tc_expr e Typing.Env.empty in
+    let typed, _ = Typing.Check.tc_expr e Typing.Env.init in
     typed |> T.get_ty |> Syntax.Parsetree.sexp_of_type_expr |> print_sexp
   in
   print_typed "1";
@@ -121,7 +121,7 @@ let%expect_test "Test: program toplevel typing" =
     Ident.refresh ();
     let prog = parse_string_program str in
     try
-      let typed, _u, _env = Typing.Check.tc_program prog Typing.Env.empty in
+      let typed, _u, _env = Typing.Check.tc_program prog Typing.Env.init in
       typed |> T.sexp_of_program |> print_sexp
     with
     | Unify.UnificationError (t0, t1) ->
@@ -130,7 +130,7 @@ let%expect_test "Test: program toplevel typing" =
   let print_effect str =
     Ident.refresh ();
     let prog = parse_string_program str in
-    let _typed, _u, env = Typing.Check.tc_program prog Typing.Env.empty in
+    let _typed, _u, env = Typing.Check.tc_program prog Typing.Env.init in
     Printf.printf "%s\n" (Env.dbg env)
   in
   print_typed {|
@@ -168,6 +168,8 @@ let%expect_test "Test: program toplevel typing" =
       Nil |-> forall  . (TCons a ())
     Type Definitions:
       a |-> (TDAdt a () ((Cons ((TCons int ()))) (Nil ())))
+    Current Module Index:
+      0
     ------------------Envirment Debug Info End-------------------------- |}];
   print_typed
     {|
@@ -205,6 +207,8 @@ let%expect_test "Test: program toplevel typing" =
       Nil |-> forall  . (TCons int_l ())
     Type Definitions:
       int_l |-> (TDAdt int_l () ((Cons ((TCons int ()))) (Nil ())))
+    Current Module Index:
+      0
     ------------------Envirment Debug Info End-------------------------- |}];
   print_typed
     {|
@@ -274,6 +278,8 @@ let%expect_test "Test: program toplevel typing" =
     Type Definitions:
       int_l |-> (TDAdt int_l ('a/0 'b/0)
       ((Cons ((TTuple ((TVar 'a/0) (TVar 'b/0))))) (Nil ())))
+    Current Module Index:
+      0
     ------------------Envirment Debug Info End-------------------------- |}]
 
 
@@ -283,7 +289,7 @@ let%expect_test "Test: type check pattern" =
     Ident.refresh ();
     let prog = parse_string_program str in
     try
-      let typed, _u, _env = Typing.Check.tc_program prog Typing.Env.empty in
+      let typed, _u, _env = Typing.Check.tc_program prog Typing.Env.init in
       typed |> T.sexp_of_program |> print_sexp
     with
     | Unify.UnificationError (t0, t1) ->

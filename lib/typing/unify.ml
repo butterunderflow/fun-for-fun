@@ -73,10 +73,9 @@ let apply_lst (u : t) lst : ty list = List.map (apply u) lst
 
 let apply_env (u : t) (env : Env.t) : Env.t =
   {
+    env with
     values = List.map (fun (x, (qvs, te)) -> (x, (qvs, u <$> te))) env.values;
     (* types and modules have no space for inference *)
-    types = env.types;
-    modules = env.modules;
   }
 
 exception UnificationError of (string * string)
@@ -114,8 +113,7 @@ let rec unify (t0 : ty) (t1 : ty) : t =
         unify_lst tes0 tes1
     | TArrow (op0, arg0), TArrow (op1, arg1) ->
         unify_lst [ op0; arg0 ] [ op1; arg1 ]
-    | TTuple tes0, TTuple tes1 ->
-       unify_lst tes0 tes1
+    | TTuple tes0, TTuple tes1 -> unify_lst tes0 tes1
     (* by default raise an exception *)
     | _ ->
         let t0_str =
