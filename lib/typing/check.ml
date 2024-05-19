@@ -1,9 +1,9 @@
 [@@@warning "-27"]
 
-open Types
 open Typedtree
 module U = Unify
-module T = Tree
+module T = Syntax.Parsetree
+module I = Types_in
 module IdentSet = Set.Make (Ident)
 
 let ( <$$> ) = U.apply_expr
@@ -14,36 +14,63 @@ let ( <.> ) = U.( <.> )
 
 let make_tv () =
   let name = "'_t" in
-  T.TVar (Ident.create ~hint:name)
+  I.TVarI (Ident.create ~hint:name)
 
-let make_tv_of hint = T.TVar (Ident.create ~hint)
+let make_tv_of hint = I.TVarI (Ident.create ~hint)
 
-let inst_with (t : bind_ty) tes : ty =
+let inst_with (t : I.bind_ty) tes : I.ty =
   let qvs, te = t in
   U.make_subst_lst qvs tes <$> te
 
-let inst (t : bind_ty) : ty =
+let inst (t : I.bind_ty) : I.ty =
   (* Make sure captured type variables will never duplicated with free type
      variables *)
   let qvs, te = t in
-  let new_tvs = List.map (fun id -> T.TVar (Ident.rename id)) qvs in
+  let new_tvs = List.map (fun id -> I.TVarI (Ident.rename id)) qvs in
   inst_with t new_tvs
 
-let get_all_tvs (e : ty) : Ident.ident list =
+let get_all_tvs (e : I.ty) : Ident.ident list =
   let tvs = ref IdentSet.empty in
   let collector =
     object (self : 'self)
-      inherit ['self] Syntax.Parsetree.iter
+      inherit ['self] Types_in.iter
 
-      method! visit_TVar _env tv = tvs := IdentSet.add tv !tvs
+      method! visit_TVarI _env tv = tvs := IdentSet.add tv !tvs
     end
   in
-  collector#visit_type_expr () e;
+  collector#visit_ty () e;
   IdentSet.fold (fun tv acc -> tv :: acc) !tvs []
 
-let generalize (t : ty) env : bind_ty =
+let generalize (t : I.ty) env : I.bind_ty =
   let tvs = get_all_tvs t in
   (tvs, t)
+
+let rec normalize (t : T.ety) (env : Env.t) : I.ty =
+  let { Env.curr; _ } = env in
+  match t with
+  | T.TField (_, _, _) -> failwith "todo"
+  | T.TCons (c, tes) ->
+      TConsI ((curr, c), List.map (fun t -> normalize t env) tes)
+  | T.TVar x -> TVarI x
+  | T.TArrow (t0, t1) -> TArrowI (normalize t0 env, normalize t1 env)
+  | T.TTuple ts -> TTupleI (List.map (fun t -> normalize t env) ts)
+  | T.TRecord fields ->
+      TRecordI (List.map (fun (x, t) -> (x, normalize t env)) fields)
+  | T.TInternal ti -> ti
+
+let normalize_def (t : T.ety_def) env : I.ty_def =
+  match t with
+  | T.TDAdt (n, tvs, vs) ->
+      let vs =
+        List.map
+          (function
+            | c, None -> (c, None)
+            | c, Some payload -> (c, Some (normalize payload env)))
+          vs
+      in
+      TDAdtI (n, tvs, vs)
+  | T.TDRecord (n, tvs, fields) ->
+      TDRecordI (n, tvs, List.map (fun (x, t) -> (x, normalize t env)) fields)
 
 (* typing expression *)
 let rec tc_expr (e : T.expr) (env : Env.t) : expr * U.t =
@@ -65,33 +92,34 @@ let rec tc_expr (e : T.expr) (env : Env.t) : expr * U.t =
 
 and tc_const c =
   match c with
-  | T.CBool _ -> EConst (c, bool_ty)
-  | T.CInt _ -> EConst (c, int_ty)
-  | T.CString _ -> EConst (c, string_ty)
+  | T.CBool _ -> EConst (c, I.bool_ty)
+  | T.CInt _ -> EConst (c, I.int_ty)
+  | T.CString _ -> EConst (c, I.string_ty)
 
 and tc_var x env =
   let t = Env.get_value_type x env |> inst in
   EVar (x, t)
 
 (* pattern will create bindings under context's type *)
-and tc_pattern p te env : (string * ty) list * U.t =
-  let tc_PCons_aux (cons_ty : ty) (p (* payload pattern *) : pattern) te0 =
+and tc_pattern p te env : pattern * (string * I.ty) list * U.t =
+  let tc_PCons_aux (cons_ty : I.ty) (p (* payload pattern *) : T.pattern) te0
+      =
     match cons_ty with
-    | T.TArrow (pay_ty (* payload type *), te1) ->
+    | I.TArrowI (pay_ty (* payload type *), te1) ->
         let u0 = U.unify te1 te0 in
         let env = U.apply_env u0 env in
         let pay_ty = U.apply u0 pay_ty in
-        let vars, u1 = tc_pattern p pay_ty env in
-        (vars, u0 <.> u1)
+        let p, vars, u1 = tc_pattern p pay_ty env in
+        (p, vars, u0 <.> u1)
     | _ -> failwith "wrong type"
   in
   match (p, te) with
-  | T.PVar x, te -> ([ (x, te) ], U.identity)
+  | T.PVar x, te -> (PVar x, [ (x, te) ], U.identity)
   | T.PCons (c, None), te -> (
       let cons_ty_gen (* type of constructor *) = Env.get_value_type c env in
       let cons_ty = inst cons_ty_gen in
       match cons_ty with
-      | T.TCons (_, []) -> ([], U.identity)
+      | I.TConsI (_, []) -> (PCons (c, None), [], U.identity)
       | _ -> failwith "wrong type")
   | T.PFieldCons (p, c, None), te -> (
       let cons_typed (* constructor *) = tc_field_cons p c env in
@@ -99,11 +127,12 @@ and tc_pattern p te env : (string * ty) list * U.t =
       (* todo: fix cons_ty should unify with te, and tc_field_cons's return
          type has problem *)
       match cons_ty with
-      | T.TCons (_, _) -> ([], U.identity)
+      | I.TConsI (_, _) -> (PCons (c, None), [], U.identity)
       | _ -> failwith "wrong type")
   | T.PCons (c, Some p0 (* pattern *)), te ->
       let cons_ty_gen (* type of constructor *) = Env.get_value_type c env in
-      tc_PCons_aux (inst cons_ty_gen) p0 te
+      let p0, binds, u = tc_PCons_aux (inst cons_ty_gen) p0 te in
+      (PCons (c, Some p0), binds, u)
   | T.PFieldCons (p (* path *), c, Some p0), te ->
       let cons_typed (* typed constructor *) = tc_field_cons p c env in
       let cons_ty = get_ty cons_typed in
@@ -111,25 +140,25 @@ and tc_pattern p te env : (string * ty) list * U.t =
   | T.PVal v, te ->
       let v_typed = tc_const v in
       let _ = U.unify (get_ty v_typed) te in
-      ([], U.identity)
+      (PVal v, [], U.identity)
   | T.PTuple pats, te -> (
-      let u = U.unify te (T.TTuple (List.map (fun _ -> make_tv ()) pats)) in
+      let u = U.unify te (I.TTupleI (List.map (fun _ -> make_tv ()) pats)) in
       let te = u <$> te in
       let env = U.apply_env u env in
       match te with
-      | T.TTuple tes ->
-          let vars, u, _ =
+      | I.TTupleI tes ->
+          let pats, vars, u, _ =
             List.fold_left2
-              (fun (vars_acc, u_acc, env) pat te ->
-                let vars, u = tc_pattern pat te env in
+              (fun (pats_acc, vars_acc, u_acc, env) pat te ->
+                let pat, vars, u = tc_pattern pat te env in
                 let var_acc =
                   List.map (fun (x, t) -> (x, u <$> t)) vars_acc
                 in
                 let env = U.apply_env u env in
-                (var_acc @ vars, u_acc <.> u, env))
-              ([], u, env) pats tes
+                (pats_acc @ [ pat ], var_acc @ vars, u_acc <.> u, env))
+              ([], [], u, env) pats tes
           in
-          (vars, u)
+          (PTuple pats, vars, u)
       | _ -> failwith "wrong")
 
 and tc_let x e0 e1 env =
@@ -195,20 +224,20 @@ and tc_letrec_binding binds env =
 and tc_lambda para body env0 =
   match para with
   | T.PAnn (x, t) ->
-      let env = Env.add_value x ([], t) env0 in
+      let env = Env.add_value x ([], normalize t env0) env0 in
       let body0, u0 = tc_expr body env in
       let body_ty0 = get_ty body0 in
-      (ELam (x, body0, T.TArrow (u0 <$> t, body_ty0)), u0)
+      (ELam (x, body0, I.TArrowI (u0 <$> normalize t env, body_ty0)), u0)
   | T.PBare x ->
       let tv = make_tv () in
       let env = Env.add_value x ([], tv) env0 in
       let body0, u0 = tc_expr body env in
       let body_ty0 = get_ty body0 in
-      (ELam (x, body0, T.TArrow (u0 <$> tv, body_ty0)), u0)
+      (ELam (x, body0, I.TArrowI (u0 <$> tv, body_ty0)), u0)
 
 and tc_if_else c e1 e2 env =
   let c_typed, u0 = tc_expr c env in
-  let u1 = U.unify (get_ty c_typed) bool_ty in
+  let u1 = U.unify (get_ty c_typed) I.bool_ty in
   let env1 = U.apply_env (u0 <.> u1) env in
   let e1_typed, u2 = tc_expr e1 env1 in
   let env2 = U.apply_env u2 env1 in
@@ -230,7 +259,7 @@ and tc_app op arg env =
   let arg_ty1 = get_ty arg_typed1 in
   let op_ty1 = U.apply u1 op_ty0 in
   let tv = make_tv_of "ret" in
-  let u2 = U.unify op_ty1 (T.TArrow (arg_ty1, tv)) in
+  let u2 = U.unify op_ty1 (I.TArrowI (arg_ty1, tv)) in
   let ret_ty2 = U.apply u2 tv in
   let op_typed2 = u1 <.> u2 <$$> op_typed0 in
   let arg_typed2 = u2 <$$> arg_typed1 in
@@ -244,9 +273,10 @@ and tc_cases e bs env =
   let res_ty = make_tv_of "res" in
   let env, bs_typed1, u1, e_ty1, res_ty1 =
     List.fold_left
-      (fun (env, acc, u, e_ty, expect_res_ty) (p (* pattern *), res) ->
+      (fun (env, acc, u, e_ty, expect_res_ty)
+           ((p : T.pattern) (* pattern *), res) ->
         (* get binding created by pattern *)
-        let vars, u1 = tc_pattern p e_ty env in
+        let p, vars, u1 = tc_pattern p e_ty env in
         let expect_res_ty = u1 <$> expect_res_ty in
         let env = U.apply_env u1 env in
         let res = U.apply_expr_untypd u1 res in
@@ -290,7 +320,7 @@ and tc_tuple es env =
         (U.apply_env u0 env, acc @ [ e_typed0 ], u <.> u0))
       (env, [], U.identity) es
   in
-  let tu_te = T.TTuple (List.map get_ty es_typed) in
+  let tu_te = I.TTupleI (List.map get_ty es_typed) in
   (ETuple (es_typed, tu_te), u)
 
 and tc_cons c env =
@@ -303,7 +333,8 @@ and tc_field p x env = failwith "todo"
 
 and tc_ann e te env =
   let e_typed0, u0 = tc_expr e env in
-  let te = u0 <$> te in
+  let env = U.apply_env u0 env in
+  let te = u0 <$> normalize te env in
   let u1 = U.unify te (get_ty e_typed0) in
   (u1 <$$> e_typed0, u0 <.> u1)
 
@@ -318,19 +349,23 @@ let rec tc_toplevel (top : T.top_level) env : top_level * U.t * Env.t =
       let env, vars, lams, u = tc_letrec_binding binds env in
       let binds = List.combine vars lams in
       (TopLetRec binds, u, env)
-  | T.TopTypeDef (TDAdt (name, ty_para_names, bs) as def) ->
+  | T.TopTypeDef (TDAdt (name, ty_para_names, bs) as def_ext) ->
+      let tid = Env.mk_tid name env in
+      let def = normalize_def def_ext env in
+      let[@warning "-8"] (I.TDAdtI (_, _, bs)) = def in
       let env = Env.add_type_def def env in
-      let constructors = analyze_constructors name ty_para_names bs in
+      let constructors = analyze_constructors tid ty_para_names bs in
       let env = { env with values = constructors @ env.values } in
       (TopTypeDef def, U.identity, env)
-  | T.TopTypeDef (TDRecord (_, _, _) as def) ->
+  | T.TopTypeDef (TDRecord (_, _, _) as def_ext) ->
+      let def = normalize_def def_ext env in
       (TopTypeDef def, U.identity, Env.add_type_def def env)
   | T.TopMod (_, _) -> failwith "todo"
 
-and analyze_constructors ty_name para_names (bs : T.variant list) :
-    (string * bind_ty) list =
+and analyze_constructors (tid : I.ty_id) para_names (bs : I.variant list) :
+    (string * I.bind_ty) list =
   List.map
-    (fun (branch : T.variant) ->
+    (fun (branch : I.variant) ->
       match branch with
       | c, None ->
           let renamed_paras =
@@ -338,24 +373,22 @@ and analyze_constructors ty_name para_names (bs : T.variant list) :
           in
           ( c,
             ( renamed_paras,
-              T.TCons (ty_name, List.map (fun id -> T.TVar id) renamed_paras)
+              I.TConsI (tid, List.map (fun id -> I.TVarI id) renamed_paras)
             ) )
       | c, Some payload ->
           let renamed_paras =
             List.map (fun id -> Ident.rename id) para_names
           in
           let renamed_para_tys =
-            List.map (fun id -> T.TVar id) renamed_paras
+            List.map (fun id -> I.TVarI id) renamed_paras
           in
           let payload_gen = (para_names, payload) in
           ( c,
             ( renamed_paras,
-              T.(
-                TArrow
-                  ( inst_with payload_gen renamed_para_tys,
-                    TCons
-                      (ty_name, List.map (fun id -> T.TVar id) renamed_paras)
-                  )) ) ))
+              I.TArrowI
+                ( inst_with payload_gen renamed_para_tys,
+                  TConsI (tid, List.map (fun id -> I.TVarI id) renamed_paras)
+                ) ) ))
     bs
 
 (* typing program (content of module) *)

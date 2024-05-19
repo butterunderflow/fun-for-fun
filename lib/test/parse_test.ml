@@ -7,11 +7,11 @@ let print_sexp s =
 let print_parsed_program str =
   parse_string_program str |> sexp_of_program |> print_sexp
 
-let print_parsed_path str =
-  parse_string_path str |> sexp_of_path |> print_sexp
+let print_parsed_mod_expr str =
+  parse_string_mod_expr str |> sexp_of_mod_expr |> print_sexp
 
 let print_parsed_type_expr str =
-  parse_string_type_expr str |> sexp_of_type_expr |> print_sexp
+  parse_string_type_expr str |> sexp_of_ety |> print_sexp
 
 let%expect_test "Test: expression parsing" =
   let print_parsed str =
@@ -25,6 +25,8 @@ let%expect_test "Test: expression parsing" =
   [%expect {| (EConst (CBool true)) |}];
   print_parsed "let x = 1 in y";
   [%expect {| (ELet x (EConst (CInt 1)) (EVar y)) |}];
+  print_parsed {| Nil |};
+  [%expect {|(ECons Nil)|}];
   print_parsed "1,3,4,(5,6),7";
   [%expect
     {|
@@ -36,6 +38,8 @@ let%expect_test "Test: expression parsing" =
     {|
     (ETuple
       ((EApp (EVar f) (EConst (CInt 1))) (EApp (EVar f) (EConst (CBool true))))) |}];
+  print_parsed {|Cons (1)|};
+  [%expect {| (EApp (ECons Cons) (EConst (CInt 1))) |}];
   print_parsed
     {|
      let rec odd = fun x -> even x
@@ -50,12 +54,14 @@ let%expect_test "Test: expression parsing" =
         (even ((PAnn x (TCons int ())) (EApp (EVar odd) (EVar x)))))
       (EApp (EVar odd) (EConst (CInt 1)))) |}];
   print_parsed {|E.f y|};
-  [%expect {| (EApp (EField (PName E) f) (EVar y)) |}];
+  [%expect {| (EApp (EField (MEName E) f) (EVar y)) |}];
+  print_parsed {|Cons 1|};
+  [%expect {| (EApp (ECons Cons) (EConst (CInt 1))) |}];
   print_parsed {|Cons (x, y)|};
   [%expect {| (EApp (ECons Cons) (ETuple ((EVar x) (EVar y)))) |}];
   print_parsed {|L.Cons (x, y)|};
   [%expect
-    {| (EApp (EFieldCons (PName L) Cons) (ETuple ((EVar x) (EVar y)))) |}];
+    {| (EApp (EFieldCons (MEName L) Cons) (ETuple ((EVar x) (EVar y)))) |}];
   print_parsed {|fun x -> x|};
   [%expect {| (ELam ((PBare x) (EVar x))) |}];
   print_parsed {|f 1|};
@@ -108,17 +114,17 @@ let%expect_test "Test: full program parsing" =
          (even ((PBare x) (EApp (EVar odd) (EVar x))))))) |}]
 
 let%expect_test "Test: path parsing" =
-  print_parsed_path {|X|};
-  [%expect {| (PName X) |}];
-  print_parsed_path {|X.Y|};
-  [%expect {| (PMem (PName X) Y) |}];
-  print_parsed_path {|X(Y)|};
-  [%expect {| (PApply (PName X) (PName Y)) |}];
-  print_parsed_path {|X.Y(Z(N))(W.M.N)|};
+  print_parsed_mod_expr {|X|};
+  [%expect {| (MEName X) |}];
+  print_parsed_mod_expr {|X.Y|};
+  [%expect {| (MEField (MEName X) Y) |}];
+  print_parsed_mod_expr {|X(Y)|};
+  [%expect {| (MEApply (MEName X) (MEName Y)) |}];
+  print_parsed_mod_expr {|X.Y(Z(N))(W.M.N)|};
   [%expect
     {|
-    (PApply (PApply (PMem (PName X) Y) (PApply (PName Z) (PName N)))
-      (PMem (PMem (PName W) M) N)) |}]
+    (MEApply (MEApply (MEField (MEName X) Y) (MEApply (MEName Z) (MEName N)))
+      (MEField (MEField (MEName W) M) N)) |}]
 
 let%expect_test "Test: type expression parsing" =
   print_parsed_type_expr "string";
@@ -147,11 +153,11 @@ let%expect_test "Test: type expression parsing" =
       ((x (TCons int ())) (y (TCons float ()))
         (z (TArrow (TCons int ()) (TCons float ()))))) |}];
   print_parsed_type_expr "(int, float) T.t";
-  [%expect {| (TField (PName T) t ((TCons int ()) (TCons float ()))) |}];
+  [%expect {| (TField (MEName T) t ((TCons int ()) (TCons float ()))) |}];
   print_parsed_type_expr "int T(M).t";
-  [%expect {| (TField (PApply (PName T) (PName M)) t ((TCons int ()))) |}];
+  [%expect {| (TField (MEApply (MEName T) (MEName M)) t ((TCons int ()))) |}];
   print_parsed_type_expr "(int) T.t";
-  [%expect {| (TField (PName T) t ((TCons int ()))) |}]
+  [%expect {| (TField (MEName T) t ((TCons int ()))) |}]
 
 let%expect_test "Test: top level module" =
   print_parsed_program {|
@@ -201,12 +207,12 @@ let%expect_test "Test: module expression" =
 
 let%expect_test "Test: module type" =
   let print_parsed str =
-    parse_string_mod_type str |> sexp_of_mod_type |> print_sexp
+    parse_string_mod_type str |> sexp_of_emod_ty |> print_sexp
   in
   print_parsed {|M|};
   [%expect {| (MTName M) |}];
   print_parsed {|M.X(M).E|};
-  [%expect {| (MTField (PApply (PMem (PName M) X) (PName M)) E) |}];
+  [%expect {| (MTField (MEApply (MEField (MEName M) X) (MEName M)) E) |}];
   print_parsed {|sig val x : int end|};
   [%expect {| (MTSig ((TValueSpec x (TCons int ())))) |}];
   print_parsed {|functor (M:M) -> sig val x: int end|};

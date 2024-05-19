@@ -1,58 +1,54 @@
-open Types
+open Types_in
+module E = Types_ext
 module SMap = Map.Make (Ident)
+module Tree = Syntax.Parsetree
 
 type t = ty SMap.t
 
 let apply u te =
   let mapper =
     object (_ : 'self)
-      inherit ['self] Syntax.Parsetree.map
+      inherit ['self] map
 
-      method! visit_TVar _ x =
-        SMap.find_opt x u |> Option.value ~default:(Tree.TVar x)
+      method! visit_TVarI _ x =
+        SMap.find_opt x u |> Option.value ~default:(TVarI x)
 
-      method! visit_type_def _ def = def
+      method! visit_ty_def _ def = def
     end
   in
-  mapper#visit_type_expr () te
+  mapper#visit_ty () te
 
 let apply_top u top =
   let mapper =
-    object (self : 'self)
+    object (_ : 'self)
       inherit ['self] Typedtree.map
 
-      method visit_ty = self#visit_type_expr
+      method! visit_TVarI _ x =
+        SMap.find_opt x u |> Option.value ~default:(TVarI x)
 
-      method! visit_TVar _ x =
-        SMap.find_opt x u |> Option.value ~default:(Tree.TVar x)
-
-      method! visit_type_def _ def = def
+      method! visit_ty_def _ def = def
     end
   in
   mapper#visit_top_level () top
 
 let apply_expr u (e : Typedtree.expr) =
   let mapper =
-    object (self : 'self)
+    object (_ : 'self)
       inherit ['self] Typedtree.map
 
-      method visit_ty = self#visit_type_expr
-
-      method! visit_TVar _ x =
-        SMap.find_opt x u |> Option.value ~default:(Tree.TVar x)
+      method! visit_TVarI _ x =
+        SMap.find_opt x u |> Option.value ~default:(TVarI x)
     end
   in
   mapper#visit_expr () e
 
 let apply_expr_untypd u (e : Syntax.Parsetree.expr) =
   let mapper =
-    object (self : 'self)
+    object (_ : 'self)
       inherit ['self] Syntax.Parsetree.map
 
-      method visit_ty = self#visit_type_expr
-
       method! visit_TVar _ x =
-        SMap.find_opt x u |> Option.value ~default:(Tree.TVar x)
+        TInternal (SMap.find_opt x u |> Option.value ~default:(TVarI x))
     end
   in
   mapper#visit_expr () e
@@ -95,25 +91,25 @@ let occur x te =
     object (_ : 'self)
       inherit ['self] Tree.iter
 
-      method! visit_TVar _ x' = if x = x' then occured := true
+      method! visit_TVarI _ x' = if x = x' then occured := true
     end
   in
-  visitor#visit_type_expr () te;
+  visitor#visit_ty () te;
   if !occured then raise (OccurError (x, te))
 
 let rec unify (t0 : ty) (t1 : ty) : t =
   if same t0 t1 then identity
   else
     match (t0, t1) with
-    | TVar x, t1 ->
+    | TVarI x, t1 ->
         occur x t1;
         make_subst x t1
-    | _, TVar _y -> unify t1 t0
-    | TCons (tc0, tes0), TCons (tc1, tes1) when tc0 = tc1 ->
+    | _, TVarI _y -> unify t1 t0
+    | TConsI (tc0, tes0), TConsI (tc1, tes1) when tc0 = tc1 ->
         unify_lst tes0 tes1
-    | TArrow (op0, arg0), TArrow (op1, arg1) ->
+    | TArrowI (op0, arg0), TArrowI (op1, arg1) ->
         unify_lst [ op0; arg0 ] [ op1; arg1 ]
-    | TTuple tes0, TTuple tes1 -> unify_lst tes0 tes1
+    | TTupleI tes0, TTupleI tes1 -> unify_lst tes0 tes1
     (* by default raise an exception *)
     | _ ->
         let t0_str =

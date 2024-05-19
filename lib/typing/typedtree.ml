@@ -1,12 +1,8 @@
 open Sexplib.Conv
-open Types
-module T = Tree
+open Types_in
+module T = Syntax.Parsetree
 
 type constant = T.constant [@@deriving sexp]
-
-type pattern = T.pattern [@@deriving sexp]
-
-type path = T.path [@@deriving sexp]
 
 [@@@warning "-17"]
 
@@ -21,13 +17,13 @@ type expr =
   | EApp of expr * expr * ty
   | EAnn of expr * ty
   | ETuple of expr list * ty
-  | EField of path * ty
+  | EField of mod_expr * ty
   | ECons of string * ty
-  | EFieldCons of path * string * ty
+  | EFieldCons of mod_expr * string * ty
 
 and lambda_typed = string * expr * ty
 
-and functor_para = string * T.mod_type
+and functor_para = string * mod_ty
 
 and functor_expr = functor_para * mod_expr
 
@@ -37,17 +33,23 @@ and mod_expr =
   | MEName of string (* M *)
   | MEStruct of mod_body (* struct ... end *)
   | MEFunctor of functor_expr (* functor (M: MT) -> ... *)
-  | MEField of path * string (* M1.M2 *)
+  | MEField of mod_expr * string (* M1.M2 *)
   | MEApply of mod_expr * mod_expr (* M1(...) *)
-  | MERestrict of mod_expr * T.mod_type (* M: M_ty *)
 
 and top_level =
   | TopLet of string * expr * ty
   | TopLetRec of (string * lambda_typed) list
-  | TopTypeDef of T.type_def
-  | TopMod of string * mod_expr * T.mod_type
+  | TopTypeDef of ty_def
+  | TopMod of string * mod_expr
 
 and program = top_level list
+
+and pattern =
+  (* simplest pattern is enough after type info has been filled *)
+  | PVal of constant
+  | PCons of string * pattern option (* Cons (1, 2) *)
+  | PVar of string
+  | PTuple of pattern list (* (x, y, z) *)
 [@@deriving
   sexp,
     visitors { variety = "iter"; name = "tree_iter" },
@@ -57,11 +59,7 @@ class virtual ['self] map =
   object (self : 'self)
     inherit ['self] Syntax.Parsetree.constant_map
 
-    inherit! ['self] Syntax.Parsetree.pattern_map
-
-    inherit! ['self] Syntax.Parsetree.path_map
-
-    inherit! ['self] Syntax.Parsetree.type_map
+    inherit! ['self] Syntax.Types_in.ty_map
 
     method visit_ident env id =
       Ident.mk_ident
