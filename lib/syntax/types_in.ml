@@ -9,10 +9,15 @@ type ty_id = int (* module type id *) * string
 (* normalized type expression *)
 and ty =
   | TConsI of ty_id * ty list (* x list *)
-  | TVarI of Ident.ident (* 'var *)
+  | TVarI of tv ref (* 'var *)
+  | TQVarI of Ident.ident
   | TArrowI of ty * ty
   | TTupleI of ty list
   | TRecordI of (string * ty) list
+
+and tv =
+  | Unbound of Ident.ident
+  | Link of ty
 
 and bind_ty = Ident.ident list * ty
 

@@ -102,7 +102,7 @@ functor_bind:
 type_def:
     | TYPE LPAREN tvs=separated_list(COMMA, TYPEVAR) RPAREN n=IDENT
         EQ vs=separated_list(OR, variant) END
-                { TDAdt (n, (List.map (fun x -> Ident.from x) tvs), vs) }
+                { TDAdt (n, (List.map Ident.from tvs), vs) }
 
 pattern:
     | n=IDENT { PVar n } (* variable pattern *)
