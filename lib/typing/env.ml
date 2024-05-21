@@ -34,6 +34,12 @@ let init =
 
 let mk_tid tn env = (env.curr, tn)
 
+let captured (env : t) (tpv : Types_in.tv ref) =
+  match tpv with
+  | { contents = I.Unbound _ } ->
+      List.exists (fun (_, (_, te)) -> Unify.occur tpv te) env.values
+  | { contents = I.Link _ } -> false
+
 (***********************)
 let dbg env =
   let values =
