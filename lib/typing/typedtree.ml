@@ -38,7 +38,7 @@ and mod_expr =
   | MERestrict of mod_expr * mod_ty
 
 and top_level =
-  | TopLet of string * expr * ty
+  | TopLet of string * expr
   | TopLetRec of (string * lambda_typed) list
   | TopTypeDef of ty_def
   | TopMod of string * mod_expr

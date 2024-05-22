@@ -173,7 +173,7 @@ let%expect_test "Test: program toplevel typing" =
      let x = 1
      |};
   [%expect
-    {| ((TopLet x (EConst (CInt 1) (TConsI (0 int) ())) (TConsI (0 int) ()))) |}];
+    {| ((TopLet x (EConst (CInt 1) (TConsI (0 int) ())))) |}];
   print_typed
     {|
      let rec f = fun x -> x
@@ -224,12 +224,11 @@ let%expect_test "Test: program toplevel typing" =
   [%expect
     {|
     ((TopTypeDef (TDAdtI int_l () ((Cons ((TConsI (0 int) ()))) (Nil ()))))
-      (TopLet c (ECons Nil (TConsI (0 int_l) ())) (TConsI (0 int_l) ()))
+      (TopLet c (ECons Nil (TConsI (0 int_l) ())))
       (TopLet co
         (EApp (ECons Cons (TArrowI (TConsI (0 int) ()) (TConsI (0 int_l) ())))
           (EConst (CInt 1) (TConsI (0 int) ()))
-          (TVarI (Link (TConsI (0 int_l) ()))))
-        (TVarI (Link (TConsI (0 int_l) ()))))) |}];
+          (TVarI (Link (TConsI (0 int_l) ())))))) |}];
   print_effect
     {|
      type () int_l 
@@ -267,13 +266,12 @@ let%expect_test "Test: program toplevel typing" =
   [%expect
     {|
     ((TopTypeDef (TDAdtI int_l () ((Cons ((TConsI (0 int) ()))) (Nil ()))))
-      (TopLet x (ECons Nil (TConsI (0 int_l) ())) (TConsI (0 int_l) ()))
+      (TopLet x (ECons Nil (TConsI (0 int_l) ())))
       (TopLet f
         (ECase (EVar x (TConsI (0 int_l) ()))
           (((PCons Cons ((PVar x))) (EVar x (TConsI (0 int) ())))
             ((PCons Nil ()) (EConst (CInt 0) (TConsI (0 int) ()))))
-          (TVarI (Link (TConsI (0 int) ()))))
-        (TVarI (Link (TConsI (0 int) ()))))) |}];
+          (TVarI (Link (TConsI (0 int) ())))))) |}];
 
   print_typed
     {|
@@ -293,8 +291,7 @@ let%expect_test "Test: program toplevel typing" =
          ((Cons ((TTupleI ((TQVarI 'a/0) (TQVarI 'b/0))))) (Nil ()))))
       (TopLet x
         (ECons Nil
-          (TConsI (0 int_l) ((TVarI (Unbound 'a/1)) (TVarI (Unbound 'b/2)))))
-        (TConsI (0 int_l) ((TVarI (Unbound 'a/1)) (TVarI (Unbound 'b/2)))))
+          (TConsI (0 int_l) ((TVarI (Unbound 'a/1)) (TVarI (Unbound 'b/2))))))
       (TopLet f
         (ECase
           (EVar x
@@ -312,12 +309,7 @@ let%expect_test "Test: program toplevel typing" =
             (Link
               (TTupleI
                 ((TVarI (Link (TVarI (Link (TVarI (Unbound '_t/7))))))
-                  (TVarI (Link (TVarI (Link (TVarI (Unbound '_t/6)))))))))))
-        (TVarI
-          (Link
-            (TTupleI
-              ((TVarI (Link (TVarI (Link (TVarI (Unbound '_t/7))))))
-                (TVarI (Link (TVarI (Link (TVarI (Unbound '_t/6)))))))))))) |}];
+                  (TVarI (Link (TVarI (Link (TVarI (Unbound '_t/6))))))))))))) |}];
   print_effect
     {|
      type ('a, 'b) int_l
@@ -358,13 +350,12 @@ let%expect_test "Test: full program typing" =
   in
   print_typed {| let x = 1 |};
   [%expect
-    {| ((TopLet x (EConst (CInt 1) (TConsI (0 int) ())) (TConsI (0 int) ()))) |}];
+    {| ((TopLet x (EConst (CInt 1) (TConsI (0 int) ())))) |}];
   print_typed {| module M = struct let x = 1 end |};
   [%expect
     {|
     ((TopMod M
-       (MEStruct
-         ((TopLet x (EConst (CInt 1) (TConsI (0 int) ())) (TConsI (0 int) ())))
+       (MEStruct ((TopLet x (EConst (CInt 1) (TConsI (0 int) ()))))
          (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ()))))) (ty_defs ())
            (mod_defs ()))))) |}];
   print_typed
@@ -374,8 +365,7 @@ let%expect_test "Test: full program typing" =
      |};
   [%expect {|
     ((TopMod M
-       (MEStruct
-         ((TopLet x (EConst (CInt 1) (TConsI (0 int) ())) (TConsI (0 int) ())))
+       (MEStruct ((TopLet x (EConst (CInt 1) (TConsI (0 int) ()))))
          (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ()))))) (ty_defs ())
            (mod_defs ()))))
       (TopLet c
@@ -383,8 +373,7 @@ let%expect_test "Test: full program typing" =
           (MEName M
             (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ()))))) (ty_defs ())
               (mod_defs ())))
-          x (TConsI (0 int) ()))
-        (TConsI (0 int) ()))) |}];
+          x (TConsI (0 int) ())))) |}];
   print_typed
     {|
      module M =
@@ -400,7 +389,7 @@ let%expect_test "Test: full program typing" =
     ((TopMod M
        (MEStruct
          ((TopTypeDef (TDAdtI t () ((Nil ()))))
-           (TopLet x (ECons Nil (TConsI (1 t) ())) (TConsI (1 t) ())))
+           (TopLet x (ECons Nil (TConsI (1 t) ()))))
          (MTMod (id 1)
            (val_defs ((x (() (TConsI (1 t) ()))) (Nil (() (TConsI (1 t) ())))))
            (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_defs ()))))
@@ -411,5 +400,4 @@ let%expect_test "Test: full program typing" =
               (val_defs
                 ((x (() (TConsI (1 t) ()))) (Nil (() (TConsI (1 t) ())))))
               (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_defs ())))
-          x (TConsI (1 t) ()))
-        (TConsI (1 t) ()))) |}]
+          x (TConsI (1 t) ())))) |}]
