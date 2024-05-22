@@ -107,40 +107,6 @@ let pool_make_tv n =
   | Some tpv -> tpv
   | None -> make_tv ()
 
-let rec normalize (t : T.ety) indef (env : Env.t) : I.ty =
-  let { Env.curr; _ } = env in
-  match t with
-  | T.TField (_, _, _) -> failwith "todo"
-  | T.TCons (c, tes) ->
-      TConsI ((curr, c), List.map (fun t -> normalize t indef env) tes)
-  | T.TVar x -> if indef then I.TQVarI x else pool_make_tv x
-  | T.TArrow (t0, t1) ->
-      TArrowI (normalize t0 indef env, normalize t1 indef env)
-  | T.TTuple ts -> TTupleI (List.map (fun t -> normalize t indef env) ts)
-  | T.TRecord fields ->
-      TRecordI (List.map (fun (x, t) -> (x, normalize t indef env)) fields)
-  | T.TInternal ti -> ti
-
-let normalize_def (t : T.ety_def) env : I.ty_def =
-  let normed =
-    match t with
-    | T.TDAdt (n, tvs, vs) ->
-        let vs =
-          List.map
-            (function
-              | c, None -> (c, None)
-              | c, Some payload -> (c, Some (normalize payload true env)))
-            vs
-        in
-        I.TDAdtI (n, tvs, vs)
-    | T.TDRecord (n, tvs, fields) ->
-        I.TDRecordI
-          (n, tvs, List.map (fun (x, t) -> (x, normalize t true env)) fields)
-  in
-  normed
-
-let normalize t env = normalize t false env
-
 (* typing expression *)
 let rec tc_expr (e : T.expr) (env : Env.t) : expr =
   (* look a binding won't unify anything *)
@@ -357,7 +323,7 @@ and tc_ann e te env =
   e_typed
 
 (* typing top levels *)
-let rec tc_toplevel (top : T.top_level) env : top_level * Env.t =
+and tc_toplevel (top : T.top_level) env : top_level * Env.t =
   let old_pool = !tv_pool in
   reset_pool ();
   let top_typed =
@@ -413,3 +379,40 @@ and tc_program (prog : T.program) env : program * Env.t =
       let top_typed0, env = tc_toplevel top env in
       let rest_typed1, env = tc_program rest env in
       (top_typed0 :: rest_typed1, env)
+
+and normalize_ty (t : T.ety) indef (env : Env.t) : I.ty =
+  let { Env.curr; _ } = env in
+  match t with
+  | T.TField (_, _, _) -> failwith "todo"
+  | T.TCons (c, tes) ->
+      TConsI ((curr, c), List.map (fun t -> normalize_ty t indef env) tes)
+  | T.TVar x -> if indef then I.TQVarI x else pool_make_tv x
+  | T.TArrow (t0, t1) ->
+      TArrowI (normalize_ty t0 indef env, normalize_ty t1 indef env)
+  | T.TTuple ts -> TTupleI (List.map (fun t -> normalize_ty t indef env) ts)
+  | T.TRecord fields ->
+      TRecordI
+        (List.map (fun (x, t) -> (x, normalize_ty t indef env)) fields)
+  | T.TInternal ti -> ti
+
+and normalize_def (t : T.ety_def) env : I.ty_def =
+  let normed =
+    match t with
+    | T.TDAdt (n, tvs, vs) ->
+        let vs =
+          List.map
+            (function
+              | c, None -> (c, None)
+              | c, Some payload -> (c, Some (normalize_ty payload true env)))
+            vs
+        in
+        I.TDAdtI (n, tvs, vs)
+    | T.TDRecord (n, tvs, fields) ->
+        I.TDRecordI
+          ( n,
+            tvs,
+            List.map (fun (x, t) -> (x, normalize_ty t true env)) fields )
+  in
+  normed
+
+and normalize t env = normalize_ty t false env
