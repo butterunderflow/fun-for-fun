@@ -34,7 +34,7 @@ and ty_def =
 and mod_ty =
   | MTMod of {
       id : int; (* give every module type an identity *)
-      val_defs : (string * ty) list;
+      val_defs : (string * bind_ty) list;
       ty_defs : ty_def list;
       mod_defs : (string * mod_ty) list;
     }

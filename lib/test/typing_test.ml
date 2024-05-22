@@ -345,7 +345,7 @@ let%expect_test "Test: program toplevel typing" =
       0
     ------------------Envirment Debug Info End-------------------------- |}]
 
-let%expect_test "Test: type check pattern" =
+let%expect_test "Test: full program typing" =
   let print_typed str =
     Ident.refresh ();
     let prog = parse_string_program str in
@@ -356,4 +356,60 @@ let%expect_test "Test: type check pattern" =
     | Unify.UnificationError (t0, t1) ->
         Printf.printf "Can't unify %s with %s" t0 t1
   in
-  ()
+  print_typed {| let x = 1 |};
+  [%expect
+    {| ((TopLet x (EConst (CInt 1) (TConsI (0 int) ())) (TConsI (0 int) ()))) |}];
+  print_typed {| module M = struct let x = 1 end |};
+  [%expect
+    {|
+    ((TopMod M
+       (MEStruct
+         ((TopLet x (EConst (CInt 1) (TConsI (0 int) ())) (TConsI (0 int) ())))
+         (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ()))))) (ty_defs ())
+           (mod_defs ()))))) |}];
+  print_typed
+    {|
+     module M = struct let x = 1 end
+     let c = M.x
+     |};
+  [%expect {|
+    ((TopMod M
+       (MEStruct
+         ((TopLet x (EConst (CInt 1) (TConsI (0 int) ())) (TConsI (0 int) ())))
+         (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ()))))) (ty_defs ())
+           (mod_defs ()))))
+      (TopLet c
+        (EField
+          (MEName M
+            (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ()))))) (ty_defs ())
+              (mod_defs ())))
+          x (TConsI (0 int) ()))
+        (TConsI (0 int) ()))) |}];
+  print_typed
+    {|
+     module M =
+       struct
+         type () t = Nil
+         end
+
+         let x = Nil
+       end
+     let c = M.x
+     |};
+  [%expect {|
+    ((TopMod M
+       (MEStruct
+         ((TopTypeDef (TDAdtI t () ((Nil ()))))
+           (TopLet x (ECons Nil (TConsI (1 t) ())) (TConsI (1 t) ())))
+         (MTMod (id 1)
+           (val_defs ((x (() (TConsI (1 t) ()))) (Nil (() (TConsI (1 t) ())))))
+           (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_defs ()))))
+      (TopLet c
+        (EField
+          (MEName M
+            (MTMod (id 1)
+              (val_defs
+                ((x (() (TConsI (1 t) ()))) (Nil (() (TConsI (1 t) ())))))
+              (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_defs ())))
+          x (TConsI (1 t) ()))
+        (TConsI (1 t) ()))) |}]

@@ -40,7 +40,8 @@ let captured (env : t) (tpv : Types_in.tv ref) =
       List.exists (fun (_, (_, te)) -> Unify.occur tpv te) env.values
   | { contents = I.Link _ } -> false
 
-(***********************)
+
+(**********Debug Function*************)
 let dbg env =
   let values =
     env.values

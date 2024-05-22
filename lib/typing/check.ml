@@ -96,6 +96,10 @@ let generalize (t : I.ty) env : I.bind_ty =
   in
   (!qvs, gen t)
 
+let env_id = ref 0
+
+let enter_env () = env_id := 1 + !env_id
+
 let tv_pool = ref IdMap.empty
 
 let reset_pool () = tv_pool := IdMap.empty
@@ -106,6 +110,38 @@ let pool_make_tv n =
   match IdMap.find_opt n !tv_pool with
   | Some tpv -> tpv
   | None -> make_tv ()
+
+(* prune from env1 last of env0 *)
+let prune (env0 : Env.t) (env1 : Env.t) : Env.t =
+  let rec drop l n =
+    match (l, n) with
+    | _, 0 -> []
+    | h' :: l', n' -> h' :: drop l' (n' - 1)
+    | _ -> failwith "neverreach"
+  in
+  let aux l0 l1 = drop l0 (List.length l0 - List.length l1) in
+  match (env0, env1) with
+  | ( {
+        values = vs0;
+        types = ts0;
+        modules = ms0;
+        module_dict = md0;
+        curr = id0;
+      },
+      {
+        values = vs1;
+        types = ts1;
+        modules = ms1;
+        module_dict = md1;
+        curr = _;
+      } ) ->
+      {
+        values = aux vs0 vs1;
+        types = aux ts0 ts1;
+        modules = aux ms0 ms1;
+        module_dict = [];
+        curr = id0;
+      }
 
 (* typing expression *)
 let rec tc_expr (e : T.expr) (env : Env.t) : expr =
@@ -158,10 +194,10 @@ and tc_pattern p te env : pattern * (string * I.ty) list =
   | T.PFieldCons (p, c, None), te -> (
       let cons_typed (* constructor *) = tc_field_cons p c env in
       let cons_ty = get_ty cons_typed in
-      (* todo: fix cons_ty should unify with te, and tc_field_cons's return
-         type has problem *)
+      U.unify cons_ty te;
+      (* unify cons_ty with te *)
       match cons_ty with
-      | I.TConsI (_, _) -> (PCons (c, None), [])
+      | I.TConsI (_, _) -> (PCons (c, None), [ (* bind nothing *) ])
       | _ -> failwith "wrong type")
   | T.PCons (c, Some p0 (* pattern *)), te ->
       let cons_ty_gen (* type of constructor *) = Env.get_value_type c env in
@@ -179,7 +215,6 @@ and tc_pattern p te env : pattern * (string * I.ty) list =
       U.unify te (I.TTupleI (List.map (fun _ -> make_tv ()) pats));
       match te with
       | I.TTupleI tes ->
-          (* todo *)
           let pats, vars =
             List.fold_left2
               (fun (pats_acc, vars_acc) pat te ->
@@ -280,19 +315,21 @@ and tc_cases e bs env =
       (fun bs_typed ((p : T.pattern) (* pattern *), res) ->
         (* get binding created by pattern *)
         let p, vars = tc_pattern p e_ty env in
-        (* todo: do some thing like let res = U.apply_expr_untypd u1 res in *)
-        (* check result expression *)
+        (* we don't need do some thing like [let res = U.apply_expr_untypd u1
+           res], the [res_typed] will get unified result when type variable
+           pool being maintained correctly *)
+        (* check result expression in its corresponding environment *)
         let env =
           List.fold_left
             (fun env (v, ty) ->
               Env.add_value v ([], ty (* no generalize here*)) env)
             env vars
         in
-        let res_typed' = tc_expr res env in
-        let res_ty' = get_ty res_typed' in
+        let res_typed = tc_expr res env in
+        let res_ty' = get_ty res_typed in
         (* unify checked result type with current result type *)
         U.unify res_ty' res_ty;
-        bs_typed @ [ (p, res_typed') ])
+        bs_typed @ [ (p, res_typed) ])
       [] bs
   in
   ECase (e_typed, bs_typed, res_ty)
@@ -312,9 +349,19 @@ and tc_cons c env =
   let t = Env.get_value_type c env |> inst in
   ECons (c, t)
 
-and tc_field_cons p c env = failwith "todo"
+and tc_field_cons me c env =
+  let me_typed = tc_mod me env in
+  match get_mod_ty me_typed with
+  | I.MTMod { val_defs; _ } ->
+      EFieldCons (me_typed, c, inst (List.assoc c val_defs))
+  | I.MTFun _ -> failwith "try get field from functor"
 
-and tc_field p x env = failwith "todo"
+and tc_field me x env =
+  let me_typed = tc_mod me env in
+  match get_mod_ty me_typed with
+  | I.MTMod { val_defs; _ } ->
+      EField (me_typed, x, inst (List.assoc x val_defs))
+  | I.MTFun _ -> failwith "try get field from functor"
 
 and tc_ann e te env =
   let e_typed = tc_expr e env in
@@ -347,7 +394,10 @@ and tc_toplevel (top : T.top_level) env : top_level * Env.t =
     | T.TopTypeDef (TDRecord (_, _, _) as def_ext) ->
         let def = normalize_def def_ext env in
         (TopTypeDef def, Env.add_type_def def env)
-    | T.TopMod (_, _) -> failwith "todo"
+    | T.TopMod (name, me) ->
+        let me_typed = tc_mod me env in
+        ( TopMod (name, me_typed),
+          Env.add_module name (get_mod_ty me_typed) env )
   in
   tv_pool := old_pool;
   top_typed
@@ -372,28 +422,46 @@ and analyze_constructors (tid : I.ty_id) para_names (bs : I.variant list) :
     bs
 
 (* typing program (content of module) *)
-and tc_program (prog : T.program) env : program * Env.t =
+and tc_tops (prog : T.top_level list) env : program * Env.t =
   match prog with
   | [] -> ([], env)
   | top :: rest ->
       let top_typed0, env = tc_toplevel top env in
-      let rest_typed1, env = tc_program rest env in
+      let rest_typed1, env = tc_tops rest env in
       (top_typed0 :: rest_typed1, env)
 
-and normalize_ty (t : T.ety) indef (env : Env.t) : I.ty =
-  let { Env.curr; _ } = env in
-  match t with
-  | T.TField (_, _, _) -> failwith "todo"
-  | T.TCons (c, tes) ->
-      TConsI ((curr, c), List.map (fun t -> normalize_ty t indef env) tes)
-  | T.TVar x -> if indef then I.TQVarI x else pool_make_tv x
-  | T.TArrow (t0, t1) ->
-      TArrowI (normalize_ty t0 indef env, normalize_ty t1 indef env)
-  | T.TTuple ts -> TTupleI (List.map (fun t -> normalize_ty t indef env) ts)
-  | T.TRecord fields ->
-      TRecordI
-        (List.map (fun (x, t) -> (x, normalize_ty t indef env)) fields)
-  | T.TInternal ti -> ti
+and make_mt val_defs ty_defs mod_defs =
+  enter_env ();
+  I.MTMod { id = !env_id; val_defs; ty_defs; mod_defs }
+
+and make_env_mt { Env.values; types; modules; module_dict; curr } =
+  I.MTMod
+    { id = curr; val_defs = values; ty_defs = types; mod_defs = modules }
+
+and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
+  match me with
+  | T.MEName name -> MEName (name, Env.get_module_sig name env)
+  | T.MEStruct body ->
+      enter_env ();
+      let body_typed, env' = tc_tops body { env with curr = !env_id } in
+      let env_diff = prune env' env in
+      let mt = make_env_mt env_diff in
+      MEStruct (body_typed, mt)
+  | T.MEFunctor ((name, emt), me) -> failwith "todo"
+  | T.MEField (me, name) -> (
+      let me_typed = tc_mod me env in
+      match get_mod_ty me_typed with
+      | I.MTMod { mod_defs; _ } ->
+          MEField (me_typed, name, List.assoc name mod_defs)
+      | I.MTFun _ -> failwith "try get field from functor")
+  | T.MEApply (_, _) -> failwith "todo"
+  | T.MERestrict (me, mt) ->
+      let me_typed = tc_mod me env in
+      let mty = normalize_mt mt env in
+      check_subtype (get_mod_ty me_typed) mt;
+      MERestrict (me_typed, mty)
+
+and check_subtype m0 m1 = failwith "todo"
 
 and normalize_def (t : T.ety_def) env : I.ty_def =
   let normed =
@@ -416,3 +484,36 @@ and normalize_def (t : T.ety_def) env : I.ty_def =
   normed
 
 and normalize t env = normalize_ty t false env
+
+and normalize_ty (t : T.ety) indef (env : Env.t) : I.ty =
+  let { Env.curr; _ } = env in
+  match t with
+  | T.TField (me, n, tes) -> (
+      let tes = List.map (fun te -> normalize te env) tes in
+      let me_typed = tc_mod me env in
+      let mod_ty = get_mod_ty me_typed in
+      match mod_ty with
+      | I.MTMod { id; _ } -> TConsI ((id, n), tes)
+      | I.MTFun _ -> failwith "try get a field from functor")
+  | T.TCons (c, tes) ->
+      TConsI ((curr, c), List.map (fun t -> normalize_ty t indef env) tes)
+  | T.TVar x -> if indef then I.TQVarI x else pool_make_tv x
+  | T.TArrow (t0, t1) ->
+      TArrowI (normalize_ty t0 indef env, normalize_ty t1 indef env)
+  | T.TTuple ts -> TTupleI (List.map (fun t -> normalize_ty t indef env) ts)
+  | T.TRecord fields ->
+      TRecordI
+        (List.map (fun (x, t) -> (x, normalize_ty t indef env)) fields)
+  | T.TInternal ti -> ti
+
+and normalize_mt (me : T.emod_ty) env : I.mod_ty = failwith "todo"
+
+let tc_program (prog : T.program) env : program * Env.t =
+  env_id := 0;
+  (* reset module type id *)
+  match prog with
+  | [] -> ([], env)
+  | top :: rest ->
+      let top_typed0, env = tc_toplevel top env in
+      let rest_typed1, env = tc_tops rest env in
+      (top_typed0 :: rest_typed1, env)
