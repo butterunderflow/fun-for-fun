@@ -377,8 +377,7 @@ and tc_toplevel (top : T.top_level) env : top_level * Env.t =
     match top with
     | T.TopLet (x, e) ->
         let e_typed0, env = tc_let_binding x e env in
-        let e_ty0 = get_ty e_typed0 in
-        (TopLet (x, e_typed0, e_ty0), env)
+        (TopLet (x, e_typed0), env)
     | T.TopLetRec binds ->
         let env, vars, lams = tc_letrec_binding binds env in
         let binds = List.combine vars lams in
