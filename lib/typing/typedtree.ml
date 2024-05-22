@@ -17,7 +17,7 @@ type expr =
   | EApp of expr * expr * ty
   | EAnn of expr * ty
   | ETuple of expr list * ty
-  | EField of mod_expr * ty
+  | EField of mod_expr * string * ty
   | ECons of string * ty
   | EFieldCons of mod_expr * string * ty
 
@@ -30,11 +30,12 @@ and functor_expr = functor_para * mod_expr
 and mod_body = top_level list
 
 and mod_expr =
-  | MEName of string (* M *)
-  | MEStruct of mod_body (* struct ... end *)
-  | MEFunctor of functor_expr (* functor (M: MT) -> ... *)
-  | MEField of mod_expr * string (* M1.M2 *)
-  | MEApply of mod_expr * mod_expr (* M1(...) *)
+  | MEName of string * mod_ty (* M *)
+  | MEStruct of mod_body * mod_ty (* struct ... end *)
+  | MEFunctor of functor_expr * mod_ty (* functor (M: MT) -> ... *)
+  | MEField of mod_expr * string * mod_ty (* M1.M2 *)
+  | MEApply of mod_expr * mod_expr * mod_ty (* M1(...) *)
+  | MERestrict of mod_expr * mod_ty
 
 and top_level =
   | TopLet of string * expr * ty
@@ -80,7 +81,17 @@ let get_ty = function
   | EApp (_, _, ty)
   | EAnn (_, ty)
   | ETuple (_, ty)
-  | EField (_, ty)
+  | EField (_, _, ty)
   | ECons (_, ty)
   | EFieldCons (_, _, ty) ->
+      ty
+
+let get_mod_ty (me : mod_expr) =
+  match me with
+  | MEName (_, ty)
+  | MEStruct (_, ty)
+  | MEFunctor (_, ty)
+  | MEField (_, _, ty)
+  | MERestrict (_, ty)
+  | MEApply (_, _, ty) ->
       ty
