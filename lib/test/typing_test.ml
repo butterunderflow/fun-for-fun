@@ -172,8 +172,7 @@ let%expect_test "Test: program toplevel typing" =
   print_typed {|
      let x = 1
      |};
-  [%expect
-    {| ((TopLet x (EConst (CInt 1) (TConsI (0 int) ())))) |}];
+  [%expect {| ((TopLet x (EConst (CInt 1) (TConsI (0 int) ())))) |}];
   print_typed
     {|
      let rec f = fun x -> x
@@ -349,8 +348,7 @@ let%expect_test "Test: full program typing" =
         Printf.printf "Can't unify %s with %s" t0 t1
   in
   print_typed {| let x = 1 |};
-  [%expect
-    {| ((TopLet x (EConst (CInt 1) (TConsI (0 int) ())))) |}];
+  [%expect {| ((TopLet x (EConst (CInt 1) (TConsI (0 int) ())))) |}];
   print_typed {| module M = struct let x = 1 end |};
   [%expect
     {|
@@ -363,7 +361,8 @@ let%expect_test "Test: full program typing" =
      module M = struct let x = 1 end
      let c = M.x
      |};
-  [%expect {|
+  [%expect
+    {|
     ((TopMod M
        (MEStruct ((TopLet x (EConst (CInt 1) (TConsI (0 int) ()))))
          (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ()))))) (ty_defs ())
@@ -385,7 +384,8 @@ let%expect_test "Test: full program typing" =
        end
      let c = M.x
      |};
-  [%expect {|
+  [%expect
+    {|
     ((TopMod M
        (MEStruct
          ((TopTypeDef (TDAdtI t () ((Nil ()))))
@@ -400,4 +400,93 @@ let%expect_test "Test: full program typing" =
               (val_defs
                 ((x (() (TConsI (1 t) ()))) (Nil (() (TConsI (1 t) ())))))
               (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_defs ())))
-          x (TConsI (1 t) ())))) |}]
+          x (TConsI (1 t) ())))) |}];
+
+  print_typed
+    {|
+     module M =
+       struct
+         type () t = Nil
+         end
+
+         let x = Nil
+         module N =
+           struct
+             type () t = Nil
+             end
+           end
+
+         let z = N.Nil
+       end
+     let c = M.x
+     let x = M.N.Nil
+     let y = M.z
+     |};
+  [%expect
+    {|
+    ((TopMod M
+       (MEStruct
+         ((TopTypeDef (TDAdtI t () ((Nil ()))))
+           (TopLet x (ECons Nil (TConsI (1 t) ())))
+           (TopMod N
+             (MEStruct ((TopTypeDef (TDAdtI t () ((Nil ())))))
+               (MTMod (id 2) (val_defs ((Nil (() (TConsI (2 t) ())))))
+                 (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_defs ()))))
+           (TopLet z
+             (EFieldCons
+               (MEName N
+                 (MTMod (id 2) (val_defs ((Nil (() (TConsI (2 t) ())))))
+                   (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_defs ())))
+               Nil (TConsI (2 t) ()))))
+         (MTMod (id 1)
+           (val_defs
+             ((z (() (TConsI (2 t) ()))) (x (() (TConsI (1 t) ())))
+               (Nil (() (TConsI (1 t) ())))))
+           (ty_defs ((TDAdtI t () ((Nil ())))))
+           (mod_defs
+             ((N
+                (MTMod (id 2) (val_defs ((Nil (() (TConsI (2 t) ())))))
+                  (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_defs ()))))))))
+      (TopLet c
+        (EField
+          (MEName M
+            (MTMod (id 1)
+              (val_defs
+                ((z (() (TConsI (2 t) ()))) (x (() (TConsI (1 t) ())))
+                  (Nil (() (TConsI (1 t) ())))))
+              (ty_defs ((TDAdtI t () ((Nil ())))))
+              (mod_defs
+                ((N
+                   (MTMod (id 2) (val_defs ((Nil (() (TConsI (2 t) ())))))
+                     (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_defs ())))))))
+          x (TConsI (1 t) ())))
+      (TopLet x
+        (EFieldCons
+          (MEField
+            (MEName M
+              (MTMod (id 1)
+                (val_defs
+                  ((z (() (TConsI (2 t) ()))) (x (() (TConsI (1 t) ())))
+                    (Nil (() (TConsI (1 t) ())))))
+                (ty_defs ((TDAdtI t () ((Nil ())))))
+                (mod_defs
+                  ((N
+                     (MTMod (id 2) (val_defs ((Nil (() (TConsI (2 t) ())))))
+                       (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_defs ())))))))
+            N
+            (MTMod (id 2) (val_defs ((Nil (() (TConsI (2 t) ())))))
+              (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_defs ())))
+          Nil (TConsI (2 t) ())))
+      (TopLet y
+        (EField
+          (MEName M
+            (MTMod (id 1)
+              (val_defs
+                ((z (() (TConsI (2 t) ()))) (x (() (TConsI (1 t) ())))
+                  (Nil (() (TConsI (1 t) ())))))
+              (ty_defs ((TDAdtI t () ((Nil ())))))
+              (mod_defs
+                ((N
+                   (MTMod (id 2) (val_defs ((Nil (() (TConsI (2 t) ())))))
+                     (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_defs ())))))))
+          z (TConsI (2 t) ())))) |}]

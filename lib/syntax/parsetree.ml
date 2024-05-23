@@ -69,6 +69,7 @@ and ety_comp =
   | TValueSpec of string * ety
   | TAbstTySpec of string
   | TManiTySpec of ety_def
+  | TModSpec of (string * emod_ty)
 
 and ety =
   | TField of mod_expr * string * ety list (* T.Cons *)

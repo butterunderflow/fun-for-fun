@@ -98,7 +98,9 @@ let generalize (t : I.ty) env : I.bind_ty =
 
 let env_id = ref 0
 
-let enter_env () = env_id := 1 + !env_id
+let enter_env () =
+  env_id := 1 + !env_id;
+  !env_id
 
 let tv_pool = ref IdMap.empty
 
@@ -142,6 +144,10 @@ let prune (env0 : Env.t) (env1 : Env.t) : Env.t =
         module_dict = [];
         curr = id0;
       }
+
+type norm_ctx =
+  | Type
+  | Let
 
 (* typing expression *)
 let rec tc_expr (e : T.expr) (env : Env.t) : expr =
@@ -277,10 +283,11 @@ and tc_letrec_binding binds env =
 and tc_lambda para body env0 : expr =
   match para with
   | T.PAnn (x, t) ->
-      let env = Env.add_value x ([], normalize t env0) env0 in
+      let ann = normalize_ty t env0 in
+      let env = Env.add_value x ([], ann) env0 in
       let body0 = tc_expr body env in
       let body_ty0 = get_ty body0 in
-      ELam (x, body0, I.TArrowI (normalize t env, body_ty0))
+      ELam (x, body0, I.TArrowI (ann, body_ty0))
   | T.PBare x ->
       let tv = make_tv () in
       let env = Env.add_value x ([], tv) env0 in
@@ -365,7 +372,7 @@ and tc_field me x env =
 
 and tc_ann e te env =
   let e_typed = tc_expr e env in
-  let te = normalize te env in
+  let te = normalize_ty te env in
   U.unify te (get_ty e_typed);
   e_typed
 
@@ -429,10 +436,6 @@ and tc_tops (prog : T.top_level list) env : program * Env.t =
       let rest_typed1, env = tc_tops rest env in
       (top_typed0 :: rest_typed1, env)
 
-and make_mt val_defs ty_defs mod_defs =
-  enter_env ();
-  I.MTMod { id = !env_id; val_defs; ty_defs; mod_defs }
-
 and make_env_mt { Env.values; types; modules; module_dict; curr } =
   I.MTMod
     { id = curr; val_defs = values; ty_defs = types; mod_defs = modules }
@@ -441,12 +444,21 @@ and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
   match me with
   | T.MEName name -> MEName (name, Env.get_module_sig name env)
   | T.MEStruct body ->
-      enter_env ();
-      let body_typed, env' = tc_tops body { env with curr = !env_id } in
+      let body_typed, env' = tc_tops body { env with curr = enter_env () } in
       let env_diff = prune env' env in
       let mt = make_env_mt env_diff in
       MEStruct (body_typed, mt)
-  | T.MEFunctor ((name, emt), me) -> failwith "todo"
+  | T.MEFunctor ((name, emt0), me1) ->
+      let mt0 = normalize_mt emt0 { env with curr = enter_env () } in
+      let me1_typed =
+        tc_mod me
+          {
+            env with
+            curr = enter_env ();
+            modules = (name, mt0) :: env.modules;
+          }
+      in
+      MEFunctor ((name, mt0), me1_typed)
   | T.MEField (me, name) -> (
       let me_typed = tc_mod me env in
       match get_mod_ty me_typed with
@@ -457,7 +469,7 @@ and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
   | T.MERestrict (me, mt) ->
       let me_typed = tc_mod me env in
       let mty = normalize_mt mt env in
-      check_subtype (get_mod_ty me_typed) mt;
+      check_subtype (get_mod_ty me_typed) mty;
       MERestrict (me_typed, mty)
 
 and check_subtype m0 m1 = failwith "todo"
@@ -470,42 +482,87 @@ and normalize_def (t : T.ety_def) env : I.ty_def =
           List.map
             (function
               | c, None -> (c, None)
-              | c, Some payload -> (c, Some (normalize_ty payload true env)))
+              | c, Some payload -> (c, Some (normalize payload Type env)))
             vs
         in
         I.TDAdtI (n, tvs, vs)
     | T.TDRecord (n, tvs, fields) ->
         I.TDRecordI
-          ( n,
-            tvs,
-            List.map (fun (x, t) -> (x, normalize_ty t true env)) fields )
+          (n, tvs, List.map (fun (x, t) -> (x, normalize t Type env)) fields)
   in
   normed
 
-and normalize t env = normalize_ty t false env
+and normalize_ty t env = normalize t Let env
 
-and normalize_ty (t : T.ety) indef (env : Env.t) : I.ty =
+and normalize (t : T.ety) (ctx : norm_ctx) (env : Env.t) : I.ty =
   let { Env.curr; _ } = env in
   match t with
   | T.TField (me, n, tes) -> (
-      let tes = List.map (fun te -> normalize te env) tes in
+      (* todo: return an transparent type when it get supported *)
+      let tes = List.map (fun te -> normalize te ctx env) tes in
       let me_typed = tc_mod me env in
       let mod_ty = get_mod_ty me_typed in
       match mod_ty with
       | I.MTMod { id; _ } -> TConsI ((id, n), tes)
       | I.MTFun _ -> failwith "try get a field from functor")
   | T.TCons (c, tes) ->
-      TConsI ((curr, c), List.map (fun t -> normalize_ty t indef env) tes)
-  | T.TVar x -> if indef then I.TQVarI x else pool_make_tv x
-  | T.TArrow (t0, t1) ->
-      TArrowI (normalize_ty t0 indef env, normalize_ty t1 indef env)
-  | T.TTuple ts -> TTupleI (List.map (fun t -> normalize_ty t indef env) ts)
+      TConsI ((curr, c), List.map (fun t -> normalize t ctx env) tes)
+  | T.TVar x -> (
+      match ctx with
+      | Type -> TQVarI x
+      | Let -> pool_make_tv x)
+  | T.TArrow (t0, t1) -> TArrowI (normalize t0 ctx env, normalize t1 ctx env)
+  | T.TTuple ts -> TTupleI (List.map (fun t -> normalize t ctx env) ts)
   | T.TRecord fields ->
-      TRecordI
-        (List.map (fun (x, t) -> (x, normalize_ty t indef env)) fields)
+      TRecordI (List.map (fun (x, t) -> (x, normalize t ctx env)) fields)
   | T.TInternal ti -> ti
 
-and normalize_mt (me : T.emod_ty) env : I.mod_ty = failwith "todo"
+and normalize_mt (me : T.emod_ty) env : I.mod_ty =
+  match me with
+  | T.MTName name -> Env.get_module_sig name env
+  | T.MTField (me, name) -> (
+      let me_typed = tc_mod me env in
+      let mt = get_mod_ty me_typed in
+      match mt with
+      | I.MTMod mt -> List.assoc name mt.mod_defs
+      | I.MTFun (mt0, mt1) -> MTFun (mt0, mt1))
+  | T.MTSig comps ->
+      let env' = normalize_msig comps { env with curr = enter_env () } in
+      make_env_mt (prune env' env)
+  | T.MTFunctor (m0, emt0, m1) ->
+      let mt0 = normalize_mt emt0 { env with curr = enter_env () } in
+      let mt1 =
+        normalize_mt m1
+          {
+            env with
+            curr = enter_env ();
+            modules = (m0, mt0) :: env.modules;
+          }
+      in
+      MTFun (mt0, mt1)
+
+and normalize_msig comps env =
+  match comps with
+  | [] -> env
+  | comp :: comps ->
+      let env =
+        match comp with
+        | T.TValueSpec (name, te) ->
+            reset_pool ();
+            {
+              env with
+              values =
+                (name, generalize (normalize_ty te env) env) :: env.values;
+            }
+        | T.TAbstTySpec name ->
+            { env with types = TDOpaqueI name :: env.types }
+        | T.TManiTySpec def ->
+            { env with types = normalize_def def env :: env.types }
+        | T.TModSpec (name, emt) ->
+            let mt = normalize_mt emt env in
+            { env with modules = (name, mt) :: env.modules }
+      in
+      normalize_msig comps env
 
 let tc_program (prog : T.program) env : program * Env.t =
   env_id := 0;
