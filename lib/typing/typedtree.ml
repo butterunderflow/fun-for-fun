@@ -32,7 +32,7 @@ and mod_body = top_level list
 and mod_expr =
   | MEName of string * mod_ty (* M *)
   | MEStruct of mod_body * mod_ty (* struct ... end *)
-  | MEFunctor of functor_expr * mod_ty (* functor (M: MT) -> ... *)
+  | MEFunctor of functor_expr (* functor (M: MT) -> ... *)
   | MEField of mod_expr * string * mod_ty (* M1.M2 *)
   | MEApply of mod_expr * mod_expr * mod_ty (* M1(...) *)
   | MERestrict of mod_expr * mod_ty
@@ -86,12 +86,12 @@ let get_ty = function
   | EFieldCons (_, _, ty) ->
       ty
 
-let get_mod_ty (me : mod_expr) =
+let rec get_mod_ty (me : mod_expr) =
   match me with
   | MEName (_, ty)
   | MEStruct (_, ty)
-  | MEFunctor (_, ty)
   | MEField (_, _, ty)
   | MERestrict (_, ty)
   | MEApply (_, _, ty) ->
       ty
+  | MEFunctor ((_, mt0), me1) -> MTFun (mt0, get_mod_ty me1)
