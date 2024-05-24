@@ -13,3 +13,12 @@ let int_ty = TConsI (mk_root_tid "int", [])
 let string_ty = TConsI (mk_root_tid "string", [])
 
 let bool_ty = TConsI (mk_root_tid "bool", [])
+
+let same_def td0 td1 = td0 = td1
+
+let get_def_name (td : ty_def) =
+  match td with
+  | TDOpaqueI (name, _)
+  | TDAdtI (name, _, _)
+  | TDRecordI (name, _, _) ->
+      name

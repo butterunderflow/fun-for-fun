@@ -111,7 +111,43 @@ let%expect_test "Test: full program parsing" =
     {|
     ((TopLetRec
        ((odd ((PBare x) (EApp (EVar even) (EVar x))))
-         (even ((PBare x) (EApp (EVar odd) (EVar x))))))) |}]
+         (even ((PBare x) (EApp (EVar odd) (EVar x))))))) |}];
+
+  print_parsed_program
+    {|
+     module M = 
+     struct 
+       type () t = Nil
+       end
+
+       let x = Nil
+     end :
+     sig
+       type () t
+       val x : t
+     end 
+     |};
+  [%expect
+    {|
+    ((TopMod M
+       (MERestrict
+         (MEStruct ((TopTypeDef (TDAdt t () ((Nil ())))) (TopLet x (ECons Nil))))
+         (MTSig ((TAbstTySpec t ()) (TValueSpec x (TCons t ()))))))) |}];
+
+  print_parsed_program
+    {|
+     module type MIntf = 
+     sig 
+       type () t = Nil
+       end
+
+       val x : t
+     end 
+     |};
+  [%expect {|
+    ((TopModSig MIntf
+       (MTSig
+         ((TManiTySpec (TDAdt t () ((Nil ())))) (TValueSpec x (TCons t ())))))) |}]
 
 let%expect_test "Test: path parsing" =
   print_parsed_mod_expr {|X|};
@@ -166,6 +202,7 @@ let%expect_test "Test: top level module" =
      |};
   [%expect {|
     ((TopMod X (MEStruct ()))) |}];
+
   print_parsed_program
     {|
      module X = struct
@@ -227,7 +264,7 @@ let%expect_test "Test: module type" =
     {|
                 sig
                   val x : int
-                  type t
+                  type () t
                   val m: t -> t
                   type () i_list = 
                     Cons of int 
@@ -238,6 +275,6 @@ let%expect_test "Test: module type" =
   [%expect
     {|
     (MTSig
-      ((TValueSpec x (TCons int ())) (TAbstTySpec t)
+      ((TValueSpec x (TCons int ())) (TAbstTySpec t ())
         (TValueSpec m (TArrow (TCons t ()) (TCons t ())))
         (TManiTySpec (TDAdt i_list () ((Cons ((TCons int ()))) (Nil ())))))) |}]

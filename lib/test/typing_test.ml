@@ -208,6 +208,10 @@ let%expect_test "Test: program toplevel typing" =
       Nil |-> forall  . (TConsI (0 a) ())
     Type Definitions:
       a |-> (TDAdtI a () ((Cons ((TConsI (0 int) ()))) (Nil ())))
+    Module Definitions:
+
+    Module Types:
+
     Current Module Index:
       0
     ------------------Envirment Debug Info End-------------------------- |}];
@@ -247,6 +251,10 @@ let%expect_test "Test: program toplevel typing" =
       Nil |-> forall  . (TConsI (0 int_l) ())
     Type Definitions:
       int_l |-> (TDAdtI int_l () ((Cons ((TConsI (0 int) ()))) (Nil ())))
+    Module Definitions:
+
+    Module Types:
+
     Current Module Index:
       0
     ------------------Envirment Debug Info End-------------------------- |}];
@@ -332,6 +340,10 @@ let%expect_test "Test: program toplevel typing" =
     Type Definitions:
       int_l |-> (TDAdtI int_l ('a/0 'b/0)
       ((Cons ((TTupleI ((TQVarI 'a/0) (TQVarI 'b/0))))) (Nil ())))
+    Module Definitions:
+
+    Module Types:
+
     Current Module Index:
       0
     ------------------Envirment Debug Info End-------------------------- |}]
@@ -347,6 +359,13 @@ let%expect_test "Test: full program typing" =
     | Unify.UnificationError (t0, t1) ->
         Printf.printf "Can't unify %s with %s" t0 t1
   in
+  let print_effect str =
+    Ident.refresh ();
+    let prog = parse_string_program str in
+    let _typed, env = Typing.Check.tc_program prog Typing.Env.init in
+    Printf.printf "%s\n" (Env.dbg env)
+  in
+
   print_typed {| let x = 1 |};
   [%expect {| ((TopLet x (EConst (CInt 1) (TConsI (0 int) ())))) |}];
   print_typed {| module M = struct let x = 1 end |};
@@ -355,7 +374,7 @@ let%expect_test "Test: full program typing" =
     ((TopMod M
        (MEStruct ((TopLet x (EConst (CInt 1) (TConsI (0 int) ()))))
          (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ()))))) (ty_defs ())
-           (mod_defs ()))))) |}];
+           (mod_sigs ()) (mod_defs ()))))) |}];
   print_typed
     {|
      module M = struct let x = 1 end
@@ -366,12 +385,12 @@ let%expect_test "Test: full program typing" =
     ((TopMod M
        (MEStruct ((TopLet x (EConst (CInt 1) (TConsI (0 int) ()))))
          (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ()))))) (ty_defs ())
-           (mod_defs ()))))
+           (mod_sigs ()) (mod_defs ()))))
       (TopLet c
         (EField
           (MEName M
             (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ()))))) (ty_defs ())
-              (mod_defs ())))
+              (mod_sigs ()) (mod_defs ())))
           x (TConsI (0 int) ())))) |}];
   print_typed
     {|
@@ -392,14 +411,14 @@ let%expect_test "Test: full program typing" =
            (TopLet x (ECons Nil (TConsI (1 t) ()))))
          (MTMod (id 1)
            (val_defs ((x (() (TConsI (1 t) ()))) (Nil (() (TConsI (1 t) ())))))
-           (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_defs ()))))
+           (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ()))))
       (TopLet c
         (EField
           (MEName M
             (MTMod (id 1)
               (val_defs
                 ((x (() (TConsI (1 t) ()))) (Nil (() (TConsI (1 t) ())))))
-              (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_defs ())))
+              (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())))
           x (TConsI (1 t) ())))) |}];
 
   print_typed
@@ -431,22 +450,25 @@ let%expect_test "Test: full program typing" =
            (TopMod N
              (MEStruct ((TopTypeDef (TDAdtI t () ((Nil ())))))
                (MTMod (id 2) (val_defs ((Nil (() (TConsI (2 t) ())))))
-                 (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_defs ()))))
+                 (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ())
+                 (mod_defs ()))))
            (TopLet z
              (EFieldCons
                (MEName N
                  (MTMod (id 2) (val_defs ((Nil (() (TConsI (2 t) ())))))
-                   (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_defs ())))
+                   (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ())
+                   (mod_defs ())))
                Nil (TConsI (2 t) ()))))
          (MTMod (id 1)
            (val_defs
              ((z (() (TConsI (2 t) ()))) (x (() (TConsI (1 t) ())))
                (Nil (() (TConsI (1 t) ())))))
-           (ty_defs ((TDAdtI t () ((Nil ())))))
+           (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ())
            (mod_defs
              ((N
                 (MTMod (id 2) (val_defs ((Nil (() (TConsI (2 t) ())))))
-                  (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_defs ()))))))))
+                  (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ())
+                  (mod_defs ()))))))))
       (TopLet c
         (EField
           (MEName M
@@ -454,11 +476,12 @@ let%expect_test "Test: full program typing" =
               (val_defs
                 ((z (() (TConsI (2 t) ()))) (x (() (TConsI (1 t) ())))
                   (Nil (() (TConsI (1 t) ())))))
-              (ty_defs ((TDAdtI t () ((Nil ())))))
+              (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ())
               (mod_defs
                 ((N
                    (MTMod (id 2) (val_defs ((Nil (() (TConsI (2 t) ())))))
-                     (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_defs ())))))))
+                     (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ())
+                     (mod_defs ())))))))
           x (TConsI (1 t) ())))
       (TopLet x
         (EFieldCons
@@ -468,14 +491,15 @@ let%expect_test "Test: full program typing" =
                 (val_defs
                   ((z (() (TConsI (2 t) ()))) (x (() (TConsI (1 t) ())))
                     (Nil (() (TConsI (1 t) ())))))
-                (ty_defs ((TDAdtI t () ((Nil ())))))
+                (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ())
                 (mod_defs
                   ((N
                      (MTMod (id 2) (val_defs ((Nil (() (TConsI (2 t) ())))))
-                       (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_defs ())))))))
+                       (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ())
+                       (mod_defs ())))))))
             N
             (MTMod (id 2) (val_defs ((Nil (() (TConsI (2 t) ())))))
-              (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_defs ())))
+              (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())))
           Nil (TConsI (2 t) ())))
       (TopLet y
         (EField
@@ -484,9 +508,133 @@ let%expect_test "Test: full program typing" =
               (val_defs
                 ((z (() (TConsI (2 t) ()))) (x (() (TConsI (1 t) ())))
                   (Nil (() (TConsI (1 t) ())))))
-              (ty_defs ((TDAdtI t () ((Nil ())))))
+              (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ())
               (mod_defs
                 ((N
                    (MTMod (id 2) (val_defs ((Nil (() (TConsI (2 t) ())))))
-                     (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_defs ())))))))
-          z (TConsI (2 t) ())))) |}]
+                     (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ())
+                     (mod_defs ())))))))
+          z (TConsI (2 t) ())))) |}];
+
+  print_typed
+    {|
+     module M = 
+     struct 
+       type () t = Nil
+       end
+
+       let x = Nil
+     end :
+     sig
+       type () t
+       val x : t
+     end 
+     |};
+  [%expect
+    {|
+    ((TopMod M
+       (MERestrict
+         (MEStruct
+           ((TopTypeDef (TDAdtI t () ((Nil ()))))
+             (TopLet x (ECons Nil (TConsI (1 t) ()))))
+           (MTMod (id 1)
+             (val_defs ((x (() (TConsI (1 t) ()))) (Nil (() (TConsI (1 t) ())))))
+             (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())))
+         (MTMod (id 1) (val_defs ((x (() (TConsI (2 t) ())))))
+           (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ()))))) |}];
+
+  print_typed
+    {|
+     module type MIntf = 
+     sig 
+       type () t = Nil
+       end
+
+       val x : t
+     end 
+     |};
+  [%expect
+    {|
+    ((TopModSig MIntf
+       (MTMod (id 1) (val_defs ((x (() (TConsI (1 t) ())))))
+         (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ()))))|}];
+
+  print_effect
+    {|
+     module type MIntf = 
+     sig 
+       type () t = Nil
+       end
+
+       val x : t
+     end 
+     |};
+  [%expect
+    {|
+    ------------------Envirment Debug Info Begin------------------------
+    Value Bindings:
+
+    Type Definitions:
+
+    Module Definitions:
+
+    Module Types:
+      MIntf |-> (MTMod (id 1) (val_defs ((x (() (TConsI (1 t) ())))))
+      (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ()))
+    Current Module Index:
+      0
+    ------------------Envirment Debug Info End-------------------------- |}];
+
+  print_typed
+    {|
+     module type MIntf = 
+     sig 
+       type () t
+
+       val x : t
+     end 
+     |};
+  [%expect {|
+    ((TopModSig MIntf
+       (MTMod (id 1) (val_defs ((x (() (TConsI (1 t) ())))))
+         (ty_defs ((TDOpaqueI t ()))) (mod_sigs ()) (mod_defs ())))) |}];
+
+  (* here have problem,  *)
+  print_typed
+    {|
+     module type MIntf = 
+     sig 
+       type () t
+
+       val x : t
+     end 
+
+     module MImpl = 
+     struct 
+       type () t = Nil end
+
+       let z = 1       
+
+       let x = Nil
+     end : MIntf
+
+     |};
+  [%expect {|
+    ((TopModSig MIntf
+       (MTMod (id 1) (val_defs ((x (() (TConsI (1 t) ())))))
+         (ty_defs ((TDOpaqueI t ()))) (mod_sigs ()) (mod_defs ())))
+      (TopMod MImpl
+        (MERestrict
+          (MEStruct
+            ((TopTypeDef (TDAdtI t () ((Nil ()))))
+              (TopLet z (EConst (CInt 1) (TConsI (0 int) ())))
+              (TopLet x (ECons Nil (TConsI (2 t) ()))))
+            (MTMod (id 2)
+              (val_defs
+                ((x (() (TConsI (2 t) ()))) (z (() (TConsI (0 int) ())))
+                  (Nil (() (TConsI (2 t) ())))))
+              (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())))
+          (MTMod (id 2) (val_defs ((x (() (TConsI (1 t) ())))))
+            (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ()))))) |}]
+
+

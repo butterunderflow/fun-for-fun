@@ -18,6 +18,7 @@ and top_level =
   | TopLetRec of (string * lambda) list
   | TopTypeDef of ety_def
   | TopMod of string * mod_expr
+  | TopModSig of string * emod_ty
 
 and para =
   | PAnn of string * ety
@@ -67,7 +68,7 @@ and adt_def = string * ety_paras * evariant list
 
 and ety_comp =
   | TValueSpec of string * ety
-  | TAbstTySpec of string
+  | TAbstTySpec of string * ety_paras
   | TManiTySpec of ety_def
   | TModSpec of (string * emod_ty)
 
