@@ -458,14 +458,32 @@ and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
             modules = (name, mt0) :: env.modules;
           }
       in
-      MEFunctor ((name, mt0), me1_typed)
+      MEFunctor
+        ( (name, mt0),
+          me1_typed,
+          fun mt0' ->
+            check_subtype mt0' mt0;
+            let retyped_mod =
+              tc_mod me
+                {
+                  env with
+                  curr = enter_env ();
+                  modules = (name, mt0) :: env.modules;
+                }
+            in
+            get_mod_ty retyped_mod )
   | T.MEField (me, name) -> (
       let me_typed = tc_mod me env in
       match get_mod_ty me_typed with
       | I.MTMod { mod_defs; _ } ->
           MEField (me_typed, name, List.assoc name mod_defs)
       | I.MTFun _ -> failwith "try get field from functor")
-  | T.MEApply (_, _) -> failwith "todo"
+  | T.MEApply (me0, me1) ->
+      let me0_typed = tc_mod me0 env in
+      let me1_typed = tc_mod me1 env in
+      let _mt0 = get_mod_ty me0_typed in
+      let _mt1 = get_mod_ty me1_typed in
+      failwith "todo"
   | T.MERestrict (me, mt) ->
       let me_typed = tc_mod me env in
       let mty = normalize_mt mt env in
@@ -525,7 +543,7 @@ and normalize_mt (me : T.emod_ty) env : I.mod_ty =
       let mt = get_mod_ty me_typed in
       match mt with
       | I.MTMod mt -> List.assoc name mt.mod_defs
-      | I.MTFun (mt0, mt1) -> MTFun (mt0, mt1))
+      | I.MTFun (mt0, mt1, applier) -> failwith "try get field from functor")
   | T.MTSig comps ->
       let env' = normalize_msig comps { env with curr = enter_env () } in
       make_env_mt (prune env' env)
@@ -539,7 +557,16 @@ and normalize_mt (me : T.emod_ty) env : I.mod_ty =
             modules = (m0, mt0) :: env.modules;
           }
       in
-      MTFun (mt0, mt1)
+      MTFun
+        ( mt0,
+          mt1,
+          fun mt0' ->
+            normalize_mt m1
+              {
+                env with
+                curr = enter_env ();
+                modules = (m0, mt0) :: env.modules;
+              } )
 
 and normalize_msig comps env =
   match comps with

@@ -38,7 +38,7 @@ and mod_ty =
       ty_defs : ty_def list;
       mod_defs : (string * mod_ty) list;
     }
-  | MTFun of (mod_ty * mod_ty)
+  | MTFun of (mod_ty * mod_ty * ((mod_ty -> mod_ty)[@opaque]))
 [@@deriving
   sexp,
     show,

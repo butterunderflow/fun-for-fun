@@ -25,14 +25,13 @@ and lambda_typed = string * expr * ty
 
 and functor_para = string * mod_ty
 
-and functor_expr = functor_para * mod_expr
-
 and mod_body = top_level list
 
 and mod_expr =
   | MEName of string * mod_ty (* M *)
   | MEStruct of mod_body * mod_ty (* struct ... end *)
-  | MEFunctor of functor_expr (* functor (M: MT) -> ... *)
+  | MEFunctor of functor_para * mod_expr * ((mod_ty -> mod_ty)[@opaque])
+    (* functor (M: MT) -> ... *)
   | MEField of mod_expr * string * mod_ty (* M1.M2 *)
   | MEApply of mod_expr * mod_expr * mod_ty (* M1(...) *)
   | MERestrict of mod_expr * mod_ty
@@ -94,4 +93,4 @@ let rec get_mod_ty (me : mod_expr) =
   | MERestrict (_, ty)
   | MEApply (_, _, ty) ->
       ty
-  | MEFunctor ((_, mt0), me1) -> MTFun (mt0, get_mod_ty me1)
+  | MEFunctor ((_, mt0), me1, applier) -> MTFun (mt0, get_mod_ty me1, applier)
