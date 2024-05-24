@@ -41,6 +41,7 @@ and top_level =
   | TopLetRec of (string * lambda_typed) list
   | TopTypeDef of ty_def
   | TopMod of string * mod_expr
+  | TopModSig of string * mod_ty
 
 and program = top_level list
 

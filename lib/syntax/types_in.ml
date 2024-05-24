@@ -27,7 +27,7 @@ and variant = string * ty option
 
 and ty_def =
   (* todo: add type alias to type definition *)
-  | TDOpaqueI of string
+  | TDOpaqueI of string * type_paras
   | TDAdtI of string * type_paras * variant list
   | TDRecordI of string * type_paras * (string * ty) list
 
@@ -36,6 +36,7 @@ and mod_ty =
       id : int; (* give every module type an identity *)
       val_defs : (string * bind_ty) list;
       ty_defs : ty_def list;
+      mod_sigs : (string * mod_ty) list;
       mod_defs : (string * mod_ty) list;
     }
   | MTFun of (mod_ty * mod_ty * ((mod_ty -> mod_ty)[@opaque]))

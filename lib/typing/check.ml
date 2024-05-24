@@ -127,6 +127,7 @@ let prune (env0 : Env.t) (env1 : Env.t) : Env.t =
         values = vs0;
         types = ts0;
         modules = ms0;
+        module_sigs = msigs0;
         module_dict = md0;
         curr = id0;
       },
@@ -134,6 +135,7 @@ let prune (env0 : Env.t) (env1 : Env.t) : Env.t =
         values = vs1;
         types = ts1;
         modules = ms1;
+        module_sigs = msigs1;
         module_dict = md1;
         curr = _;
       } ) ->
@@ -141,6 +143,7 @@ let prune (env0 : Env.t) (env1 : Env.t) : Env.t =
         values = aux vs0 vs1;
         types = aux ts0 ts1;
         modules = aux ms0 ms1;
+        module_sigs = aux msigs0 msigs1;
         module_dict = [];
         curr = id0;
       }
@@ -404,6 +407,9 @@ and tc_toplevel (top : T.top_level) env : top_level * Env.t =
         let me_typed = tc_mod me env in
         ( TopMod (name, me_typed),
           Env.add_module name (get_mod_ty me_typed) env )
+    | T.TopModSig (name, emt) ->
+        let mt = normalize_mt emt env in
+        (TopModSig (name, mt), Env.add_module_sig name mt env)
   in
   tv_pool := old_pool;
   top_typed
@@ -436,13 +442,20 @@ and tc_tops (prog : T.top_level list) env : program * Env.t =
       let rest_typed1, env = tc_tops rest env in
       (top_typed0 :: rest_typed1, env)
 
-and make_env_mt { Env.values; types; modules; module_dict; curr } =
+and make_env_mt
+    { Env.values; types; modules; module_sigs; module_dict; curr } =
   I.MTMod
-    { id = curr; val_defs = values; ty_defs = types; mod_defs = modules }
+    {
+      id = curr;
+      val_defs = values;
+      ty_defs = types;
+      mod_sigs = module_sigs;
+      mod_defs = modules;
+    }
 
 and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
   match me with
-  | T.MEName name -> MEName (name, Env.get_module_sig name env)
+  | T.MEName name -> MEName (name, Env.get_module_def name env)
   | T.MEStruct body ->
       let body_typed, env' = tc_tops body { env with curr = enter_env () } in
       let env_diff = prune env' env in
@@ -462,7 +475,7 @@ and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
         ( (name, mt0),
           me1_typed,
           fun mt0' ->
-            check_subtype mt0' mt0;
+            let _ = check_subtype mt0' mt0 in
             let retyped_mod =
               tc_mod me
                 {
@@ -471,26 +484,148 @@ and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
                   modules = (name, mt0) :: env.modules;
                 }
             in
-            get_mod_ty retyped_mod )
+            check_subtype (get_mod_ty retyped_mod) (get_mod_ty me1_typed) )
   | T.MEField (me, name) -> (
       let me_typed = tc_mod me env in
       match get_mod_ty me_typed with
       | I.MTMod { mod_defs; _ } ->
           MEField (me_typed, name, List.assoc name mod_defs)
       | I.MTFun _ -> failwith "try get field from functor")
-  | T.MEApply (me0, me1) ->
+  | T.MEApply (me0, me1) -> (
       let me0_typed = tc_mod me0 env in
       let me1_typed = tc_mod me1 env in
-      let _mt0 = get_mod_ty me0_typed in
-      let _mt1 = get_mod_ty me1_typed in
-      failwith "todo"
+      let mt0 = get_mod_ty me0_typed in
+      let mt1 = get_mod_ty me1_typed in
+      match mt0 with
+      | I.MTMod _ -> failwith "try apply a structure"
+      | I.MTFun (_, _, applier) ->
+          MEApply
+            ( me0_typed,
+              me1_typed,
+              applier mt1 (* can we staging this application *) ))
   | T.MERestrict (me, mt) ->
       let me_typed = tc_mod me env in
       let mty = normalize_mt mt env in
-      check_subtype (get_mod_ty me_typed) mty;
+      let mty = check_subtype (get_mod_ty me_typed) mty in
       MERestrict (me_typed, mty)
 
-and check_subtype m0 m1 = failwith "todo"
+and check_subtype mt0 mt1 : I.mod_ty =
+  let mid_map = ref [] in
+  let subst mt =
+    let mapper =
+      object (self : 'self)
+        inherit ['self] Types_in.map
+
+        method! visit_ty_id () (id, name) =
+          match List.assoc_opt id !mid_map with
+          | Some id1 -> (id1, name)
+          | _ -> (id, name)
+      end
+    in
+    mapper#visit_mod_ty () mt
+  in
+  let rec collect_mid_maping mt0 mt1 =
+    match (mt0, mt1) with
+    | ( I.MTMod { id = id0; mod_defs = mds0; _ },
+        I.MTMod { id = id1; mod_defs = mds1; _ } ) ->
+        mid_map := (id0, id1) :: !mid_map;
+        List.iter
+          (fun (name, md1) ->
+            let md0 = List.assoc name mds0 in
+            collect_mid_maping md0 md1)
+          mds1
+    | I.MTFun (argt0, mt0, _), I.MTFun (argt1, mt1, _) ->
+        collect_mid_maping argt1 argt0;
+        collect_mid_maping mt0 mt1
+    | _ -> failwith "subtype check error"
+  in
+  collect_mid_maping mt0 mt1;
+  let mt0 = subst mt0 in
+  let get_def name ty_defs =
+    List.find
+      (fun td ->
+        match td with
+        | I.TDOpaqueI (name', _)
+        | I.TDAdtI (name', _, _)
+        | I.TDRecordI (name', _, _)
+          when name' = name ->
+            true
+        | _ -> false)
+      ty_defs
+  in
+  let rec compatible mt0 mt1 : I.mod_ty =
+    match (mt0, mt1) with
+    | ( I.MTMod
+          {
+            val_defs = vds0;
+            ty_defs = tds0;
+            mod_defs = mds0;
+            mod_sigs = ms0;
+            id = id0;
+          },
+        I.MTMod
+          {
+            val_defs = vds1;
+            ty_defs = tds1;
+            mod_defs = mds1;
+            mod_sigs = ms1;
+            _;
+          } ) ->
+        I.MTMod
+          {
+            val_defs =
+              List.map
+                (fun (name, vd1) ->
+                  let vd0 = List.assoc name vds0 in
+                  if vd0 <> vd1 then
+                    failwith "a value binding component not compatible"
+                  else (name, vd0))
+                vds1;
+            ty_defs =
+              List.map
+                (fun td ->
+                  match td with
+                  | I.TDOpaqueI (name, paras) -> (
+                      let td0 = get_def name tds0 in
+                      match td0 with
+                      | I.TDOpaqueI (_, paras0)
+                      | I.TDAdtI (_, paras0, _)
+                      | I.TDRecordI (_, paras0, _) ->
+                          if List.length paras <> List.length paras then
+                            failwith
+                              "number of type parameter not compatible in \
+                               opaque type"
+                          else td0)
+                  | _ ->
+                      let td0 = get_def (I.get_def_name td) tds0 in
+                      if td <> td0 then
+                        failwith "a type def component not compatible"
+                      else td0)
+                tds1;
+            mod_defs =
+              List.map
+                (fun (name, md1) ->
+                  (name, compatible md1 (List.assoc name mds0)))
+                mds1;
+            mod_sigs =
+              List.map
+                (fun (name, ms1) ->
+                  (name, compatible ms1 (List.assoc name mds0)))
+                ms1;
+            id = id0;
+          }
+    | I.MTFun (argt0, mt0, applier), I.MTFun (argt1, mt1, _) ->
+        let arg_t = compatible argt1 argt0 in
+        let ret_t = compatible mt0 mt1 in
+        I.MTFun
+          ( arg_t,
+            ret_t,
+            fun m ->
+              let ret_t' = applier m in
+              check_subtype ret_t' ret_t )
+    | _ -> failwith "subtype check error"
+  in
+  compatible mt0 mt1
 
 and normalize_def (t : T.ety_def) env : I.ty_def =
   let normed =
@@ -542,7 +677,7 @@ and normalize_mt (me : T.emod_ty) env : I.mod_ty =
       let me_typed = tc_mod me env in
       let mt = get_mod_ty me_typed in
       match mt with
-      | I.MTMod mt -> List.assoc name mt.mod_defs
+      | I.MTMod mt -> List.assoc name mt.mod_sigs
       | I.MTFun (mt0, mt1, applier) -> failwith "try get field from functor")
   | T.MTSig comps ->
       let env' = normalize_msig comps { env with curr = enter_env () } in
@@ -581,8 +716,8 @@ and normalize_msig comps env =
               values =
                 (name, generalize (normalize_ty te env) env) :: env.values;
             }
-        | T.TAbstTySpec name ->
-            { env with types = TDOpaqueI name :: env.types }
+        | T.TAbstTySpec (name, paras) ->
+            { env with types = TDOpaqueI (name, paras) :: env.types }
         | T.TManiTySpec def ->
             { env with types = normalize_def def env :: env.types }
         | T.TModSpec (name, emt) ->

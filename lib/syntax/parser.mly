@@ -83,6 +83,8 @@ top_levels:
     | MODULE m_name=MIDENT
         EQ m_body=mod_expr rest=top_levels
         { TopMod (m_name, m_body) :: rest }
+    | MODULE TYPE m_name=MIDENT EQ mt=mod_type rest=top_levels
+        { TopModSig (m_name, mt) :: rest }
 ;
 
 mod_expr:
@@ -90,7 +92,9 @@ mod_expr:
     | STRUCT m_body=top_levels END { MEStruct m_body }
     | FUNCTOR LPAREN mp=mod_para RPAREN ARROW f_body=mod_expr { MEFunctor (mp, f_body) }
     | m = mod_expr DOT n = MIDENT { MEField (m, n) }
-    | m1 = mod_expr LPAREN m2 = mod_expr RPAREN { MEApply (m1, m2) } ;
+    | m1 = mod_expr LPAREN m2 = mod_expr RPAREN { MEApply (m1, m2) } 
+    | m1 = mod_expr COLON mt1 = mod_type { MERestrict (m1, mt1) }
+;
 
 mod_para :
     | m_name=MIDENT COLON m_type=mod_type { (m_name, m_type) }
@@ -180,8 +184,11 @@ mod_type:
 
 sig_comp:
     | VAL v=IDENT COLON ty=type_expr { TValueSpec (v, ty) }
-    | TYPE t=IDENT                   { TAbstTySpec t }
+    | TYPE LPAREN tvs=separated_list(COMMA, TYPEVAR) RPAREN t=IDENT
+        { TAbstTySpec (t, (List.map Ident.from tvs)) }
     | def=type_def                   { TManiTySpec def }
+    | MODULE m_name=MIDENT EQ mt=mod_type { TModSpec (m_name, mt) }
+;
 
 constant:
     | i = INT { CInt i }
