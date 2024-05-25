@@ -144,10 +144,37 @@ let%expect_test "Test: full program parsing" =
        val x : t
      end 
      |};
-  [%expect {|
+  [%expect
+    {|
     ((TopModSig MIntf
        (MTSig
-         ((TManiTySpec (TDAdt t () ((Nil ())))) (TValueSpec x (TCons t ())))))) |}]
+         ((TManiTySpec (TDAdt t () ((Nil ())))) (TValueSpec x (TCons t ())))))) |}];
+
+  print_parsed_program
+    {|
+module F =
+functor
+  (MI : I)
+  ->
+  (
+    struct
+      let x = 1
+
+      let y = 1
+
+      let z = 1
+    end :
+      J)
+|};
+  [%expect {|
+    ((TopMod F
+       (MEFunctor
+         ((MI (MTName I))
+           (MERestrict
+             (MEStruct
+               ((TopLet x (EConst (CInt 1))) (TopLet y (EConst (CInt 1)))
+                 (TopLet z (EConst (CInt 1)))))
+             (MTName J)))))) |}]
 
 let%expect_test "Test: path parsing" =
   print_parsed_mod_expr {|X|};
