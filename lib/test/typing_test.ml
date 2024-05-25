@@ -693,6 +693,21 @@ functor
     module K = MI (Simple)
   end
 
+module F =
+functor
+  (MI : I)
+  ->
+  (
+    struct
+      let x = 1
+
+      let y = 1
+
+      let z = 1
+    end :
+      J)
+
+module MMM = (M(F).K : I)
      |};
   [%expect
     {|
@@ -771,5 +786,86 @@ functor
                        ((y (() (TConsI (0 int) ())))
                          (x (() (TConsI (0 int) ())))))
                      (ty_defs ()) (mod_sigs ()) (mod_defs ())))))))
-          <opaque>)))
+          <opaque>))
+      (TopMod F
+        (MEFunctor
+          (MI
+            (MTMod (id 1)
+              (val_defs
+                ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
+              (ty_defs ()) (mod_sigs ()) (mod_defs ())))
+          (MERestrict
+            (MEStruct
+              ((TopLet x (EConst (CInt 1) (TConsI (0 int) ())))
+                (TopLet y (EConst (CInt 1) (TConsI (0 int) ())))
+                (TopLet z (EConst (CInt 1) (TConsI (0 int) ()))))
+              (MTMod (id 13)
+                (val_defs
+                  ((z (() (TConsI (0 int) ()))) (y (() (TConsI (0 int) ())))
+                    (x (() (TConsI (0 int) ())))))
+                (ty_defs ()) (mod_sigs ()) (mod_defs ())))
+            (MTMod (id 13)
+              (val_defs
+                ((z (() (TConsI (0 int) ()))) (y (() (TConsI (0 int) ())))
+                  (x (() (TConsI (0 int) ())))))
+              (ty_defs ()) (mod_sigs ()) (mod_defs ())))
+          <opaque>))
+      (TopMod MMM
+        (MERestrict
+          (MEField
+            (MEApply
+              (MEName M
+                (MTFun
+                  ((MTFun
+                     ((MTMod (id 1)
+                        (val_defs
+                          ((y (() (TConsI (0 int) ())))
+                            (x (() (TConsI (0 int) ())))))
+                        (ty_defs ()) (mod_sigs ()) (mod_defs ()))
+                       (MTMod (id 1)
+                         (val_defs
+                           ((y (() (TConsI (0 int) ())))
+                             (x (() (TConsI (0 int) ())))))
+                         (ty_defs ()) (mod_sigs ()) (mod_defs ()))
+                       <opaque>))
+                    (MTMod (id 9) (val_defs ()) (ty_defs ()) (mod_sigs ())
+                      (mod_defs
+                        ((K
+                           (MTMod (id 1)
+                             (val_defs
+                               ((y (() (TConsI (0 int) ())))
+                                 (x (() (TConsI (0 int) ())))))
+                             (ty_defs ()) (mod_sigs ()) (mod_defs ()))))))
+                    <opaque>)))
+              (MEName F
+                (MTFun
+                  ((MTMod (id 1)
+                     (val_defs
+                       ((y (() (TConsI (0 int) ())))
+                         (x (() (TConsI (0 int) ())))))
+                     (ty_defs ()) (mod_sigs ()) (mod_defs ()))
+                    (MTMod (id 13)
+                      (val_defs
+                        ((z (() (TConsI (0 int) ())))
+                          (y (() (TConsI (0 int) ())))
+                          (x (() (TConsI (0 int) ())))))
+                      (ty_defs ()) (mod_sigs ()) (mod_defs ()))
+                    <opaque>)))
+              (MTMod (id 15) (val_defs ()) (ty_defs ()) (mod_sigs ())
+                (mod_defs
+                  ((K
+                     (MTMod (id 1)
+                       (val_defs
+                         ((y (() (TConsI (0 int) ())))
+                           (x (() (TConsI (0 int) ())))))
+                       (ty_defs ()) (mod_sigs ()) (mod_defs ())))))))
+            K
+            (MTMod (id 1)
+              (val_defs
+                ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
+              (ty_defs ()) (mod_sigs ()) (mod_defs ())))
+          (MTMod (id 1)
+            (val_defs
+              ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
+            (ty_defs ()) (mod_sigs ()) (mod_defs ())))))
  |}]

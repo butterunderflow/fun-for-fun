@@ -88,6 +88,7 @@ top_levels:
 ;
 
 mod_expr:
+    | LPAREN me=mod_expr RPAREN { me }
     | m_name=MIDENT { MEName m_name }
     | STRUCT m_body=top_levels END { MEStruct m_body }
     | FUNCTOR LPAREN mp=mod_para RPAREN ARROW f_body=mod_expr { MEFunctor (mp, f_body) }
