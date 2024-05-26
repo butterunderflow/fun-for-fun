@@ -438,9 +438,9 @@ and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
         ( (name, mt0),
           me1_typed,
           fun mt0' ->
-            let _ = check_subtype mt0' mt0 in
+            let mt0' = check_subtype mt0' mt0 in
             let retyped_mod =
-              tc_mod me1 (Env.add_module name mt0 (enter_env env))
+              tc_mod me1 (Env.add_module name mt0' (enter_env env))
             in
             get_mod_ty retyped_mod )
   | T.MEField (me, name) -> (
@@ -651,8 +651,7 @@ and normalize_mt (me : T.emod_ty) env : I.mod_ty =
         ( mt0,
           mt1,
           fun mt0' ->
-            let _ = check_subtype mt0' mt0 in
-            normalize_mt m1 (Env.add_module m0 mt0 (enter_env env)) )
+            normalize_mt m1 (Env.add_module m0 mt0' (enter_env env)) )
 
 and normalize_msig comps env =
   match comps with

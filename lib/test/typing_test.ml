@@ -854,17 +854,17 @@ module MMM = (M(F).K : I)
               (MTMod (id 15) (val_defs ()) (ty_defs ()) (mod_sigs ())
                 (mod_defs
                   ((K
-                     (MTMod (id 1)
+                     (MTMod (id 17)
                        (val_defs
                          ((y (() (TConsI (0 int) ())))
                            (x (() (TConsI (0 int) ())))))
                        (ty_defs ()) (mod_sigs ()) (mod_defs ())))))))
             K
-            (MTMod (id 1)
+            (MTMod (id 17)
               (val_defs
                 ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
               (ty_defs ()) (mod_sigs ()) (mod_defs ())))
-          (MTMod (id 1)
+          (MTMod (id 17)
             (val_defs
               ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
             (ty_defs ()) (mod_sigs ()) (mod_defs ())))))
