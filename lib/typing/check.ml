@@ -117,6 +117,19 @@ let prune (env0 : Env.t) (env1 : Env.t) : Env.scope =
   | s :: env0' when Env.size env1 = Env.size env0' -> s
   | _ -> failwith "neverreach"
 
+let get_type_id_mod name ty_defs =
+  match
+    List.find_opt
+      (function
+        | I.TDOpaqueI (x, _)
+        | TDAdtI (x, _, _)
+        | TDRecordI (x, _, _) ->
+            Ident.name_of_ident x = name)
+      ty_defs
+  with
+  | Some def -> I.get_def_name def
+  | None -> failwith "type not found"
+
 type norm_ctx =
   | Type
   | Let
@@ -412,11 +425,9 @@ and tc_tops (prog : T.top_level list) env : program * Env.t =
       let rest_typed1, env = tc_tops rest env in
       (top_typed0 :: rest_typed1, env)
 
-and make_env_mt
-    { Env.values; types; modules; module_sigs; module_dict = _; curr } =
+and make_env_mt { Env.values; types; modules; module_sigs; _ } =
   I.MTMod
     {
-      id = curr;
       val_defs = values;
       ty_defs = types;
       mod_sigs = module_sigs;
@@ -434,15 +445,7 @@ and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
   | T.MEFunctor ((name, emt0), me1) ->
       let mt0 = normalize_mt emt0 (enter_env env) in
       let me1_typed = tc_mod me1 (Env.add_module name mt0 (enter_env env)) in
-      MEFunctor
-        ( (name, mt0),
-          me1_typed,
-          fun mt0' ->
-            let mt0' = check_subtype mt0' mt0 in
-            let retyped_mod =
-              tc_mod me1 (Env.add_module name mt0' (enter_env env))
-            in
-            get_mod_ty retyped_mod )
+      MEFunctor ((name, mt0), me1_typed)
   | T.MEField (me, name) -> (
       let me_typed = tc_mod me env in
       match get_mod_ty me_typed with
@@ -456,7 +459,7 @@ and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
       let mt1 = get_mod_ty me1_typed in
       match mt0 with
       | I.MTMod _ -> failwith "try apply a structure"
-      | I.MTFun (_, _, applier) ->
+      | I.MTFun (_, _) ->
           MEApply
             ( me0_typed,
               me1_typed,
@@ -468,37 +471,6 @@ and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
       MERestrict (me_typed, mty)
 
 and check_subtype mt0 mt1 : I.mod_ty =
-  let mid_map = ref [] in
-  let subst mt =
-    let mapper =
-      object (_ : 'self)
-        inherit ['self] Types_in.map
-
-        method! visit_ty_id () (id, name) =
-          match List.assoc_opt id !mid_map with
-          | Some id1 -> (id1, name)
-          | _ -> (id, name)
-      end
-    in
-    mapper#visit_mod_ty () mt
-  in
-  let rec collect_mid_maping mt0 mt1 =
-    match (mt0, mt1) with
-    | ( I.MTMod { id = id0; mod_defs = mds0; _ },
-        I.MTMod { id = id1; mod_defs = mds1; _ } ) ->
-        mid_map := (id0, id1) :: !mid_map;
-        List.iter
-          (fun (name, md1) ->
-            let md0 = List.assoc name mds0 in
-            collect_mid_maping md0 md1)
-          mds1
-    | I.MTFun (argt0, mt0, _), I.MTFun (argt1, mt1, _) ->
-        collect_mid_maping argt1 argt0;
-        collect_mid_maping mt0 mt1
-    | _ -> failwith "subtype check error"
-  in
-  collect_mid_maping mt0 mt1;
-  let mt0 = subst mt0 in
   let get_def name ty_defs =
     List.find
       (fun td ->
@@ -519,7 +491,6 @@ and check_subtype mt0 mt1 : I.mod_ty =
             ty_defs = tds0;
             mod_defs = mds0;
             mod_sigs = _ms0;
-            id = id0;
           },
         I.MTMod
           {
@@ -527,7 +498,6 @@ and check_subtype mt0 mt1 : I.mod_ty =
             ty_defs = tds1;
             mod_defs = mds1;
             mod_sigs = ms1;
-            _;
           } ) ->
         I.MTMod
           {
@@ -572,17 +542,11 @@ and check_subtype mt0 mt1 : I.mod_ty =
                 (fun (name, ms1) ->
                   (name, compatible ms1 (List.assoc name mds0)))
                 ms1;
-            id = id0;
           }
-    | I.MTFun (argt0, mt0, applier), I.MTFun (argt1, mt1, _) ->
+    | I.MTFun (argt0, mt0), I.MTFun (argt1, mt1) ->
         let arg_t = compatible argt1 argt0 in
         let ret_t = compatible mt0 mt1 in
-        I.MTFun
-          ( arg_t,
-            ret_t,
-            fun m ->
-              let ret_t' = applier m in
-              check_subtype ret_t' ret_t )
+        I.MTFun (arg_t, ret_t)
     | _ -> failwith "subtype check error"
   in
   compatible mt0 mt1
@@ -591,6 +555,8 @@ and normalize_def (t : T.ety_def) env : I.ty_def =
   let normed =
     match t with
     | T.TDAdt (n, tvs, vs) ->
+        let name = Ident.create ~hint:n in
+        let env = Env.add_type_def (TDAdtI (name, tvs, [])) env in
         let vs =
           List.map
             (function
@@ -598,10 +564,14 @@ and normalize_def (t : T.ety_def) env : I.ty_def =
               | c, Some payload -> (c, Some (normalize payload Type env)))
             vs
         in
-        I.TDAdtI (n, tvs, vs)
+        I.TDAdtI (Ident.create ~hint:n, tvs, vs)
     | T.TDRecord (n, tvs, fields) ->
+        let name = Ident.create ~hint:n in
+        let env = Env.add_type_def (TDRecordI (name, tvs, [])) env in
         I.TDRecordI
-          (n, tvs, List.map (fun (x, t) -> (x, normalize t Type env)) fields)
+          ( Ident.create ~hint:n,
+            tvs,
+            List.map (fun (x, t) -> (x, normalize t Type env)) fields )
   in
   normed
 
@@ -615,12 +585,12 @@ and normalize (t : T.ety) (ctx : norm_ctx) (env : Env.t) : I.ty =
       let me_typed = tc_mod me env in
       let mod_ty = get_mod_ty me_typed in
       match mod_ty with
-      | I.MTMod { id; _ } -> TConsI ((id, n), tes)
+      | I.MTMod { ty_defs; _ } -> TConsI (get_type_id_mod n ty_defs, tes)
       | I.MTFun _ -> failwith "try get a field from functor")
   | T.TCons (c, tes) ->
       (* todo: fix, use lookuped environment index *)
-      let id, _ = Env.get_type_def c env in
-      TConsI ((id, c), List.map (fun t -> normalize t ctx env) tes)
+      let def = Env.get_type_def c env in
+      TConsI (I.get_def_name def, List.map (fun t -> normalize t ctx env) tes)
   | T.TVar x -> (
       match ctx with
       | Type -> TQVarI x
@@ -663,7 +633,7 @@ and normalize_msig comps env =
             reset_pool ();
             Env.add_value name (generalize (normalize_ty te env) env) env
         | T.TAbstTySpec (name, paras) ->
-            Env.add_type_def (TDOpaqueI (name, paras)) env
+            Env.add_type_def (TDOpaqueI (Ident.create ~hint:name, paras)) env
         | T.TManiTySpec def -> Env.add_type_def (normalize_def def env) env
         | T.TModSpec (name, emt) ->
             let mt = normalize_mt emt env in

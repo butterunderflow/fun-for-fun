@@ -61,10 +61,9 @@ let rec get_module_sig m (env : t) =
       | Some te -> te)
 
 let get_root_def tn =
-  ( 0,
-    match tn with
-    | "int" -> I.TDAdtI ("int", [], [])
-    | tn -> failwith (Printf.sprintf "cant get type `%s`" tn) )
+  match tn with
+  | "int" -> I.TDAdtI (Ident.mk_ident 0 "int", [], [])
+  | tn -> failwith (Printf.sprintf "cant get type `%s`" tn)
 
 let rec get_type_def tn env =
   match env with
@@ -76,10 +75,10 @@ let rec get_type_def tn env =
             | I.TDOpaqueI (x, _)
             | TDAdtI (x, _, _)
             | TDRecordI (x, _, _) ->
-                x = tn)
+                Ident.name_of_ident x = tn)
           s.types
       with
-      | Some def -> (s.curr, def)
+      | Some def -> def
       | None -> get_type_def tn env')
 
 let get_curr env =
@@ -103,7 +102,7 @@ let init = [ init_scope ]
 
 let mk_tid tn env =
   match env with
-  | s :: _ -> (s.curr, tn)
+  | s :: _ -> Ident.mk_ident s.curr tn
   | _ -> failwith "nevnerreach"
 
 let captured_scope (s : scope) (tpv : Types_in.tv ref) =
@@ -140,7 +139,8 @@ let dbg (env : t) =
            ( name,
              I.sexp_of_ty_def def
              |> Sexplib.Sexp.to_string_hum ?indent:(Some 2) ))
-    |> List.map (fun (name, def) -> Printf.sprintf "%s |-> %s" name def)
+    |> List.map (fun (name, def) ->
+           Printf.sprintf "%s |-> %s" (Ident.to_string name) def)
     |> String.concat "; \n  "
   in
   let scope_mod_tys s =

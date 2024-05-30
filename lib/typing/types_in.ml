@@ -6,7 +6,7 @@ let same ty0 ty1 = ty0 = ty1
 
 let root_id = 0
 
-let mk_root_tid tn = (root_id, tn)
+let mk_root_tid tn = Ident.mk_ident 0 tn
 
 let int_ty = TConsI (mk_root_tid "int", [])
 

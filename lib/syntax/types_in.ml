@@ -4,7 +4,7 @@ open Sexplib.Conv
 
 [@@@warning "-17"]
 
-type ty_id = int (* module type id *) * string
+type ty_id = Ident.ident
 
 (* normalized type expression *)
 and ty =
@@ -27,19 +27,20 @@ and variant = string * ty option
 
 and ty_def =
   (* todo: add type alias to type definition *)
-  | TDOpaqueI of string * type_paras
-  | TDAdtI of string * type_paras * variant list
-  | TDRecordI of string * type_paras * (string * ty) list
+  | TDOpaqueI of Ident.ident * type_paras
+  | TDAdtI of Ident.ident * type_paras * variant list
+  | TDRecordI of Ident.ident * type_paras * (string * ty) list
+
+and structure = {
+  val_defs : (string * bind_ty) list;
+  ty_defs : ty_def list;
+  mod_sigs : (string * mod_ty) list;
+  mod_defs : (string * mod_ty) list;
+}
 
 and mod_ty =
-  | MTMod of {
-      id : int; (* give every module type an identity *)
-      val_defs : (string * bind_ty) list;
-      ty_defs : ty_def list;
-      mod_sigs : (string * mod_ty) list;
-      mod_defs : (string * mod_ty) list;
-    }
-  | MTFun of (mod_ty * mod_ty * ((mod_ty -> mod_ty)[@opaque]))
+  | MTMod of structure
+  | MTFun of (mod_ty * mod_ty)
 [@@deriving
   sexp,
     show,
