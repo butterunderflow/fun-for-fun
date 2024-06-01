@@ -467,6 +467,7 @@ and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
       let mty = check_subtype (get_mod_ty me_typed) mty in
       MERestrict (me_typed, mty)
 
+(* check if mt0 is more specifc than mt1, return an mt1 view of mt0 *)
 and check_subtype mt0 mt1 : I.mod_ty =
   let mid_map = ref [] in
   let subst mt =
@@ -486,7 +487,7 @@ and check_subtype mt0 mt1 : I.mod_ty =
     match (mt0, mt1) with
     | ( I.MTMod { id = id0; mod_defs = mds0; _ },
         I.MTMod { id = id1; mod_defs = mds1; _ } ) ->
-        mid_map := (id0, id1) :: !mid_map;
+        mid_map := (id1, id0) :: !mid_map;
         List.iter
           (fun (name, md1) ->
             let md0 = List.assoc name mds0 in
@@ -498,7 +499,7 @@ and check_subtype mt0 mt1 : I.mod_ty =
     | _ -> failwith "subtype check error"
   in
   collect_mid_maping mt0 mt1;
-  let mt0 = subst mt0 in
+  let mt1 = subst mt1 in
   let get_def name ty_defs =
     List.find
       (fun td ->
@@ -575,7 +576,7 @@ and check_subtype mt0 mt1 : I.mod_ty =
             id = id0;
           }
     | I.MTFun (argt0, mt0, applier), I.MTFun (argt1, mt1, _) ->
-        let arg_t = compatible argt1 argt0 in
+        let arg_t = compatible argt1 argt0 in (* don't just use argt0 here *)
         let ret_t = compatible mt0 mt1 in
         I.MTFun
           ( arg_t,

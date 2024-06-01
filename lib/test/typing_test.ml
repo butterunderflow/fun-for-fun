@@ -552,7 +552,7 @@ let%expect_test "Test: full program typing" =
            (MTMod (id 1)
              (val_defs ((x (() (TConsI (1 t) ()))) (Nil (() (TConsI (1 t) ())))))
              (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())))
-         (MTMod (id 1) (val_defs ((x (() (TConsI (2 t) ())))))
+         (MTMod (id 1) (val_defs ((x (() (TConsI (1 t) ())))))
            (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ()))))) |}];
 
   print_typed
@@ -652,7 +652,7 @@ let%expect_test "Test: full program typing" =
                 ((x (() (TConsI (2 t) ()))) (z (() (TConsI (0 int) ())))
                   (Nil (() (TConsI (2 t) ())))))
               (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())))
-          (MTMod (id 2) (val_defs ((x (() (TConsI (1 t) ())))))
+          (MTMod (id 2) (val_defs ((x (() (TConsI (2 t) ())))))
             (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ()))))) |}];
 
   print_typed
