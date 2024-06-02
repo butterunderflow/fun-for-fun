@@ -449,16 +449,7 @@ and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
       let env' = enter_env env in
       let me1_typed = tc_mod me1 (Env.add_module name mt0 env') in
       Env.record_all_history (Env.get_top_history env') env;
-      MEFunctor
-        ( (name, mt0),
-          me1_typed,
-          fun mt0' ->
-            let mt0' = check_subtype mt0' mt0 in
-            let env' = enter_env env in
-            let retyped_mod = tc_mod me1 (Env.add_module name mt0' env') in
-            (* don't record history here, module created by functor belong to
-               where it's been applied *)
-            get_mod_ty retyped_mod )
+      MEFunctor ((name, mt0), me1_typed)
   | T.MEField (me, name) -> (
       let me_typed = tc_mod me env in
       match get_mod_ty me_typed with
@@ -472,19 +463,26 @@ and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
       let mt1 = get_mod_ty me1_typed in
       match mt0 with
       | I.MTMod _ -> failwith "try apply a structure"
-      | I.MTFun (_, _, applier) ->
+      | I.MTFun (para_mt, body_mt) ->
           MEApply
-            ( me0_typed,
-              me1_typed,
-              applier mt1 (* can we staging this application *) ))
+            (me0_typed, me1_typed, apply_functor para_mt body_mt mt1 env))
   | T.MERestrict (me, mt) ->
       let me_typed = tc_mod me env in
       let mty = normalize_mt mt env in
-      let mty = check_subtype (get_mod_ty me_typed) mty in
+      let mty, _ = check_subtype (get_mod_ty me_typed) mty in
       MERestrict (me_typed, mty)
 
+(* apply a functor, add returned module type's id into environment *)
+and apply_functor para_mt body_mt arg_mt env =
+  let _arg_mt, map = check_subtype arg_mt para_mt in
+  let body_mt, created = shift_mt body_mt map in
+  Env.record_all_history created env;
+  body_mt
+
+and shift_mt mt map : I.mod_ty * int list = _
+
 (* check if mt0 is more specifc than mt1, return an mt1 view of mt0 *)
-and check_subtype mt0 mt1 : I.mod_ty =
+and check_subtype mt0 mt1 : I.mod_ty * (I.mod_ty -> I.mod_ty) =
   let mid_map = ref [] in
   let subst mt =
     let mapper =
@@ -509,7 +507,7 @@ and check_subtype mt0 mt1 : I.mod_ty =
             let md0 = List.assoc name mds0 in
             collect_mid_maping md0 md1)
           mds1
-    | I.MTFun (argt0, mt0, _), I.MTFun (argt1, mt1, _) ->
+    | I.MTFun (argt0, mt0), I.MTFun (argt1, mt1) ->
         collect_mid_maping argt1 argt0;
         collect_mid_maping mt0 mt1
     | _ -> failwith "subtype check error"
@@ -593,19 +591,14 @@ and check_subtype mt0 mt1 : I.mod_ty =
             id = id0;
             owned_mods = [];
           }
-    | I.MTFun (argt0, mt0, applier), I.MTFun (argt1, mt1, _) ->
+    | I.MTFun (argt0, mt0), I.MTFun (argt1, mt1) ->
         let arg_t = compatible argt1 argt0 in
         (* don't just use argt0 here *)
         let ret_t = compatible mt0 mt1 in
-        I.MTFun
-          ( arg_t,
-            ret_t,
-            fun m ->
-              let ret_t' = applier m in
-              check_subtype ret_t' ret_t )
+        I.MTFun (arg_t, ret_t)
     | _ -> failwith "subtype check error"
   in
-  compatible mt0 mt1
+  (compatible mt0 mt1, subst)
 
 and normalize_def (t : T.ety_def) env : I.ty_def =
   let normed =
@@ -659,8 +652,7 @@ and normalize_mt (me : T.emod_ty) env : I.mod_ty =
       let mt = get_mod_ty me_typed in
       match mt with
       | I.MTMod mt -> List.assoc name mt.mod_sigs
-      | I.MTFun (_mt0, _mt1, _applier) ->
-          failwith "try get field from functor")
+      | I.MTFun (_mt0, _mt1) -> failwith "try get field from functor")
   | T.MTSig comps ->
       let env' = normalize_msig comps (enter_env env) in
       let scope = prune env' env in
@@ -673,14 +665,7 @@ and normalize_mt (me : T.emod_ty) env : I.mod_ty =
       let env' = enter_env env in
       let mt1 = normalize_mt m1 (Env.add_module m0 mt0 env') in
       Env.record_all_history (Env.get_top_history env') env;
-      MTFun
-        ( mt0,
-          mt1,
-          fun mt0' ->
-            let env' = enter_env env in
-            (* don't record history here, module created by functor belong to
-               where it's been applied *)
-            normalize_mt m1 (Env.add_module m0 mt0' env') )
+      MTFun (mt0, mt1)
 
 and normalize_msig comps env =
   match comps with

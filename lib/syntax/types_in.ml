@@ -40,7 +40,7 @@ and mod_ty =
       mod_defs : (string * mod_ty) list;
       owned_mods : int list;
     }
-  | MTFun of (mod_ty * mod_ty * ((mod_ty -> mod_ty)[@opaque]))
+  | MTFun of (mod_ty * mod_ty)
 [@@deriving
   sexp,
     show,
