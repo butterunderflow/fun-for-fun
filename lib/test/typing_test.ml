@@ -11,13 +11,13 @@ let%expect_test "Test: expression typing" =
   let print_typed str =
     Ident.refresh ();
     let e = parse_string_expr str in
-    let typed = Typing.Check.tc_expr e Typing.Env.init in
+    let typed = Typing.Check.tc_expr e (Typing.Env.init ()) in
     typed |> T.sexp_of_expr |> print_sexp
   in
   let print_type str =
     Ident.refresh ();
     let e = parse_string_expr str in
-    let typed = Typing.Check.tc_expr e Typing.Env.init in
+    let typed = Typing.Check.tc_expr e (Typing.Env.init ()) in
     typed |> T.get_ty |> Syntax.Types_in.sexp_of_ty |> print_sexp
   in
   print_typed "1";
@@ -157,7 +157,7 @@ let%expect_test "Test: program toplevel typing" =
     Ident.refresh ();
     let prog = parse_string_program str in
     try
-      let typed, _env = Typing.Check.tc_program prog Typing.Env.init in
+      let typed, _env = Typing.Check.tc_program prog (Typing.Env.init ()) in
       typed |> T.sexp_of_program |> print_sexp
     with
     | Unify.UnificationError (t0, t1) ->
@@ -166,7 +166,7 @@ let%expect_test "Test: program toplevel typing" =
   let print_effect str =
     Ident.refresh ();
     let prog = parse_string_program str in
-    let _typed, env = Typing.Check.tc_program prog Typing.Env.init in
+    let _typed, env = Typing.Check.tc_program prog (Typing.Env.init ()) in
     Printf.printf "%s\n" (Env.dbg env)
   in
   print_typed {|
@@ -214,6 +214,8 @@ let%expect_test "Test: program toplevel typing" =
 
     Module Types:
 
+    Module Creation History:
+
     Current Module Index:
       0
     ++++++++++++++++++Scope Debug Info Begin++++++++++++++++++
@@ -260,6 +262,8 @@ let%expect_test "Test: program toplevel typing" =
     Module Definitions:
 
     Module Types:
+
+    Module Creation History:
 
     Current Module Index:
       0
@@ -354,6 +358,8 @@ let%expect_test "Test: program toplevel typing" =
 
     Module Types:
 
+    Module Creation History:
+
     Current Module Index:
       0
     ++++++++++++++++++Scope Debug Info Begin++++++++++++++++++
@@ -365,7 +371,7 @@ let%expect_test "Test: full program typing" =
     Ident.refresh ();
     let prog = parse_string_program str in
     try
-      let typed, _env = Typing.Check.tc_program prog Typing.Env.init in
+      let typed, _env = Typing.Check.tc_program prog (Typing.Env.init ()) in
       typed |> T.sexp_of_program |> print_sexp
     with
     | Unify.UnificationError (t0, t1) ->
@@ -374,7 +380,7 @@ let%expect_test "Test: full program typing" =
   let print_effect str =
     Ident.refresh ();
     let prog = parse_string_program str in
-    let _typed, env = Typing.Check.tc_program prog Typing.Env.init in
+    let _typed, env = Typing.Check.tc_program prog (Typing.Env.init ()) in
     Printf.printf "%s\n" (Env.dbg env)
   in
 
@@ -386,7 +392,7 @@ let%expect_test "Test: full program typing" =
     ((TopMod M
        (MEStruct ((TopLet x (EConst (CInt 1) (TConsI (0 int) ()))))
          (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ()))))) (ty_defs ())
-           (mod_sigs ()) (mod_defs ()))))) |}];
+           (mod_sigs ()) (mod_defs ()) (owned_mods ()))))) |}];
   print_typed
     {|
      module M = struct let x = 1 end
@@ -397,12 +403,12 @@ let%expect_test "Test: full program typing" =
     ((TopMod M
        (MEStruct ((TopLet x (EConst (CInt 1) (TConsI (0 int) ()))))
          (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ()))))) (ty_defs ())
-           (mod_sigs ()) (mod_defs ()))))
+           (mod_sigs ()) (mod_defs ()) (owned_mods ()))))
       (TopLet c
         (EField
           (MEName M
             (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ()))))) (ty_defs ())
-              (mod_sigs ()) (mod_defs ())))
+              (mod_sigs ()) (mod_defs ()) (owned_mods ())))
           x (TConsI (0 int) ())))) |}];
   print_typed
     {|
@@ -423,14 +429,16 @@ let%expect_test "Test: full program typing" =
            (TopLet x (ECons Nil (TConsI (1 t) ()))))
          (MTMod (id 1)
            (val_defs ((x (() (TConsI (1 t) ()))) (Nil (() (TConsI (1 t) ())))))
-           (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ()))))
+           (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())
+           (owned_mods ()))))
       (TopLet c
         (EField
           (MEName M
             (MTMod (id 1)
               (val_defs
                 ((x (() (TConsI (1 t) ()))) (Nil (() (TConsI (1 t) ())))))
-              (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())))
+              (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())
+              (owned_mods ())))
           x (TConsI (1 t) ())))) |}];
 
   print_typed
@@ -462,14 +470,14 @@ let%expect_test "Test: full program typing" =
            (TopMod N
              (MEStruct ((TopTypeDef (TDAdtI t () ((Nil ())))))
                (MTMod (id 2) (val_defs ((Nil (() (TConsI (2 t) ())))))
-                 (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ())
-                 (mod_defs ()))))
+                 (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())
+                 (owned_mods ()))))
            (TopLet z
              (EFieldCons
                (MEName N
                  (MTMod (id 2) (val_defs ((Nil (() (TConsI (2 t) ())))))
                    (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ())
-                   (mod_defs ())))
+                   (mod_defs ()) (owned_mods ())))
                Nil (TConsI (2 t) ()))))
          (MTMod (id 1)
            (val_defs
@@ -480,7 +488,8 @@ let%expect_test "Test: full program typing" =
              ((N
                 (MTMod (id 2) (val_defs ((Nil (() (TConsI (2 t) ())))))
                   (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ())
-                  (mod_defs ()))))))))
+                  (mod_defs ()) (owned_mods ())))))
+           (owned_mods (2)))))
       (TopLet c
         (EField
           (MEName M
@@ -493,7 +502,8 @@ let%expect_test "Test: full program typing" =
                 ((N
                    (MTMod (id 2) (val_defs ((Nil (() (TConsI (2 t) ())))))
                      (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ())
-                     (mod_defs ())))))))
+                     (mod_defs ()) (owned_mods ())))))
+              (owned_mods (2))))
           x (TConsI (1 t) ())))
       (TopLet x
         (EFieldCons
@@ -508,10 +518,12 @@ let%expect_test "Test: full program typing" =
                   ((N
                      (MTMod (id 2) (val_defs ((Nil (() (TConsI (2 t) ())))))
                        (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ())
-                       (mod_defs ())))))))
+                       (mod_defs ()) (owned_mods ())))))
+                (owned_mods (2))))
             N
             (MTMod (id 2) (val_defs ((Nil (() (TConsI (2 t) ())))))
-              (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())))
+              (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())
+              (owned_mods ())))
           Nil (TConsI (2 t) ())))
       (TopLet y
         (EField
@@ -525,7 +537,8 @@ let%expect_test "Test: full program typing" =
                 ((N
                    (MTMod (id 2) (val_defs ((Nil (() (TConsI (2 t) ())))))
                      (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ())
-                     (mod_defs ())))))))
+                     (mod_defs ()) (owned_mods ())))))
+              (owned_mods (2))))
           z (TConsI (2 t) ())))) |}];
 
   print_typed
@@ -551,9 +564,11 @@ let%expect_test "Test: full program typing" =
              (TopLet x (ECons Nil (TConsI (1 t) ()))))
            (MTMod (id 1)
              (val_defs ((x (() (TConsI (1 t) ()))) (Nil (() (TConsI (1 t) ())))))
-             (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())))
+             (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())
+             (owned_mods ())))
          (MTMod (id 1) (val_defs ((x (() (TConsI (1 t) ())))))
-           (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ()))))) |}];
+           (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())
+           (owned_mods ()))))) |}];
 
   print_typed
     {|
@@ -569,7 +584,8 @@ let%expect_test "Test: full program typing" =
     {|
     ((TopModSig MIntf
        (MTMod (id 1) (val_defs ((x (() (TConsI (1 t) ())))))
-         (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ()))))|}];
+         (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())
+         (owned_mods ()))))|}];
 
   print_effect
     {|
@@ -594,7 +610,10 @@ let%expect_test "Test: full program typing" =
 
     Module Types:
       MIntf |-> (MTMod (id 1) (val_defs ((x (() (TConsI (1 t) ())))))
-      (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ()))
+      (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())
+      (owned_mods ()))
+    Module Creation History:
+      1
     Current Module Index:
       0
     ++++++++++++++++++Scope Debug Info Begin++++++++++++++++++
@@ -614,7 +633,8 @@ let%expect_test "Test: full program typing" =
     {|
     ((TopModSig MIntf
        (MTMod (id 1) (val_defs ((x (() (TConsI (1 t) ())))))
-         (ty_defs ((TDOpaqueI t ()))) (mod_sigs ()) (mod_defs ())))) |}];
+         (ty_defs ((TDOpaqueI t ()))) (mod_sigs ()) (mod_defs ())
+         (owned_mods ())))) |}];
 
   (* here have problem, *)
   print_typed
@@ -640,7 +660,8 @@ let%expect_test "Test: full program typing" =
     {|
     ((TopModSig MIntf
        (MTMod (id 1) (val_defs ((x (() (TConsI (1 t) ())))))
-         (ty_defs ((TDOpaqueI t ()))) (mod_sigs ()) (mod_defs ())))
+         (ty_defs ((TDOpaqueI t ()))) (mod_sigs ()) (mod_defs ())
+         (owned_mods ())))
       (TopMod MImpl
         (MERestrict
           (MEStruct
@@ -651,9 +672,11 @@ let%expect_test "Test: full program typing" =
               (val_defs
                 ((x (() (TConsI (2 t) ()))) (z (() (TConsI (0 int) ())))
                   (Nil (() (TConsI (2 t) ())))))
-              (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())))
+              (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())
+              (owned_mods ())))
           (MTMod (id 2) (val_defs ((x (() (TConsI (2 t) ())))))
-            (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ()))))) |}];
+            (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())
+            (owned_mods ()))))) |}];
 
   print_typed
     {|
@@ -714,13 +737,13 @@ module MMM = (M(F).K : I)
     ((TopModSig I
        (MTMod (id 1)
          (val_defs ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
-         (ty_defs ()) (mod_sigs ()) (mod_defs ())))
+         (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))
       (TopModSig J
         (MTMod (id 2)
           (val_defs
             ((z (() (TConsI (0 int) ()))) (y (() (TConsI (0 int) ())))
               (x (() (TConsI (0 int) ())))))
-          (ty_defs ()) (mod_sigs ()) (mod_defs ())))
+          (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))
       (TopMod MJ
         (MEStruct
           ((TopLet x (EConst (CInt 1) (TConsI (0 int) ())))
@@ -730,7 +753,7 @@ module MMM = (M(F).K : I)
             (val_defs
               ((z (() (TConsI (0 int) ()))) (y (() (TConsI (0 int) ())))
                 (x (() (TConsI (0 int) ())))))
-            (ty_defs ()) (mod_sigs ()) (mod_defs ()))))
+            (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()))))
       (TopMod Simple
         (MEStruct
           ((TopLet x (EConst (CInt 1) (TConsI (0 int) ())))
@@ -738,7 +761,7 @@ module MMM = (M(F).K : I)
           (MTMod (id 4)
             (val_defs
               ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
-            (ty_defs ()) (mod_sigs ()) (mod_defs ()))))
+            (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()))))
       (TopMod M
         (MEFunctor
           (MI
@@ -746,11 +769,11 @@ module MMM = (M(F).K : I)
               ((MTMod (id 1)
                  (val_defs
                    ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
-                 (ty_defs ()) (mod_sigs ()) (mod_defs ()))
+                 (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()))
                 (MTMod (id 1)
                   (val_defs
                     ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
-                  (ty_defs ()) (mod_sigs ()) (mod_defs ()))
+                  (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()))
                 <opaque>)))
           (MEStruct
             ((TopMod K
@@ -761,23 +784,24 @@ module MMM = (M(F).K : I)
                         (val_defs
                           ((y (() (TConsI (0 int) ())))
                             (x (() (TConsI (0 int) ())))))
-                        (ty_defs ()) (mod_sigs ()) (mod_defs ()))
+                        (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()))
                        (MTMod (id 1)
                          (val_defs
                            ((y (() (TConsI (0 int) ())))
                              (x (() (TConsI (0 int) ())))))
-                         (ty_defs ()) (mod_sigs ()) (mod_defs ()))
+                         (ty_defs ()) (mod_sigs ()) (mod_defs ())
+                         (owned_mods ()))
                        <opaque>)))
                  (MEName Simple
                    (MTMod (id 4)
                      (val_defs
                        ((y (() (TConsI (0 int) ())))
                          (x (() (TConsI (0 int) ())))))
-                     (ty_defs ()) (mod_sigs ()) (mod_defs ())))
+                     (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))
                  (MTMod (id 1)
                    (val_defs
                      ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
-                   (ty_defs ()) (mod_sigs ()) (mod_defs ())))))
+                   (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
             (MTMod (id 9) (val_defs ()) (ty_defs ()) (mod_sigs ())
               (mod_defs
                 ((K
@@ -785,7 +809,8 @@ module MMM = (M(F).K : I)
                      (val_defs
                        ((y (() (TConsI (0 int) ())))
                          (x (() (TConsI (0 int) ())))))
-                     (ty_defs ()) (mod_sigs ()) (mod_defs ())))))))
+                     (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
+              (owned_mods ())))
           <opaque>))
       (TopMod F
         (MEFunctor
@@ -793,7 +818,7 @@ module MMM = (M(F).K : I)
             (MTMod (id 1)
               (val_defs
                 ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
-              (ty_defs ()) (mod_sigs ()) (mod_defs ())))
+              (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))
           (MERestrict
             (MEStruct
               ((TopLet x (EConst (CInt 1) (TConsI (0 int) ())))
@@ -803,12 +828,12 @@ module MMM = (M(F).K : I)
                 (val_defs
                   ((z (() (TConsI (0 int) ()))) (y (() (TConsI (0 int) ())))
                     (x (() (TConsI (0 int) ())))))
-                (ty_defs ()) (mod_sigs ()) (mod_defs ())))
+                (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))
             (MTMod (id 13)
               (val_defs
                 ((z (() (TConsI (0 int) ()))) (y (() (TConsI (0 int) ())))
                   (x (() (TConsI (0 int) ())))))
-              (ty_defs ()) (mod_sigs ()) (mod_defs ())))
+              (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))
           <opaque>))
       (TopMod MMM
         (MERestrict
@@ -821,12 +846,13 @@ module MMM = (M(F).K : I)
                         (val_defs
                           ((y (() (TConsI (0 int) ())))
                             (x (() (TConsI (0 int) ())))))
-                        (ty_defs ()) (mod_sigs ()) (mod_defs ()))
+                        (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()))
                        (MTMod (id 1)
                          (val_defs
                            ((y (() (TConsI (0 int) ())))
                              (x (() (TConsI (0 int) ())))))
-                         (ty_defs ()) (mod_sigs ()) (mod_defs ()))
+                         (ty_defs ()) (mod_sigs ()) (mod_defs ())
+                         (owned_mods ()))
                        <opaque>))
                     (MTMod (id 9) (val_defs ()) (ty_defs ()) (mod_sigs ())
                       (mod_defs
@@ -835,7 +861,9 @@ module MMM = (M(F).K : I)
                              (val_defs
                                ((y (() (TConsI (0 int) ())))
                                  (x (() (TConsI (0 int) ())))))
-                             (ty_defs ()) (mod_sigs ()) (mod_defs ()))))))
+                             (ty_defs ()) (mod_sigs ()) (mod_defs ())
+                             (owned_mods ())))))
+                      (owned_mods ()))
                     <opaque>)))
               (MEName F
                 (MTFun
@@ -843,13 +871,13 @@ module MMM = (M(F).K : I)
                      (val_defs
                        ((y (() (TConsI (0 int) ())))
                          (x (() (TConsI (0 int) ())))))
-                     (ty_defs ()) (mod_sigs ()) (mod_defs ()))
+                     (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()))
                     (MTMod (id 13)
                       (val_defs
                         ((z (() (TConsI (0 int) ())))
                           (y (() (TConsI (0 int) ())))
                           (x (() (TConsI (0 int) ())))))
-                      (ty_defs ()) (mod_sigs ()) (mod_defs ()))
+                      (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()))
                     <opaque>)))
               (MTMod (id 15) (val_defs ()) (ty_defs ()) (mod_sigs ())
                 (mod_defs
@@ -858,14 +886,145 @@ module MMM = (M(F).K : I)
                        (val_defs
                          ((y (() (TConsI (0 int) ())))
                            (x (() (TConsI (0 int) ())))))
-                       (ty_defs ()) (mod_sigs ()) (mod_defs ())))))))
+                       (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
+                (owned_mods ())))
             K
             (MTMod (id 17)
               (val_defs
                 ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
-              (ty_defs ()) (mod_sigs ()) (mod_defs ())))
+              (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))
           (MTMod (id 17)
             (val_defs
               ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
-            (ty_defs ()) (mod_sigs ()) (mod_defs ())))))
- |}]
+            (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
+ |}];
+
+  print_effect
+    {|
+     module type I = sig
+        val x : int
+
+        val y : int
+     end
+
+     module type J = sig
+        val x : int
+
+        val y : int
+
+        val z : int
+     end
+
+module MJ = struct
+  let x = 1
+
+  let y = 1
+
+  let z = 1
+end
+
+module Simple = struct
+  let x = 1
+
+  let y = 2
+end
+
+module M =
+functor
+  (MI : functor (MI : I) -> I)
+  ->
+  struct
+    module K = MI (Simple)
+  end
+
+module F =
+functor
+  (MI : I)
+  ->
+  (
+    struct
+      let x = 1
+
+      let y = 1
+
+      let z = 1
+    end :
+      J)
+
+module MMM = (M(F).K : I)
+     |};
+  [%expect {|
+    ------------------Envirment Debug Info Begin------------------------
+
+    ++++++++++++++++++Scope Debug Info Begin++++++++++++++++++
+    Value Bindings:
+
+    Type Definitions:
+
+    Module Definitions:
+      MMM |-> (MTMod (id 17)
+      (val_defs ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
+      (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()));
+     F |-> (MTFun
+      ((MTMod (id 1)
+         (val_defs ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
+         (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()))
+        (MTMod (id 13)
+          (val_defs
+            ((z (() (TConsI (0 int) ()))) (y (() (TConsI (0 int) ())))
+              (x (() (TConsI (0 int) ())))))
+          (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()))
+        <opaque>));
+     M |-> (MTFun
+      ((MTFun
+         ((MTMod (id 1)
+            (val_defs
+              ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
+            (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()))
+           (MTMod (id 1)
+             (val_defs
+               ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
+             (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()))
+           <opaque>))
+        (MTMod (id 9) (val_defs ()) (ty_defs ()) (mod_sigs ())
+          (mod_defs
+            ((K
+               (MTMod (id 1)
+                 (val_defs
+                   ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
+                 (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
+          (owned_mods ()))
+        <opaque>));
+     Simple |-> (MTMod (id 4)
+      (val_defs ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
+      (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()));
+     MJ |-> (MTMod (id 3)
+      (val_defs
+        ((z (() (TConsI (0 int) ()))) (y (() (TConsI (0 int) ())))
+          (x (() (TConsI (0 int) ())))))
+      (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()))
+    Module Types:
+      J |-> (MTMod (id 2)
+      (val_defs
+        ((z (() (TConsI (0 int) ()))) (y (() (TConsI (0 int) ())))
+          (x (() (TConsI (0 int) ())))))
+      (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()));
+     I |-> (MTMod (id 1)
+      (val_defs ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
+      (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()))
+    Module Creation History:
+      12;
+      11;
+      8;
+      7;
+      6;
+      5;
+      4;
+      3;
+      2;
+      1
+    Current Module Index:
+      0
+    ++++++++++++++++++Scope Debug Info Begin++++++++++++++++++
+
+    ------------------Envirment Debug Info End-------------------------- |}]

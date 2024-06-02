@@ -38,6 +38,7 @@ and mod_ty =
       ty_defs : ty_def list;
       mod_sigs : (string * mod_ty) list;
       mod_defs : (string * mod_ty) list;
+      owned_mods : int list;
     }
   | MTFun of (mod_ty * mod_ty * ((mod_ty -> mod_ty)[@opaque]))
 [@@deriving

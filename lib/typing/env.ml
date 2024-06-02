@@ -7,6 +7,7 @@ type scope = {
   module_sigs : (string * I.mod_ty) list; (* module bindings *)
   module_dict : (int * I.mod_ty) list;
   curr : int;
+  mutable history : int list;
 }
 
 type t = scope list
@@ -36,6 +37,16 @@ let add_values binds env =
   | s :: env' -> { s with values = binds @ s.values } :: env'
   | [] -> failwith "neverreach"
 
+let get_curr (env : t) =
+  match env with
+  | [] -> failwith "neverreach"
+  | s :: _ -> s.curr
+
+let get_top_history (env : t) =
+  match env with
+  | [] -> failwith "neverreach"
+  | s :: _ -> s.history
+
 let rec get_value_type x (env : t) =
   match env with
   | [] -> failwith (Printf.sprintf "name `%s` not found" x)
@@ -43,6 +54,16 @@ let rec get_value_type x (env : t) =
       match List.assoc_opt x s.values with
       | None -> get_value_type x env'
       | Some te -> te)
+
+let record_history id (env : t) =
+  match env with
+  | [] -> failwith "neverreach"
+  | s :: _ -> s.history <- id :: s.history
+
+let record_all_history ids (env : t) =
+  match env with
+  | [] -> failwith "neverreach"
+  | s :: _ -> s.history <- ids @ s.history
 
 let rec get_module_def m (env : t) =
   match env with
@@ -89,7 +110,7 @@ let get_curr env =
 
 let get_module_by_id i env = List.assoc i env.module_dict
 
-let init_scope =
+let init_scope () =
   {
     values = [];
     types = [];
@@ -97,9 +118,10 @@ let init_scope =
     module_sigs = [];
     module_dict = [];
     curr = 0;
+    history = [];
   }
 
-let init = [ init_scope ]
+let init () = [ init_scope () ]
 
 let mk_tid tn env =
   match env with
@@ -159,6 +181,11 @@ let dbg (env : t) =
              |> Sexplib.Sexp.to_string_hum ?indent:(Some 2)))
     |> String.concat "; \n "
   in
+  let scope_history s =
+    s.history
+    |> List.map (fun id -> Printf.sprintf "%d" id)
+    |> String.concat "; \n  "
+  in
   Printf.sprintf
     {|
 ------------------Envirment Debug Info Begin------------------------
@@ -178,11 +205,13 @@ Module Definitions:
   %s
 Module Types: 
   %s
+Module Creation History: 
+  %s
 Current Module Index:
   %d 
 ++++++++++++++++++Scope Debug Info Begin++++++++++++++++++
             |}
            (scope_values s) (scope_ty_defs s) (scope_mod_defs s)
-           (scope_mod_tys s) s.curr)
+           (scope_mod_tys s) (scope_history s) s.curr)
        env
     |> String.concat "\n")

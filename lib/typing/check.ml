@@ -98,7 +98,8 @@ let env_id = ref 0
 
 let enter_env env =
   env_id := 1 + !env_id;
-  { Env.init_scope with curr = !env_id } :: env
+  Env.record_history !env_id env;
+  { (Env.init_scope ()) with curr = !env_id } :: env
 
 let tv_pool = ref IdMap.empty
 
@@ -412,8 +413,16 @@ and tc_tops (prog : T.top_level list) env : program * Env.t =
       let rest_typed1, env = tc_tops rest env in
       (top_typed0 :: rest_typed1, env)
 
-and make_env_mt
-    { Env.values; types; modules; module_sigs; module_dict = _; curr } =
+and make_scope_mt
+    {
+      Env.values;
+      types;
+      modules;
+      module_sigs;
+      module_dict = _;
+      curr;
+      history;
+    } =
   I.MTMod
     {
       id = curr;
@@ -421,6 +430,7 @@ and make_env_mt
       ty_defs = types;
       mod_sigs = module_sigs;
       mod_defs = modules;
+      owned_mods = history;
     }
 
 and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
@@ -429,19 +439,25 @@ and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
   | T.MEStruct body ->
       let body_typed, env' = tc_tops body (enter_env env) in
       let env_diff = prune env' env in
-      let mt = make_env_mt env_diff in
+      Env.record_all_history (Env.get_top_history env') env;
+      let mt = make_scope_mt env_diff in
       MEStruct (body_typed, mt)
   | T.MEFunctor ((name, emt0), me1) ->
-      let mt0 = normalize_mt emt0 (enter_env env) in
-      let me1_typed = tc_mod me1 (Env.add_module name mt0 (enter_env env)) in
+      let env' = enter_env env in
+      let mt0 = normalize_mt emt0 env' in
+      Env.record_all_history (Env.get_top_history env') env;
+      let env' = enter_env env in
+      let me1_typed = tc_mod me1 (Env.add_module name mt0 env') in
+      Env.record_all_history (Env.get_top_history env') env;
       MEFunctor
         ( (name, mt0),
           me1_typed,
           fun mt0' ->
             let mt0' = check_subtype mt0' mt0 in
-            let retyped_mod =
-              tc_mod me1 (Env.add_module name mt0' (enter_env env))
-            in
+            let env' = enter_env env in
+            let retyped_mod = tc_mod me1 (Env.add_module name mt0' env') in
+            (* don't record history here, module created by functor belong to
+               where it's been applied *)
             get_mod_ty retyped_mod )
   | T.MEField (me, name) -> (
       let me_typed = tc_mod me env in
@@ -521,6 +537,7 @@ and check_subtype mt0 mt1 : I.mod_ty =
             mod_defs = mds0;
             mod_sigs = _ms0;
             id = id0;
+            _;
           },
         I.MTMod
           {
@@ -574,9 +591,11 @@ and check_subtype mt0 mt1 : I.mod_ty =
                   (name, compatible ms1 (List.assoc name mds0)))
                 ms1;
             id = id0;
+            owned_mods = [];
           }
     | I.MTFun (argt0, mt0, applier), I.MTFun (argt1, mt1, _) ->
-        let arg_t = compatible argt1 argt0 in (* don't just use argt0 here *)
+        let arg_t = compatible argt1 argt0 in
+        (* don't just use argt0 here *)
         let ret_t = compatible mt0 mt1 in
         I.MTFun
           ( arg_t,
@@ -644,15 +663,24 @@ and normalize_mt (me : T.emod_ty) env : I.mod_ty =
           failwith "try get field from functor")
   | T.MTSig comps ->
       let env' = normalize_msig comps (enter_env env) in
-      make_env_mt (prune env' env)
+      let scope = prune env' env in
+      Env.record_all_history scope.history env;
+      make_scope_mt scope
   | T.MTFunctor (m0, emt0, m1) ->
-      let mt0 = normalize_mt emt0 (enter_env env) in
-      let mt1 = normalize_mt m1 (Env.add_module m0 mt0 (enter_env env)) in
+      let env' = enter_env env in
+      let mt0 = normalize_mt emt0 env' in
+      Env.record_all_history (Env.get_top_history env') env;
+      let env' = enter_env env in
+      let mt1 = normalize_mt m1 (Env.add_module m0 mt0 env') in
+      Env.record_all_history (Env.get_top_history env') env;
       MTFun
         ( mt0,
           mt1,
           fun mt0' ->
-            normalize_mt m1 (Env.add_module m0 mt0' (enter_env env)) )
+            let env' = enter_env env in
+            (* don't record history here, module created by functor belong to
+               where it's been applied *)
+            normalize_mt m1 (Env.add_module m0 mt0' env') )
 
 and normalize_msig comps env =
   match comps with
