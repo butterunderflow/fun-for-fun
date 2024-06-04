@@ -773,8 +773,7 @@ module MMM = (M(F).K : I)
                 (MTMod (id 1)
                   (val_defs
                     ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
-                  (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()))
-                <opaque>)))
+                  (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
           (MEStruct
             ((TopMod K
                (MEApply
@@ -790,28 +789,26 @@ module MMM = (M(F).K : I)
                            ((y (() (TConsI (0 int) ())))
                              (x (() (TConsI (0 int) ())))))
                          (ty_defs ()) (mod_sigs ()) (mod_defs ())
-                         (owned_mods ()))
-                       <opaque>)))
+                         (owned_mods ())))))
                  (MEName Simple
                    (MTMod (id 4)
                      (val_defs
                        ((y (() (TConsI (0 int) ())))
                          (x (() (TConsI (0 int) ())))))
                      (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))
-                 (MTMod (id 1)
+                 (MTMod (id 10)
                    (val_defs
                      ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
                    (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
             (MTMod (id 9) (val_defs ()) (ty_defs ()) (mod_sigs ())
               (mod_defs
                 ((K
-                   (MTMod (id 1)
+                   (MTMod (id 10)
                      (val_defs
                        ((y (() (TConsI (0 int) ())))
                          (x (() (TConsI (0 int) ())))))
                      (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
-              (owned_mods ())))
-          <opaque>))
+              (owned_mods (10))))))
       (TopMod F
         (MEFunctor
           (MI
@@ -833,8 +830,7 @@ module MMM = (M(F).K : I)
               (val_defs
                 ((z (() (TConsI (0 int) ()))) (y (() (TConsI (0 int) ())))
                   (x (() (TConsI (0 int) ())))))
-              (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))
-          <opaque>))
+              (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
       (TopMod MMM
         (MERestrict
           (MEField
@@ -852,19 +848,17 @@ module MMM = (M(F).K : I)
                            ((y (() (TConsI (0 int) ())))
                              (x (() (TConsI (0 int) ())))))
                          (ty_defs ()) (mod_sigs ()) (mod_defs ())
-                         (owned_mods ()))
-                       <opaque>))
+                         (owned_mods ()))))
                     (MTMod (id 9) (val_defs ()) (ty_defs ()) (mod_sigs ())
                       (mod_defs
                         ((K
-                           (MTMod (id 1)
+                           (MTMod (id 10)
                              (val_defs
                                ((y (() (TConsI (0 int) ())))
                                  (x (() (TConsI (0 int) ())))))
                              (ty_defs ()) (mod_sigs ()) (mod_defs ())
                              (owned_mods ())))))
-                      (owned_mods ()))
-                    <opaque>)))
+                      (owned_mods (10))))))
               (MEName F
                 (MTFun
                   ((MTMod (id 1)
@@ -877,23 +871,22 @@ module MMM = (M(F).K : I)
                         ((z (() (TConsI (0 int) ())))
                           (y (() (TConsI (0 int) ())))
                           (x (() (TConsI (0 int) ())))))
-                      (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()))
-                    <opaque>)))
-              (MTMod (id 15) (val_defs ()) (ty_defs ()) (mod_sigs ())
+                      (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
+              (MTMod (id 14) (val_defs ()) (ty_defs ()) (mod_sigs ())
                 (mod_defs
                   ((K
-                     (MTMod (id 17)
+                     (MTMod (id 15)
                        (val_defs
                          ((y (() (TConsI (0 int) ())))
                            (x (() (TConsI (0 int) ())))))
                        (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
-                (owned_mods ())))
+                (owned_mods (15))))
             K
-            (MTMod (id 17)
+            (MTMod (id 15)
               (val_defs
                 ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
               (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))
-          (MTMod (id 17)
+          (MTMod (id 15)
             (val_defs
               ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
             (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
@@ -962,7 +955,7 @@ module MMM = (M(F).K : I)
     Type Definitions:
 
     Module Definitions:
-      MMM |-> (MTMod (id 17)
+      MMM |-> (MTMod (id 15)
       (val_defs ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
       (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()));
      F |-> (MTFun
@@ -973,8 +966,7 @@ module MMM = (M(F).K : I)
           (val_defs
             ((z (() (TConsI (0 int) ()))) (y (() (TConsI (0 int) ())))
               (x (() (TConsI (0 int) ())))))
-          (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()))
-        <opaque>));
+          (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()))));
      M |-> (MTFun
       ((MTFun
          ((MTMod (id 1)
@@ -984,17 +976,15 @@ module MMM = (M(F).K : I)
            (MTMod (id 1)
              (val_defs
                ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
-             (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()))
-           <opaque>))
+             (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()))))
         (MTMod (id 9) (val_defs ()) (ty_defs ()) (mod_sigs ())
           (mod_defs
             ((K
-               (MTMod (id 1)
+               (MTMod (id 10)
                  (val_defs
                    ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
                  (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
-          (owned_mods ()))
-        <opaque>));
+          (owned_mods (10)))));
      Simple |-> (MTMod (id 4)
       (val_defs ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
       (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()));
@@ -1013,6 +1003,8 @@ module MMM = (M(F).K : I)
       (val_defs ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
       (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()))
     Module Creation History:
+      15;
+      14;
       12;
       11;
       8;

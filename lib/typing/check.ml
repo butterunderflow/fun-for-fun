@@ -3,6 +3,7 @@ module U = Unify
 module T = Syntax.Parsetree
 module I = Types_in
 module IdMap = Map.Make (Ident)
+module IntMap = Map.Make (Int)
 
 let make_tv () =
   let name = "'_t" in
@@ -100,6 +101,11 @@ let enter_env env =
   env_id := 1 + !env_id;
   Env.record_history !env_id env;
   { (Env.init_scope ()) with curr = !env_id } :: env
+
+let env_newid env =
+  env_id := 1 + !env_id;
+  Env.record_history !env_id env;
+  !env_id
 
 let tv_pool = ref IdMap.empty
 
@@ -475,28 +481,61 @@ and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
 (* apply a functor, add returned module type's id into environment *)
 and apply_functor para_mt body_mt arg_mt env =
   let _arg_mt, map = check_subtype arg_mt para_mt in
-  let body_mt, created = shift_mt body_mt map in
-  Env.record_all_history created env;
+  let substituted = map body_mt in
+  let body_mt = shift_mt substituted env in
   body_mt
 
-and shift_mt mt map : I.mod_ty * int list = _
-
-(* check if mt0 is more specifc than mt1, return an mt1 view of mt0 *)
-and check_subtype mt0 mt1 : I.mod_ty * (I.mod_ty -> I.mod_ty) =
-  let mid_map = ref [] in
-  let subst mt =
+and shift_mt (mt : I.mod_ty) env : I.mod_ty =
+  (* collect type id need to shift *)
+  let dict = ref IntMap.empty in
+  let rec go mt =
+    match (mt : I.mod_ty) with
+    | I.MTMod
+        { id; val_defs = _; ty_defs = _; mod_sigs; mod_defs; owned_mods } ->
+        List.iter
+          (fun id ->
+            if not (IntMap.mem id !dict) then
+              dict := IntMap.add id (env_newid env) !dict)
+          (id :: owned_mods);
+        List.iter (fun (_, mt) -> go mt) mod_defs;
+        List.iter (fun (_, mt) -> go mt) mod_sigs
+    | I.MTFun (para_mt, body_mt) ->
+        go para_mt;
+        go body_mt
+  in
+  go mt;
+  (* for now dict is read-only *)
+  let make_mapper map =
+    let get_id_or_default id =
+      match IntMap.find_opt id map with
+      | Some id' -> id'
+      | None -> id
+    in
     let mapper =
-      object (_ : 'self)
-        inherit ['self] Types_in.map
+      object (_self)
+        inherit [_] Types_in.map as super
+
+        method! visit_MTMod () id val_defs ty_defs mod_sigs mod_defs
+            owned_mods =
+          super#visit_MTMod () (get_id_or_default id) val_defs ty_defs
+            mod_sigs mod_defs
+            (List.map get_id_or_default owned_mods)
 
         method! visit_ty_id () (id, name) =
-          match List.assoc_opt id !mid_map with
-          | Some id1 -> (id1, name)
-          | _ -> (id, name)
+          match IntMap.find_opt id map with
+          | None -> (id, name)
+          | Some id' -> (id', name)
       end
     in
-    mapper#visit_mod_ty () mt
+    fun mt -> mapper#visit_mod_ty () mt
   in
+  let mapper = make_mapper !dict in
+  mapper mt
+
+(* check if mt0 is more specifc than mt1, return an mt1 view of mt0 *)
+and check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) :
+    I.mod_ty * (I.mod_ty -> I.mod_ty) =
+  let mid_map = ref [] in
   let rec collect_mid_maping mt0 mt1 =
     match (mt0, mt1) with
     | ( I.MTMod { id = id0; mod_defs = mds0; _ },
@@ -513,6 +552,18 @@ and check_subtype mt0 mt1 : I.mod_ty * (I.mod_ty -> I.mod_ty) =
     | _ -> failwith "subtype check error"
   in
   collect_mid_maping mt0 mt1;
+  let mapper =
+    object
+      inherit [_] Types_in.map
+
+      method! visit_ty_id () (id, name) =
+        match List.assoc_opt id !mid_map with
+        | Some id1 -> (id1, name)
+        | _ -> (id, name)
+    end
+  in
+
+  let subst mt = mapper#visit_mod_ty () mt in
   let mt1 = subst mt1 in
   let get_def name ty_defs =
     List.find
