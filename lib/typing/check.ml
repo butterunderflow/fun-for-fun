@@ -118,11 +118,9 @@ let pool_make_tv n =
   | Some tpv -> tpv
   | None -> make_tv ()
 
-(* prune one scope from env1 last of env0 *)
-let prune (env0 : Env.t) (env1 : Env.t) : Env.scope =
-  match env0 with
-  | s :: env0' when Env.size env1 = Env.size env0' -> s
-  | _ -> failwith "neverreach"
+(* record top history of env1 to env0 *)
+let absorb_top_history (env0 : Env.t) (env1 : Env.t) =
+  Env.record_all_history (Env.get_top_history env0) env1
 
 type norm_ctx =
   | Type
@@ -444,17 +442,17 @@ and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
   | T.MEName name -> MEName (name, Env.get_module_def name env)
   | T.MEStruct body ->
       let body_typed, env' = tc_tops body (enter_env env) in
-      let env_diff = prune env' env in
-      Env.record_all_history (Env.get_top_history env') env;
+      let env_diff = Env.get_top_scope env' in
+      absorb_top_history env' env;
       let mt = make_scope_mt env_diff in
       MEStruct (body_typed, mt)
   | T.MEFunctor ((name, emt0), me1) ->
       let env' = enter_env env in
       let mt0 = normalize_mt emt0 env' in
-      Env.record_all_history (Env.get_top_history env') env;
+      absorb_top_history env' env;
       let env' = enter_env env in
       let me1_typed = tc_mod me1 (Env.add_module name mt0 env') in
-      Env.record_all_history (Env.get_top_history env') env;
+      absorb_top_history env' env;
       MEFunctor ((name, mt0), me1_typed)
   | T.MEField (me, name) -> (
       let me_typed = tc_mod me env in
@@ -486,28 +484,32 @@ and apply_functor para_mt body_mt arg_mt env =
   body_mt
 
 and shift_mt (mt : I.mod_ty) env : I.mod_ty =
-  (* collect type id need to shift *)
-  let dict = ref IntMap.empty in
-  let rec go mt =
-    match (mt : I.mod_ty) with
-    | I.MTMod
-        { id; val_defs = _; ty_defs = _; mod_sigs; mod_defs; owned_mods } ->
-        List.iter
-          (fun id ->
-            if not (IntMap.mem id !dict) then
-              dict := IntMap.add id (env_newid env) !dict)
-          (id :: owned_mods);
-        List.iter (fun (_, mt) -> go mt) mod_defs;
-        List.iter (fun (_, mt) -> go mt) mod_sigs
-    | I.MTFun (para_mt, body_mt) ->
-        go para_mt;
-        go body_mt
+  (* collect type id need to be shift *)
+  let dict =
+    let result = ref IntMap.empty in
+    let rec go mt =
+      match (mt : I.mod_ty) with
+      | I.MTMod
+          { id; val_defs = _; ty_defs = _; mod_sigs; mod_defs; owned_mods }
+        ->
+          List.iter
+            (fun id ->
+              if not (IntMap.mem id !result) then
+                result := IntMap.add id (env_newid env) !result)
+            (id :: owned_mods);
+          List.iter (fun (_, mt) -> go mt) mod_defs;
+          List.iter (fun (_, mt) -> go mt) mod_sigs
+      | I.MTFun (para_mt, body_mt) ->
+          go para_mt;
+          go body_mt
+    in
+    go mt;
+    !result
   in
-  go mt;
   (* for now dict is read-only *)
-  let make_mapper map =
+  let mapper =
     let get_id_or_default id =
-      match IntMap.find_opt id map with
+      match IntMap.find_opt id dict with
       | Some id' -> id'
       | None -> id
     in
@@ -517,53 +519,56 @@ and shift_mt (mt : I.mod_ty) env : I.mod_ty =
 
         method! visit_MTMod () id val_defs ty_defs mod_sigs mod_defs
             owned_mods =
-          super#visit_MTMod () (get_id_or_default id) val_defs ty_defs
+          super#visit_MTMod () (IntMap.find id dict) val_defs ty_defs
             mod_sigs mod_defs
             (List.map get_id_or_default owned_mods)
 
         method! visit_ty_id () (id, name) =
-          match IntMap.find_opt id map with
+          match IntMap.find_opt id dict with
           | None -> (id, name)
           | Some id' -> (id', name)
       end
     in
     fun mt -> mapper#visit_mod_ty () mt
   in
-  let mapper = make_mapper !dict in
   mapper mt
 
 (* check if mt0 is more specifc than mt1, return an mt1 view of mt0 *)
 and check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) :
     I.mod_ty * (I.mod_ty -> I.mod_ty) =
-  let mid_map = ref [] in
-  let rec collect_mid_maping mt0 mt1 =
-    match (mt0, mt1) with
-    | ( I.MTMod { id = id0; mod_defs = mds0; _ },
-        I.MTMod { id = id1; mod_defs = mds1; _ } ) ->
-        mid_map := (id1, id0) :: !mid_map;
-        List.iter
-          (fun (name, md1) ->
-            let md0 = List.assoc name mds0 in
-            collect_mid_maping md0 md1)
-          mds1
-    | I.MTFun (argt0, mt0), I.MTFun (argt1, mt1) ->
-        collect_mid_maping argt1 argt0;
-        collect_mid_maping mt0 mt1
-    | _ -> failwith "subtype check error"
+  let map =
+    let mid_map = ref [] in
+    let rec collect_mid_maping mt0 mt1 =
+      match (mt0, mt1) with
+      | ( I.MTMod { id = id0; mod_defs = mds0; _ },
+          I.MTMod { id = id1; mod_defs = mds1; _ } ) ->
+          mid_map := (id1, id0) :: !mid_map;
+          List.iter
+            (fun (name, md1) ->
+              let md0 = List.assoc name mds0 in
+              collect_mid_maping md0 md1)
+            mds1
+      | I.MTFun (argt0, mt0), I.MTFun (argt1, mt1) ->
+          collect_mid_maping argt0 argt1;
+          collect_mid_maping mt0 mt1
+      | _ -> failwith "subtype check error"
+    in
+    collect_mid_maping mt0 mt1;
+    !mid_map
   in
-  collect_mid_maping mt0 mt1;
-  let mapper =
-    object
-      inherit [_] Types_in.map
+  let subst =
+    let mapper =
+      object
+        inherit [_] Types_in.map
 
-      method! visit_ty_id () (id, name) =
-        match List.assoc_opt id !mid_map with
-        | Some id1 -> (id1, name)
-        | _ -> (id, name)
-    end
+        method! visit_ty_id () (id, name) =
+          match List.assoc_opt id map with
+          | Some id1 -> (id1, name)
+          | _ -> (id, name)
+      end
+    in
+    fun mt -> mapper#visit_mod_ty () mt
   in
-
-  let subst mt = mapper#visit_mod_ty () mt in
   let mt1 = subst mt1 in
   let get_def name ty_defs =
     List.find
@@ -706,16 +711,16 @@ and normalize_mt (me : T.emod_ty) env : I.mod_ty =
       | I.MTFun (_mt0, _mt1) -> failwith "try get field from functor")
   | T.MTSig comps ->
       let env' = normalize_msig comps (enter_env env) in
-      let scope = prune env' env in
-      Env.record_all_history scope.history env;
+      let scope : Env.scope = Env.get_top_scope env' in
+      absorb_top_history env' env;
       make_scope_mt scope
   | T.MTFunctor (m0, emt0, m1) ->
       let env' = enter_env env in
       let mt0 = normalize_mt emt0 env' in
-      Env.record_all_history (Env.get_top_history env') env;
+      absorb_top_history env' env;
       let env' = enter_env env in
       let mt1 = normalize_mt m1 (Env.add_module m0 mt0 env') in
-      Env.record_all_history (Env.get_top_history env') env;
+      absorb_top_history env' env;
       MTFun (mt0, mt1)
 
 and normalize_msig comps env =
