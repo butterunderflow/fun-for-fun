@@ -100,7 +100,8 @@ let env_id = ref 0
 let enter_env env =
   env_id := 1 + !env_id;
   Env.record_history !env_id env;
-  { (Env.init_scope ()) with curr = !env_id } :: env
+  let new_scope = { (Env.init_scope ()) with curr = !env_id } in
+  new_scope :: env
 
 let env_newid env =
   env_id := 1 + !env_id;
@@ -118,9 +119,11 @@ let pool_make_tv n =
   | Some tpv -> tpv
   | None -> make_tv ()
 
-(* record top history of env1 to env0 *)
-let absorb_top_history (env0 : Env.t) (env1 : Env.t) =
-  Env.record_all_history (Env.get_top_history env0) env1
+(* record top history of env0 to env1 *)
+let absorb_history (env0 : Env.t) (env1 : Env.t) =
+  let s = Env.prune env0 env1 in
+  Env.record_all_history !(s.history) env1;
+  s
 
 type norm_ctx =
   | Type
@@ -442,9 +445,8 @@ and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
   | T.MEName name -> MEName (name, Env.get_module_def name env)
   | T.MEStruct body ->
       let body_typed, env' = tc_tops body (enter_env env) in
-      let env_diff = Env.get_top_scope env' in
-      absorb_top_history env' env;
-      let mt = make_scope_mt env_diff in
+      let scope = absorb_history env' env in
+      let mt = make_scope_mt scope in
       MEStruct (body_typed, mt)
   | T.MEFunctor ((name, emt0), me1) ->
       let mt0 = normalize_mt emt0 env in
@@ -707,8 +709,7 @@ and normalize_mt (me : T.emod_ty) env : I.mod_ty =
       | I.MTFun (_mt0, _mt1) -> failwith "try get field from functor")
   | T.MTSig comps ->
       let env' = normalize_msig comps (enter_env env) in
-      let scope : Env.scope = Env.get_top_scope env' in
-      absorb_top_history env' env;
+      let scope = absorb_history env' env in
       make_scope_mt scope
   | T.MTFunctor (m0, emt0, m1) ->
       let mt0 = normalize_mt emt0 env in

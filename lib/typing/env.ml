@@ -42,10 +42,10 @@ let get_curr (env : t) =
   | [] -> failwith "neverreach"
   | s :: _ -> s.curr
 
-let get_top_scope env =
-  match env with
-  | [] -> failwith "neverreach"
-  | s :: _ -> s
+let prune env0 env1 =
+  match env0 with
+  | s :: env0' when env0' == env1 -> s
+  | _ -> failwith "neverreach"
 
 let get_top_history (env : t) =
   match env with
