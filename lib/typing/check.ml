@@ -434,7 +434,7 @@ and make_scope_mt
       ty_defs = types;
       mod_sigs = module_sigs;
       mod_defs = modules;
-      owned_mods = history;
+      owned_mods = !history;
     }
 
 and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
@@ -447,12 +447,8 @@ and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
       let mt = make_scope_mt env_diff in
       MEStruct (body_typed, mt)
   | T.MEFunctor ((name, emt0), me1) ->
-      let env' = enter_env env in
-      let mt0 = normalize_mt emt0 env' in
-      absorb_top_history env' env;
-      let env' = enter_env env in
-      let me1_typed = tc_mod me1 (Env.add_module name mt0 env') in
-      absorb_top_history env' env;
+      let mt0 = normalize_mt emt0 env in
+      let me1_typed = tc_mod me1 (Env.add_module name mt0 env) in
       MEFunctor ((name, mt0), me1_typed)
   | T.MEField (me, name) -> (
       let me_typed = tc_mod me env in
@@ -715,12 +711,8 @@ and normalize_mt (me : T.emod_ty) env : I.mod_ty =
       absorb_top_history env' env;
       make_scope_mt scope
   | T.MTFunctor (m0, emt0, m1) ->
-      let env' = enter_env env in
-      let mt0 = normalize_mt emt0 env' in
-      absorb_top_history env' env;
-      let env' = enter_env env in
-      let mt1 = normalize_mt m1 (Env.add_module m0 mt0 env') in
-      absorb_top_history env' env;
+      let mt0 = normalize_mt emt0 env in
+      let mt1 = normalize_mt m1 (Env.add_module m0 mt0 env) in
       MTFun (mt0, mt1)
 
 and normalize_msig comps env =

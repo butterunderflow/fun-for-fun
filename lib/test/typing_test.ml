@@ -796,19 +796,19 @@ module MMM = (M(F).K : I)
                        ((y (() (TConsI (0 int) ())))
                          (x (() (TConsI (0 int) ())))))
                      (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))
-                 (MTMod (id 10)
+                 (MTMod (id 6)
                    (val_defs
                      ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
                    (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
-            (MTMod (id 9) (val_defs ()) (ty_defs ()) (mod_sigs ())
+            (MTMod (id 5) (val_defs ()) (ty_defs ()) (mod_sigs ())
               (mod_defs
                 ((K
-                   (MTMod (id 10)
+                   (MTMod (id 6)
                      (val_defs
                        ((y (() (TConsI (0 int) ())))
                          (x (() (TConsI (0 int) ())))))
                      (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
-              (owned_mods (10))))))
+              (owned_mods (6))))))
       (TopMod F
         (MEFunctor
           (MI
@@ -821,12 +821,12 @@ module MMM = (M(F).K : I)
               ((TopLet x (EConst (CInt 1) (TConsI (0 int) ())))
                 (TopLet y (EConst (CInt 1) (TConsI (0 int) ())))
                 (TopLet z (EConst (CInt 1) (TConsI (0 int) ()))))
-              (MTMod (id 13)
+              (MTMod (id 7)
                 (val_defs
                   ((z (() (TConsI (0 int) ()))) (y (() (TConsI (0 int) ())))
                     (x (() (TConsI (0 int) ())))))
                 (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))
-            (MTMod (id 13)
+            (MTMod (id 7)
               (val_defs
                 ((z (() (TConsI (0 int) ()))) (y (() (TConsI (0 int) ())))
                   (x (() (TConsI (0 int) ())))))
@@ -849,16 +849,16 @@ module MMM = (M(F).K : I)
                              (x (() (TConsI (0 int) ())))))
                          (ty_defs ()) (mod_sigs ()) (mod_defs ())
                          (owned_mods ()))))
-                    (MTMod (id 9) (val_defs ()) (ty_defs ()) (mod_sigs ())
+                    (MTMod (id 5) (val_defs ()) (ty_defs ()) (mod_sigs ())
                       (mod_defs
                         ((K
-                           (MTMod (id 10)
+                           (MTMod (id 6)
                              (val_defs
                                ((y (() (TConsI (0 int) ())))
                                  (x (() (TConsI (0 int) ())))))
                              (ty_defs ()) (mod_sigs ()) (mod_defs ())
                              (owned_mods ())))))
-                      (owned_mods (10))))))
+                      (owned_mods (6))))))
               (MEName F
                 (MTFun
                   ((MTMod (id 1)
@@ -866,27 +866,27 @@ module MMM = (M(F).K : I)
                        ((y (() (TConsI (0 int) ())))
                          (x (() (TConsI (0 int) ())))))
                      (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()))
-                    (MTMod (id 13)
+                    (MTMod (id 7)
                       (val_defs
                         ((z (() (TConsI (0 int) ())))
                           (y (() (TConsI (0 int) ())))
                           (x (() (TConsI (0 int) ())))))
                       (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
-              (MTMod (id 14) (val_defs ()) (ty_defs ()) (mod_sigs ())
+              (MTMod (id 8) (val_defs ()) (ty_defs ()) (mod_sigs ())
                 (mod_defs
                   ((K
-                     (MTMod (id 15)
+                     (MTMod (id 9)
                        (val_defs
                          ((y (() (TConsI (0 int) ())))
                            (x (() (TConsI (0 int) ())))))
                        (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
-                (owned_mods (15))))
+                (owned_mods (9))))
             K
-            (MTMod (id 15)
+            (MTMod (id 9)
               (val_defs
                 ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
               (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))
-          (MTMod (id 15)
+          (MTMod (id 9)
             (val_defs
               ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
             (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
@@ -955,14 +955,14 @@ module MMM = (M(F).K : I)
     Type Definitions:
 
     Module Definitions:
-      MMM |-> (MTMod (id 15)
+      MMM |-> (MTMod (id 9)
       (val_defs ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
       (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()));
      F |-> (MTFun
       ((MTMod (id 1)
          (val_defs ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
          (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()))
-        (MTMod (id 13)
+        (MTMod (id 7)
           (val_defs
             ((z (() (TConsI (0 int) ()))) (y (() (TConsI (0 int) ())))
               (x (() (TConsI (0 int) ())))))
@@ -977,14 +977,14 @@ module MMM = (M(F).K : I)
              (val_defs
                ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
              (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()))))
-        (MTMod (id 9) (val_defs ()) (ty_defs ()) (mod_sigs ())
+        (MTMod (id 5) (val_defs ()) (ty_defs ()) (mod_sigs ())
           (mod_defs
             ((K
-               (MTMod (id 10)
+               (MTMod (id 6)
                  (val_defs
                    ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
                  (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
-          (owned_mods (10)))));
+          (owned_mods (6)))));
      Simple |-> (MTMod (id 4)
       (val_defs ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
       (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()));
@@ -1003,10 +1003,7 @@ module MMM = (M(F).K : I)
       (val_defs ((y (() (TConsI (0 int) ()))) (x (() (TConsI (0 int) ())))))
       (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ()))
     Module Creation History:
-      15;
-      14;
-      12;
-      11;
+      9;
       8;
       7;
       6;

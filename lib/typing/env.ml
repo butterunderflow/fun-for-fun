@@ -7,7 +7,7 @@ type scope = {
   module_sigs : (string * I.mod_ty) list; (* module bindings *)
   module_dict : (int * I.mod_ty) list;
   curr : int;
-  mutable history : int list;
+  history : int list ref;
 }
 
 type t = scope list
@@ -50,7 +50,7 @@ let get_top_scope env =
 let get_top_history (env : t) =
   match env with
   | [] -> failwith "neverreach"
-  | s :: _ -> s.history
+  | s :: _ -> !(s.history)
 
 let rec get_value_type x (env : t) =
   match env with
@@ -63,12 +63,12 @@ let rec get_value_type x (env : t) =
 let record_history id (env : t) =
   match env with
   | [] -> failwith "neverreach"
-  | s :: _ -> s.history <- id :: s.history
+  | s :: _ -> s.history := id :: !(s.history)
 
 let record_all_history ids (env : t) =
   match env with
   | [] -> failwith "neverreach"
-  | s :: _ -> s.history <- ids @ s.history
+  | s :: _ -> s.history := ids @ !(s.history)
 
 let rec get_module_def m (env : t) =
   match env with
@@ -123,7 +123,7 @@ let init_scope () =
     module_sigs = [];
     module_dict = [];
     curr = 0;
-    history = [];
+    history = ref [];
   }
 
 let init () = [ init_scope () ]
@@ -187,7 +187,7 @@ let dbg (env : t) =
     |> String.concat "; \n "
   in
   let scope_history s =
-    s.history
+    !(s.history)
     |> List.map (fun id -> Printf.sprintf "%d" id)
     |> String.concat "; \n  "
   in
