@@ -289,7 +289,7 @@ and tc_app op arg env =
   let op_ty = get_ty op_typed in
   let arg_typed = tc_expr arg env in
   let arg_ty1 = get_ty arg_typed in
-  let tv = make_tv_of "ret" in
+  let tv = make_tv_of "'ret" in
   U.unify op_ty (I.TArrowI (arg_ty1, tv));
 
   EApp (op_typed, arg_typed, tv)
@@ -297,7 +297,7 @@ and tc_app op arg env =
 and tc_cases e bs env =
   let e_typed = tc_expr e env in
   let e_ty = get_ty e_typed in
-  let res_ty = make_tv_of "res" in
+  let res_ty = make_tv_of "'res" in
   let bs_typed =
     List.fold_left
       (fun bs_typed ((p : T.pattern) (* pattern *), res) ->

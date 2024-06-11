@@ -113,18 +113,19 @@ let%expect_test "Test: expression typing" =
            (EApp
              (EVar g
                (TVarI
-                 (Link (TArrowI (TVarI (Unbound '_t/3)) (TVarI (Unbound ret/4))))))
-             (EVar x (TVarI (Unbound '_t/3))) (TVarI (Unbound ret/4)))
-           (TArrowI (TVarI (Unbound '_t/3)) (TVarI (Unbound ret/4)))))
+                 (Link
+                   (TArrowI (TVarI (Unbound '_t/3)) (TVarI (Unbound 'ret/4))))))
+             (EVar x (TVarI (Unbound '_t/3))) (TVarI (Unbound 'ret/4)))
+           (TArrowI (TVarI (Unbound '_t/3)) (TVarI (Unbound 'ret/4)))))
         (g
           (x
             (EApp
               (EVar f
                 (TVarI
                   (Link
-                    (TArrowI (TVarI (Unbound '_t/5)) (TVarI (Unbound ret/6))))))
-              (EVar x (TVarI (Unbound '_t/5))) (TVarI (Unbound ret/6)))
-            (TArrowI (TVarI (Unbound '_t/5)) (TVarI (Unbound ret/6))))))
+                    (TArrowI (TVarI (Unbound '_t/5)) (TVarI (Unbound 'ret/6))))))
+              (EVar x (TVarI (Unbound '_t/5))) (TVarI (Unbound 'ret/6)))
+            (TArrowI (TVarI (Unbound '_t/5)) (TVarI (Unbound 'ret/6))))))
       (EConst (CInt 1) (TConsI (0 int) ())) (TConsI (0 int) ())) |}];
 
   print_typed
@@ -146,9 +147,9 @@ let%expect_test "Test: expression typing" =
             (EApp
               (EVar f
                 (TVarI
-                  (Link (TArrowI (TConsI (0 int) ()) (TVarI (Unbound ret/5))))))
-              (EConst (CInt 1) (TConsI (0 int) ())) (TVarI (Unbound ret/5)))
-            (TArrowI (TVarI (Unbound '_t/4)) (TVarI (Unbound ret/5))))))
+                  (Link (TArrowI (TConsI (0 int) ()) (TVarI (Unbound 'ret/5))))))
+              (EConst (CInt 1) (TConsI (0 int) ())) (TVarI (Unbound 'ret/5)))
+            (TArrowI (TVarI (Unbound '_t/4)) (TVarI (Unbound 'ret/5))))))
       (EConst (CInt 1) (TConsI (0 int) ())) (TConsI (0 int) ())) |}]
 (* todo: test pattern matching *)
 
@@ -190,9 +191,9 @@ let%expect_test "Test: program toplevel typing" =
              (EApp
                (EVar f
                  (TVarI
-                   (Link (TArrowI (TConsI (0 int) ()) (TVarI (Unbound ret/5))))))
-               (EConst (CInt 1) (TConsI (0 int) ())) (TVarI (Unbound ret/5)))
-             (TArrowI (TVarI (Unbound '_t/4)) (TVarI (Unbound ret/5)))))))) |}];
+                   (Link (TArrowI (TConsI (0 int) ()) (TVarI (Unbound 'ret/5))))))
+               (EConst (CInt 1) (TConsI (0 int) ())) (TVarI (Unbound 'ret/5)))
+             (TArrowI (TVarI (Unbound '_t/4)) (TVarI (Unbound 'ret/5)))))))) |}];
   print_effect
     {|
      type () a 
