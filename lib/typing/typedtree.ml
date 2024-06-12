@@ -49,7 +49,7 @@ and pattern =
   (* simplest pattern is enough after type info has been filled *)
   | PVal of constant
   | PCons of string * pattern option (* Cons (1, 2) *)
-  | PVar of string
+  | PVar of string * ty
   | PTuple of pattern list (* (x, y, z) *)
 [@@deriving
   sexp,

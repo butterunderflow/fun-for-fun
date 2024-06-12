@@ -289,7 +289,8 @@ let%expect_test "Test: program toplevel typing" =
       (TopLet x (ECons Nil (TConsI (0 int_l) ())))
       (TopLet f
         (ECase (EVar x (TConsI (0 int_l) ()))
-          (((PCons Cons ((PVar x))) (EVar x (TConsI (0 int) ())))
+          (((PCons Cons ((PVar x (TConsI (0 int) ()))))
+             (EVar x (TConsI (0 int) ())))
             ((PCons Nil ()) (EConst (CInt 0) (TConsI (0 int) ()))))
           (TVarI (Link (TConsI (0 int) ())))))) |}];
 
@@ -318,7 +319,10 @@ let%expect_test "Test: program toplevel typing" =
             (TConsI (0 int_l)
               ((TVarI (Link (TVarI (Unbound '_t/6))))
                 (TVarI (Link (TVarI (Unbound '_t/7)))))))
-          (((PCons Cons ((PTuple ((PVar a) (PVar b)))))
+          (((PCons Cons
+              ((PTuple
+                 ((PVar a (TVarI (Link (TVarI (Link (TVarI (Unbound '_t/6)))))))
+                   (PVar b (TVarI (Link (TVarI (Link (TVarI (Unbound '_t/7)))))))))))
              (ETuple
                ((EVar b (TVarI (Link (TVarI (Link (TVarI (Unbound '_t/7)))))))
                  (EVar a (TVarI (Link (TVarI (Link (TVarI (Unbound '_t/6))))))))

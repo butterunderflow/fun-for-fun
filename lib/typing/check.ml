@@ -170,7 +170,7 @@ and tc_pattern p te env : pattern * (string * I.ty) list =
     | _ -> failwith "wrong type"
   in
   match (p, te) with
-  | T.PVar x, te -> (PVar x, [ (x, te) ])
+  | T.PVar x, te -> (PVar (x, te), [ (x, te) ])
   | T.PCons (c, None), te -> (
       let cons_ty_gen (* type of constructor *) = Env.get_value_type c env in
       let cons_ty = inst cons_ty_gen in
