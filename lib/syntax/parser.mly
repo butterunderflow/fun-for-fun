@@ -12,12 +12,19 @@ let mk_type_ref fon t_args =
 %token <bool> BOOL
 %token <string> STRING
 
+
 %token TYPE
 %token EOF
 %token LET
+%token MODULE
+
+%nonassoc LET TYPE
+
+%token IF
+%token THEN
+%token ELSE
 %token REC
 %token END
-%token MODULE
 %token SIG
 %token STRUCT
 %token VAL
@@ -50,7 +57,7 @@ let mk_type_ref fon t_args =
 %left     COMMA                        /* (e , e , e) */
 %left     STAR                         /* (e * e * e) */
 
-%nonassoc below_APP
+%left below_APP
 %nonassoc LPAREN
 
 
@@ -77,7 +84,8 @@ top_levels:
     | (* empty *) { [] }
     | td=type_def rest=top_levels
         { TopTypeDef td :: rest }
-    | LET x=IDENT EQ e=expr rest=top_levels  { TopLet (x, e) :: rest }
+    | LET x=IDENT EQ e=expr rest=top_levels
+        { TopLet (x, e) :: rest }
     | LET REC funcs=separated_list(AND, function_bind) rest=top_levels
         { TopLetRec funcs :: rest }
     | MODULE m_name=MIDENT
@@ -154,14 +162,15 @@ path:
 
 expr:
     | c=constant { EConst c }
-    | func=expr arg=expr { EApp (func, arg) } %prec below_APP
+    | func=expr arg=expr { EApp (func, arg) }  %prec below_APP
     | LPAREN e=expr RPAREN { e }
     | c=MIDENT { ECons c }
     | p=path DOT v=IDENT { EField (p, v) }
     | p=path DOT v=MIDENT { EFieldCons (p, v) }
-    | v=IDENT { EVar v }
+    | v=IDENT { EVar v } 
     | LET x=IDENT EQ e1=expr IN e2=expr { ELet (x, e1, e2) }
     | LET REC binds=separated_nonempty_list(AND, function_bind) IN body=expr { ELetrec (binds, body) }
+    | IF e0=expr THEN e1=expr ELSE e2=expr { EIf (e0, e1, e2) }
     | tu=tuple_expr { tu }
     | FUN para=parameter ARROW body=expr { ELam (para, body) }
     | MATCH e=expr WITH OR? branches=separated_nonempty_list(OR, branch)

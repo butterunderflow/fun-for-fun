@@ -65,7 +65,15 @@ let%expect_test "Test: expression parsing" =
   print_parsed {|fun x -> x|};
   [%expect {| (ELam ((PBare x) (EVar x))) |}];
   print_parsed {|f 1|};
-  [%expect {| (EApp (EVar f) (EConst (CInt 1))) |}]
+  [%expect {| (EApp (EVar f) (EConst (CInt 1))) |}];
+  print_parsed {|
+         match c with
+         | Cons x -> x
+         | Nil    -> 0
+                |};
+  [%expect {|
+    (ECase (EVar c)
+      (((PCons Cons ((PVar x))) (EVar x)) ((PCons Nil ()) (EConst (CInt 0))))) |}]
 
 let%expect_test "Test: pattern parsing" =
   let print_parsed str =
@@ -174,7 +182,16 @@ functor
              (MEStruct
                ((TopLet x (EConst (CInt 1))) (TopLet y (EConst (CInt 1)))
                  (TopLet z (EConst (CInt 1)))))
-             (MTName J)))))) |}]
+             (MTName J)))))) |}];
+
+print_parsed_program {|
+    let co = Cons 1
+
+    let f = 1
+|};
+  [%expect {|
+    ((TopLet co (EApp (ECons Cons) (EConst (CInt 1))))
+      (TopLet f (EConst (CInt 1)))) |}]
 
 let%expect_test "Test: path parsing" =
   print_parsed_mod_expr {|X|};
