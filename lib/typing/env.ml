@@ -137,7 +137,7 @@ let captured_scope (s : scope) (tpv : Types_in.tv ref) =
   match tpv with
   | { contents = I.Unbound _ } ->
       List.exists (fun (_, (_, te)) -> Unify.occur tpv te) s.values
-  | { contents = I.Link _ } -> false
+  | { contents = I.Link _ } -> failwith "neverreach"
 
 let captured (env : t) tpv = List.exists (fun s -> captured_scope s tpv) env
 

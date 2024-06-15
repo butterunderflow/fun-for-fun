@@ -51,6 +51,11 @@ class virtual ['self] map =
   object (self : 'self)
     inherit ['self] ty_map
 
+    method! visit_TVarI () x =
+      match !x with
+      | Unbound _ -> TVarI x
+      | Link te -> self#visit_ty () te
+
     method visit_ident env id =
       Ident.mk_ident
         (self#visit_int env (Ident.index_of_ident id))

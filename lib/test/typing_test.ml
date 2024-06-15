@@ -11,9 +11,16 @@ let%expect_test "Test: expression typing" =
   let print_typed str =
     Ident.refresh ();
     let e = parse_string_expr str in
-    let typed = Typing.Check.tc_expr e (Typing.Env.init ()) in
-    typed |> T.sexp_of_expr |> print_sexp
+    try
+      let typed = Typing.Check.tc_expr e (Typing.Env.init ()) in
+      typed |> T.sexp_of_expr |> print_sexp
+    with
+    | Unify.OccurError (tvn, te) ->
+        print_sexp (Types_in.sexp_of_tv !tvn);
+        Printf.printf "occured in ";
+        print_sexp (Types_in.sexp_of_ty te)
   in
+
   let print_type str =
     Ident.refresh ();
     let e = parse_string_expr str in
@@ -114,16 +121,18 @@ let%expect_test "Test: expression typing" =
              (EVar g
                (TVarI
                  (Link
-                   (TArrowI (TVarI (Unbound '_t/3)) (TVarI (Unbound 'ret/4))))))
-             (EVar x (TVarI (Unbound '_t/3))) (TVarI (Unbound 'ret/4)))
-           (TArrowI (TVarI (Unbound '_t/3)) (TVarI (Unbound 'ret/4)))))
+                   (TArrowI (TVarI (Link (TVarI (Unbound '_t/5))))
+                     (TVarI (Link (TVarI (Unbound 'ret/6))))))))
+             (EVar x (TVarI (Link (TVarI (Unbound '_t/5)))))
+             (TVarI (Link (TVarI (Unbound 'ret/6)))))
+           (TArrowI (TVarI (Link (TVarI (Unbound '_t/5))))
+             (TVarI (Link (TVarI (Unbound 'ret/6)))))))
         (g
           (x
             (EApp
               (EVar f
-                (TVarI
-                  (Link
-                    (TArrowI (TVarI (Unbound '_t/5)) (TVarI (Unbound 'ret/6))))))
+                (TArrowI (TVarI (Link (TVarI (Unbound '_t/5))))
+                  (TVarI (Link (TVarI (Unbound 'ret/6))))))
               (EVar x (TVarI (Unbound '_t/5))) (TVarI (Unbound 'ret/6)))
             (TArrowI (TVarI (Unbound '_t/5)) (TVarI (Unbound 'ret/6))))))
       (EConst (CInt 1) (TConsI (0 int) ())) (TConsI (0 int) ())) |}];
@@ -140,16 +149,18 @@ let%expect_test "Test: expression typing" =
     {|
     (ELetrec
       ((f
-         (x (EVar x (TVarI (Unbound '_t/3)))
-           (TArrowI (TVarI (Unbound '_t/3)) (TVarI (Unbound '_t/3)))))
+         (x (EVar x (TVarI (Link (TConsI (0 int) ()))))
+           (TArrowI (TVarI (Link (TConsI (0 int) ())))
+             (TVarI (Link (TConsI (0 int) ()))))))
         (g
           (x
             (EApp
               (EVar f
-                (TVarI
-                  (Link (TArrowI (TConsI (0 int) ()) (TVarI (Unbound 'ret/5))))))
-              (EConst (CInt 1) (TConsI (0 int) ())) (TVarI (Unbound 'ret/5)))
-            (TArrowI (TVarI (Unbound '_t/4)) (TVarI (Unbound 'ret/5))))))
+                (TArrowI (TVarI (Link (TConsI (0 int) ())))
+                  (TVarI (Link (TConsI (0 int) ())))))
+              (EConst (CInt 1) (TConsI (0 int) ()))
+              (TVarI (Link (TConsI (0 int) ()))))
+            (TArrowI (TVarI (Unbound '_t/4)) (TVarI (Link (TConsI (0 int) ())))))))
       (EConst (CInt 1) (TConsI (0 int) ())) (TConsI (0 int) ())) |}]
 (* todo: test pattern matching *)
 
@@ -184,16 +195,18 @@ let%expect_test "Test: program toplevel typing" =
     {|
     ((TopLetRec
        ((f
-          (x (EVar x (TVarI (Unbound '_t/3)))
-            (TArrowI (TVarI (Unbound '_t/3)) (TVarI (Unbound '_t/3)))))
+          (x (EVar x (TVarI (Link (TConsI (0 int) ()))))
+            (TArrowI (TVarI (Link (TConsI (0 int) ())))
+              (TVarI (Link (TConsI (0 int) ()))))))
          (g
            (x
              (EApp
                (EVar f
-                 (TVarI
-                   (Link (TArrowI (TConsI (0 int) ()) (TVarI (Unbound 'ret/5))))))
-               (EConst (CInt 1) (TConsI (0 int) ())) (TVarI (Unbound 'ret/5)))
-             (TArrowI (TVarI (Unbound '_t/4)) (TVarI (Unbound 'ret/5)))))))) |}];
+                 (TArrowI (TVarI (Link (TConsI (0 int) ())))
+                   (TVarI (Link (TConsI (0 int) ())))))
+               (EConst (CInt 1) (TConsI (0 int) ()))
+               (TVarI (Link (TConsI (0 int) ()))))
+             (TArrowI (TVarI (Unbound '_t/4)) (TVarI (Link (TConsI (0 int) ()))))))))) |}];
   print_effect
     {|
      type () a 
@@ -312,7 +325,9 @@ let%expect_test "Test: program toplevel typing" =
          ((Cons ((TTupleI ((TQVarI 'a/0) (TQVarI 'b/0))))) (Nil ()))))
       (TopLet x
         (ECons Nil
-          (TConsI (0 int_l) ((TVarI (Unbound 'a/1)) (TVarI (Unbound 'b/2))))))
+          (TConsI (0 int_l)
+            ((TVarI (Link (TVarI (Unbound '_t/6))))
+              (TVarI (Link (TVarI (Unbound '_t/7))))))))
       (TopLet f
         (ECase
           (EVar x
@@ -324,16 +339,11 @@ let%expect_test "Test: program toplevel typing" =
                  ((PVar a (TVarI (Link (TVarI (Link (TVarI (Unbound '_t/6)))))))
                    (PVar b (TVarI (Link (TVarI (Link (TVarI (Unbound '_t/7)))))))))))
              (ETuple
-               ((EVar b (TVarI (Link (TVarI (Link (TVarI (Unbound '_t/7)))))))
-                 (EVar a (TVarI (Link (TVarI (Link (TVarI (Unbound '_t/6))))))))
-               (TTupleI
-                 ((TVarI (Link (TVarI (Link (TVarI (Unbound '_t/7))))))
-                   (TVarI (Link (TVarI (Link (TVarI (Unbound '_t/6)))))))))))
+               ((EVar b (TVarI (Unbound '_t/7)))
+                 (EVar a (TVarI (Unbound '_t/6))))
+               (TTupleI ((TVarI (Unbound '_t/7)) (TVarI (Unbound '_t/6)))))))
           (TVarI
-            (Link
-              (TTupleI
-                ((TVarI (Link (TVarI (Link (TVarI (Unbound '_t/7))))))
-                  (TVarI (Link (TVarI (Link (TVarI (Unbound '_t/6))))))))))))) |}];
+            (Link (TTupleI ((TVarI (Unbound '_t/7)) (TVarI (Unbound '_t/6))))))))) |}];
   print_effect
     {|
      type ('a, 'b) int_l
@@ -352,7 +362,9 @@ let%expect_test "Test: program toplevel typing" =
     ++++++++++++++++++Scope Debug Info Begin++++++++++++++++++
     Value Bindings:
       f |-> forall  . (TTupleI ((TVarI (Unbound '_t/7)) (TVarI (Unbound '_t/6))));
-      x |-> forall  . (TConsI (0 int_l) ((TVarI (Unbound 'a/1)) (TVarI (Unbound 'b/2))));
+      x |-> forall  . (TConsI (0 int_l)
+      ((TVarI (Link (TVarI (Unbound '_t/6))))
+        (TVarI (Link (TVarI (Unbound '_t/7))))));
       Cons |-> forall 'a/0;'b/0 . (TArrowI (TTupleI ((TQVarI 'a/0) (TQVarI 'b/0)))
       (TConsI (0 int_l) ((TQVarI 'a/0) (TQVarI 'b/0))));
       Nil |-> forall 'a/0;'b/0 . (TConsI (0 int_l) ((TQVarI 'a/0) (TQVarI 'b/0)))
@@ -951,7 +963,8 @@ functor
 
 module MMM = (M(F).K : I)
      |};
-  [%expect {|
+  [%expect
+    {|
     ------------------Envirment Debug Info Begin------------------------
 
     ++++++++++++++++++Scope Debug Info Begin++++++++++++++++++

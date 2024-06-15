@@ -70,13 +70,7 @@ let get_all_qtvs (e : I.ty) : Ident.t list =
 let generalize (t : I.ty) (env : Env.t) : I.bind_ty =
   let tvs = get_all_tvs t in
   (* get all type variables *)
-  let uncaptured_tvs =
-    tvs
-    |> List.filter (function
-         | { contents = I.Unbound _ } -> true
-         | _ -> false)
-    |> List.filter (fun x -> not (Env.captured env x))
-  in
+  let uncaptured_tvs = List.filter (fun x -> not (Env.captured env x)) tvs in
   let qvs = ref [] in
   let rec gen (t : I.ty) =
     match t with
@@ -238,14 +232,14 @@ and tc_letrec_binding binds env =
   in
   let vars = List.map fst binds in
   let lams = List.map snd binds in
-  let env, lams_typed =
+  let lams_typed =
     List.fold_left2
-      (fun (env, acc) x (para, body) ->
+      (fun acc x (para, body) ->
         let lam_typed = tc_lambda para body env in
         let lam_ty = get_ty lam_typed in
         U.unify lam_ty (inst (Env.get_value_type x env));
-        (env, acc @ [ lam_typed ]))
-      (env, []) vars lams
+        acc @ [ lam_typed ])
+      [] vars lams
   in
   let lams_typed =
     List.map
@@ -288,9 +282,9 @@ and tc_app op arg env =
   let op_typed = tc_expr op env in
   let op_ty = get_ty op_typed in
   let arg_typed = tc_expr arg env in
-  let arg_ty1 = get_ty arg_typed in
+  let arg_ty = get_ty arg_typed in
   let tv = make_tv_of "'ret" in
-  U.unify op_ty (I.TArrowI (arg_ty1, tv));
+  U.unify op_ty (I.TArrowI (arg_ty, tv));
 
   EApp (op_typed, arg_typed, tv)
 

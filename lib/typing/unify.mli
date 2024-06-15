@@ -4,4 +4,4 @@ val occur : Types_in.tv ref -> Types_in.ty -> bool
 
 exception UnificationError of (string * string)
 
-exception OccurError of (string * Types_in.ty)
+exception OccurError of (Types_in.tv ref * Types_in.ty)

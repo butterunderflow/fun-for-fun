@@ -5,32 +5,46 @@ module Tree = Syntax.Parsetree
 
 exception UnificationError of (string * string)
 
-exception OccurError of (string * ty)
+exception OccurError of (tv ref * ty)
 
 exception IllFormType
 
-let rec occurs (tpv : tv ref) (te : ty) : unit =
-  match te with
-  | TTupleI tes
-  | TConsI (_, tes) ->
-      List.iter (occurs tpv) tes
-  | TVarI tpv' when tpv == tpv' -> failwith "occur check fail"
-  | TVarI { contents = Link te } -> occurs tpv te
-  | TVarI { contents = _ } -> ()
-  | TQVarI _ -> ()
-  | TArrowI (te1, te2) ->
-      occurs tpv te1;
-      occurs tpv te2
-  | TRecordI fields -> List.map snd fields |> List.iter (occurs tpv)
+let occurs (tpv : tv ref) (te : ty) : unit =
+  let rec go te =
+    match te with
+    | TTupleI tes
+    | TConsI (_, tes) ->
+        List.iter go tes
+    | TVarI tpv' when tpv == tpv' -> (
+        match tpv with
+        | { contents = Unbound _ } -> raise (OccurError (tpv, te))
+        | { contents = Link _ } -> failwith "illegal occur check value")
+    | TVarI { contents = Link te } -> go te
+    | TVarI { contents = _ } -> ()
+    | TQVarI _ -> ()
+    | TArrowI (te1, te2) ->
+        go te1;
+        go te2
+    | TRecordI fields -> List.map snd fields |> List.iter go
+  in
+  let rec strip te : ty =
+    match te with
+    | TVarI { contents = Link te } -> strip te
+    | _ -> te
+  in
+  go (strip te)
 
 let rec unify (t0 : ty) (t1 : ty) : unit =
   if t0 == t1 then ()
   else
     match (t0, t1) with
+    (* strip links *)
+    | TVarI { contents = Link t0 }, t1 -> unify t0 t1
+    | t0, TVarI { contents = Link t1 } -> unify t0 t1
+    | TVarI { contents = Unbound _ }, t1 when t0 = t1 -> ()
     | TVarI ({ contents = Unbound _ } as tv0), t1 ->
         occurs tv0 t1;
         tv0.contents <- Link t1
-    | TVarI { contents = Link t0 }, t1 -> unify t0 t1
     | _, TVarI _y -> unify t1 t0
     | TConsI (tc0, tes0), TConsI (tc1, tes1) when tc0 = tc1 ->
         unify_lst tes0 tes1
