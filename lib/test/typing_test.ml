@@ -212,7 +212,6 @@ let%expect_test "Test: program toplevel typing" =
      type () a 
      = Cons of int
      | Nil 
-     end
      |};
   [%expect
     {|
@@ -240,7 +239,6 @@ let%expect_test "Test: program toplevel typing" =
      type () int_l 
      = Cons of int
      | Nil 
-     end
      let c = Nil
      let co = Cons 1
      |};
@@ -257,7 +255,7 @@ let%expect_test "Test: program toplevel typing" =
      type () int_l 
      = Cons of int
      | Nil 
-     end
+
      let c = Nil
      let co = Cons 1
      |};
@@ -289,7 +287,7 @@ let%expect_test "Test: program toplevel typing" =
      type () int_l
      = Cons of int
      | Nil
-     end
+
      let x = Nil
      let f =
          match x with
@@ -312,7 +310,7 @@ let%expect_test "Test: program toplevel typing" =
      type ('a, 'b) int_l
      = Cons of ('a * 'b)
      | Nil
-     end
+
      let x = Nil
      let f =
          match x with
@@ -349,7 +347,7 @@ let%expect_test "Test: program toplevel typing" =
      type ('a, 'b) int_l
      = Cons of ('a * 'b)
      | Nil
-     end
+
      let x = Nil
      let f =
          match x with
@@ -432,7 +430,7 @@ let%expect_test "Test: full program typing" =
      module M =
        struct
          type () t = Nil
-         end
+
 
          let x = Nil
        end
@@ -463,13 +461,12 @@ let%expect_test "Test: full program typing" =
      module M =
        struct
          type () t = Nil
-         end
 
          let x = Nil
          module N =
            struct
              type () t = Nil
-             end
+
            end
 
          let z = N.Nil
@@ -563,7 +560,6 @@ let%expect_test "Test: full program typing" =
      module M = 
      struct 
        type () t = Nil
-       end
 
        let x = Nil
      end :
@@ -592,7 +588,6 @@ let%expect_test "Test: full program typing" =
      module type MIntf = 
      sig 
        type () t = Nil
-       end
 
        val x : t
      end 
@@ -609,7 +604,6 @@ let%expect_test "Test: full program typing" =
      module type MIntf = 
      sig 
        type () t = Nil
-       end
 
        val x : t
      end 
@@ -665,7 +659,7 @@ let%expect_test "Test: full program typing" =
 
      module MImpl = 
      struct 
-       type () t = Nil end
+       type () t = Nil
 
        let z = 1       
 

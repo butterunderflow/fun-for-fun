@@ -126,7 +126,6 @@ let%expect_test "Test: full program parsing" =
      module M = 
      struct 
        type () t = Nil
-       end
 
        let x = Nil
      end :
@@ -147,7 +146,6 @@ let%expect_test "Test: full program parsing" =
      module type MIntf = 
      sig 
        type () t = Nil
-       end
 
        val x : t
      end 
@@ -275,7 +273,7 @@ let%expect_test "Test: module expression" =
        type () a 
          = Cons of int
          | Nil 
-       end
+
      end
      |};
   [%expect
@@ -313,7 +311,7 @@ let%expect_test "Test: module type" =
                   type () i_list = 
                     Cons of int 
                     | Nil
-                  end
+
                 end
                 |};
   [%expect

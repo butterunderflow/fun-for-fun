@@ -19,6 +19,7 @@ let mk_type_ref fon t_args =
 %token MODULE
 
 %nonassoc LET TYPE
+%nonassoc over_TOP
 
 %token IF
 %token THEN
@@ -114,7 +115,7 @@ functor_bind:
 
 type_def:
     | TYPE LPAREN tvs=separated_list(COMMA, TYPEVAR) RPAREN n=IDENT
-        EQ vs=separated_list(OR, variant) END
+        EQ vs=separated_list(OR, variant) %prec over_TOP
                 { TDAdt (n, (List.map Ident.from tvs), vs) }
 
 pattern:

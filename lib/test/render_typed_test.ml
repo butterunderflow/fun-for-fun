@@ -67,7 +67,7 @@ let%expect_test "Test: pretty print typed program" =
      type () int_l 
      = Cons of int
      | Nil 
-     end      let co = (Cons 1)
+           let co = (Cons 1)
 
      let c = Nil
 
