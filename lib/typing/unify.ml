@@ -41,7 +41,11 @@ let rec unify (t0 : ty) (t1 : ty) : unit =
     (* strip links *)
     | TVarI { contents = Link t0 }, t1 -> unify t0 t1
     | t0, TVarI { contents = Link t1 } -> unify t0 t1
-    | TVarI { contents = Unbound _ }, t1 when t0 = t1 -> ()
+    (* skip same uninfered type reference *)
+    | ( TVarI ({ contents = Unbound _ } as tv0),
+        TVarI ({ contents = Unbound _ } as tv1) )
+      when tv0 == tv1 ->
+        ()
     | TVarI ({ contents = Unbound _ } as tv0), t1 ->
         occurs tv0 t1;
         tv0.contents <- Link t1
