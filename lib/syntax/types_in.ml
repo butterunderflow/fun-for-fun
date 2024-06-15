@@ -51,9 +51,9 @@ class virtual ['self] map =
   object (self : 'self)
     inherit ['self] ty_map
 
-    method! visit_TVarI () x =
-      match !x with
-      | Unbound _ -> TVarI x
+    method! visit_TVarI () tv =
+      match !tv with
+      | Unbound _ -> TVarI tv
       | Link te -> self#visit_ty () te
 
     method visit_ident env id =

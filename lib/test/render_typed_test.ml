@@ -1,7 +1,7 @@
 open Syntax.Parsing
 open Typing
 
-module DefaultPP = Render.MakePP (struct end)
+module DefaultPP = Render.MakePP (Render.ShowAllConfig)
 
 let%expect_test "Test: pretty print typed expression" =
   let print_typed str =
@@ -86,5 +86,5 @@ let%expect_test "Test: pretty print typed program" =
     let c = Nil
 
     let f = match c is () 0.int_l with
-            | (Cons x) -> x is () 0.int
+            | (Cons x is () 0.int) -> x is () 0.int
             | Nil -> 0 is () 0.int |}]

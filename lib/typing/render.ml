@@ -2,27 +2,27 @@ open Typedtree
 module I = Syntax.Types_in
 module Fmt = Format
 
-module type PPConfig = sig end
+module type PPConfig = sig
+  val show_const_ty : bool
+
+  val show_bind_ty : bool
+end
 
 module MakePP (Config : PPConfig) = struct
   let rec pp_expr (fmt : Format.formatter) (e : expr) =
     match e with
     | EConst (CBool b, ty) ->
         Fmt.pp_print_bool fmt b;
-        Fmt.pp_print_string fmt " is ";
-        pp_ty fmt ty
+        pp_is_ty fmt Config.show_const_ty ty
     | EConst (CInt i, ty) ->
         Fmt.pp_print_int fmt i;
-        Fmt.pp_print_string fmt " is ";
-        pp_ty fmt ty
+        pp_is_ty fmt Config.show_const_ty ty
     | EConst (CString s, ty) ->
         Fmt.pp_print_string fmt (Printf.sprintf "\"%s\"" s);
-        Fmt.pp_print_string fmt " is ";
-        pp_ty fmt ty
+        pp_is_ty fmt Config.show_const_ty ty
     | EVar (x, ty) ->
         Fmt.pp_print_string fmt x;
-        Fmt.pp_print_string fmt " is ";
-        pp_ty fmt ty
+        pp_is_ty fmt Config.show_bind_ty ty
     | ELet (x, e0, e1, _) ->
         Fmt.fprintf fmt "@[<hv>let %s = " x;
         pp_expr fmt e0;
@@ -116,6 +116,10 @@ module MakePP (Config : PPConfig) = struct
     Fmt.fprintf fmt "@[<v 2>fun %s -> @\n" x;
     pp_expr fmt e;
     Fmt.fprintf fmt "@]"
+
+  and pp_is_ty fmt config ty =
+    if config then Fmt.pp_print_string fmt " is ";
+    pp_ty fmt ty
 
   and pp_mod fmt me =
     match me with
@@ -270,7 +274,9 @@ module MakePP (Config : PPConfig) = struct
             Fmt.fprintf fmt "@ ";
             pp_pattern fmt p;
             Fmt.fprintf fmt ")")
-    | PVar (x, _) -> Fmt.pp_print_string fmt x
+    | PVar (x, ty) ->
+        Fmt.pp_print_string fmt x;
+        pp_is_ty fmt Config.show_const_ty ty
     | PTuple [] -> failwith "neverreach"
     | PTuple (p :: ps) ->
         Fmt.fprintf fmt "(@[<v 1>";
@@ -299,4 +305,10 @@ module MakePP (Config : PPConfig) = struct
         Fmt.fprintf fmt "@\n";
         pp_top fmt top)
       prog
+end
+
+module ShowAllConfig = struct
+  let show_const_ty = true
+
+  let show_bind_ty = true
 end
