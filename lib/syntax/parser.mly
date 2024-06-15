@@ -115,7 +115,7 @@ functor_bind:
 
 type_def:
     | TYPE LPAREN tvs=separated_list(COMMA, TYPEVAR) RPAREN n=IDENT
-        EQ vs=separated_list(OR, variant) %prec over_TOP
+        EQ OR? vs=separated_list(OR, variant) %prec over_TOP
                 { TDAdt (n, (List.map Ident.from tvs), vs) }
 
 pattern:

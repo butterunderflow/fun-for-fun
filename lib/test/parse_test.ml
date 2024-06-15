@@ -270,8 +270,8 @@ let%expect_test "Test: module expression" =
     {|
      struct 
        let x = 1
-       type () a 
-         = Cons of int
+       type () a = 
+         | Cons of int
          | Nil 
 
      end
