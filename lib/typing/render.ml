@@ -12,17 +12,21 @@ module MakePP (Config : PPConfig) = struct
   let rec pp_expr (fmt : Format.formatter) (e : expr) =
     match e with
     | EConst (CBool b, ty) ->
-        Fmt.pp_print_bool fmt b;
-        pp_is_ty fmt Config.show_const_ty ty
+        pp_is_ty fmt Config.show_const_ty
+          (fun _ -> Fmt.pp_print_bool fmt b)
+          ty
     | EConst (CInt i, ty) ->
-        Fmt.pp_print_int fmt i;
-        pp_is_ty fmt Config.show_const_ty ty
+        pp_is_ty fmt Config.show_const_ty
+          (fun _ -> Fmt.pp_print_int fmt i)
+          ty
     | EConst (CString s, ty) ->
-        Fmt.pp_print_string fmt (Printf.sprintf "\"%s\"" s);
-        pp_is_ty fmt Config.show_const_ty ty
+        pp_is_ty fmt Config.show_const_ty
+          (fun _ -> Fmt.pp_print_string fmt (Printf.sprintf "\"%s\"" s))
+          ty
     | EVar (x, ty) ->
-        Fmt.pp_print_string fmt x;
-        pp_is_ty fmt Config.show_bind_ty ty
+        pp_is_ty fmt Config.show_bind_ty
+          (fun _ -> Fmt.pp_print_string fmt x)
+          ty
     | ELet (x, e0, e1, _) ->
         Fmt.fprintf fmt "@[<hv>let %s = " x;
         pp_expr fmt e0;
@@ -89,11 +93,11 @@ module MakePP (Config : PPConfig) = struct
         pp_expr fmt op;
         Fmt.fprintf fmt " ";
         pp_expr fmt arg
-    | EAnn (e, _te) ->
+    | EAnn (e, te) ->
         Fmt.fprintf fmt "@[<v>";
         pp_expr fmt e;
-        Fmt.fprintf fmt "@[\n";
-        Fmt.fprintf fmt ": todo";
+        Fmt.fprintf fmt ":@[";
+        pp_ty fmt te;
         Fmt.fprintf fmt "@]"
     | ETuple (es, _) ->
         let size = List.length es in
@@ -104,34 +108,58 @@ module MakePP (Config : PPConfig) = struct
             if i = size - 1 then Fmt.fprintf fmt ")"
             else Fmt.fprintf fmt ", ")
           es
-    | EField (me, name, _)
-    | EFieldCons (me, name, _) ->
-        Fmt.fprintf fmt "@[";
-        pp_mod fmt me;
-        Fmt.fprintf fmt ".%s" name;
-        Fmt.fprintf fmt "@]"
-    | ECons (c, _) -> Fmt.pp_print_string fmt c
+    | EField (me, name, te)
+    | EFieldCons (me, name, te) ->
+        pp_is_ty fmt Config.show_bind_ty
+          (fun _ ->
+            Fmt.fprintf fmt "@[";
+            pp_mod fmt me;
+            Fmt.fprintf fmt ".%s" name;
+            Fmt.fprintf fmt "@]")
+          te
+    | ECons (c, te) ->
+        pp_is_ty fmt Config.show_bind_ty
+          (fun _ -> Fmt.pp_print_string fmt c)
+          te
 
   and pp_lam fmt (x, e, _te) =
     Fmt.fprintf fmt "@[<v 2>fun %s -> @\n" x;
     pp_expr fmt e;
     Fmt.fprintf fmt "@]"
 
-  and pp_is_ty fmt config ty =
-    if config then Fmt.pp_print_string fmt " is ";
-    pp_ty fmt ty
+  and pp_is_ty fmt config content_printer ty =
+    if config then (
+      Fmt.fprintf fmt "(@[";
+      content_printer ();
+      Fmt.pp_print_string fmt " is ";
+      pp_ty fmt ty;
+      Fmt.fprintf fmt "@])")
+    else content_printer ()
+
+  and pp_is_mod_ty fmt config content_printer ty =
+    if config then (
+      Fmt.fprintf fmt "(@[";
+      content_printer ();
+      Fmt.pp_print_string fmt " is ";
+      Fmt.fprintf fmt "@[";
+      pp_mod_ty fmt ty;
+      Fmt.fprintf fmt "@])")
+    else content_printer ()
 
   and pp_mod fmt me =
     match me with
     | MEName (name, _) -> Fmt.pp_print_string fmt name
-    | MEStruct (tops, _) ->
-        Fmt.fprintf fmt "@<v 2>[";
-        List.iter
-          (fun top ->
-            Fmt.fprintf fmt "@\n";
-            pp_top fmt top)
-          tops;
-        Fmt.fprintf fmt "@]"
+    | MEStruct (tops, mt) ->
+        pp_is_mod_ty fmt true
+          (fun _ ->
+            Fmt.fprintf fmt "@[<v 2>struct";
+            List.iter
+              (fun top ->
+                Fmt.fprintf fmt "@\n@\n";
+                pp_top fmt top)
+              tops;
+            Fmt.fprintf fmt "@]@\n@\nend")
+          mt
     | MEFunctor ((name, mt), me) ->
         Fmt.fprintf fmt "@[<v 2>functor (%s : " name;
         pp_mod_ty fmt mt;
@@ -172,7 +200,19 @@ module MakePP (Config : PPConfig) = struct
                 pp_lam fmt lam;
                 Fmt.fprintf fmt "@]")
               tail)
-    | TopTypeDef (TDOpaqueI (name, paras)) ->
+    | TopTypeDef td -> pp_ty_def fmt td
+    | TopMod (name, me) ->
+        Fmt.fprintf fmt "@[<v 2>module %s = @\n" name;
+        pp_mod fmt me;
+        Fmt.fprintf fmt "@]"
+    | TopModSig (name, mt) ->
+        Fmt.fprintf fmt "module type %s = @[<v 2>@\n" name;
+        pp_mod_ty fmt mt;
+        Fmt.fprintf fmt "@]"
+
+  and pp_ty_def fmt td =
+    match td with
+    | I.TDOpaqueI (name, paras) ->
         Fmt.fprintf fmt "type (";
         (match paras with
         | [] -> ()
@@ -182,7 +222,7 @@ module MakePP (Config : PPConfig) = struct
               (fun x -> Fmt.fprintf fmt ", %s" (Ident.show_ident x))
               rest);
         Fmt.fprintf fmt ") %s" name
-    | TopTypeDef (TDAdtI (name, tvs, vs (* variants *))) ->
+    | TDAdtI (name, tvs, vs (* variants *)) ->
         Fmt.fprintf fmt "@[<v>type (";
         (match tvs with
         | [] -> ()
@@ -200,21 +240,13 @@ module MakePP (Config : PPConfig) = struct
                 pp_ty fmt te)
           vs;
         Fmt.fprintf fmt "@]"
-    | TopTypeDef (TDRecordI (name, tvs, fields)) ->
+    | I.TDRecordI (name, tvs, fields) ->
         Fmt.fprintf fmt "@<v>type (%s) %s = "
           (tvs |> List.map Ident.show_ident |> String.concat ", ")
           name;
         Fmt.fprintf fmt "@\n  @[{@[<v 2>";
         pp_fields fmt fields;
         Fmt.fprintf fmt "@]@\n}@]"
-    | TopMod (name, me) ->
-        Fmt.fprintf fmt "module %s = @[<v 2>@\n" name;
-        pp_mod fmt me;
-        Fmt.fprintf fmt "@]"
-    | TopModSig (name, mt) ->
-        Fmt.fprintf fmt "module type %s = @[<v 2>@\n" name;
-        pp_mod_ty fmt mt;
-        Fmt.fprintf fmt "@]"
 
   and pp_ty fmt te =
     match te with
@@ -275,8 +307,9 @@ module MakePP (Config : PPConfig) = struct
             pp_pattern fmt p;
             Fmt.fprintf fmt ")")
     | PVar (x, ty) ->
-        Fmt.pp_print_string fmt x;
-        pp_is_ty fmt Config.show_const_ty ty
+        pp_is_ty fmt Config.show_const_ty
+          (fun _ -> Fmt.pp_print_string fmt x)
+          ty
     | PTuple [] -> failwith "neverreach"
     | PTuple (p :: ps) ->
         Fmt.fprintf fmt "(@[<v 1>";
@@ -296,7 +329,45 @@ module MakePP (Config : PPConfig) = struct
         Fmt.fprintf fmt ";")
       fields
 
-  and pp_mod_ty _fmt _mt = failwith "todo"
+  and pp_mod_ty fmt mt =
+    match mt with
+    | I.MTMod { id; val_defs; ty_defs; mod_sigs; mod_defs; owned_mods } ->
+        Fmt.fprintf fmt "@[<v 2>sig@\n";
+        Fmt.fprintf fmt "@\nid = %d" id;
+        List.iter
+          (fun (x, ((qvs, te) : I.bind_ty)) ->
+            Fmt.fprintf fmt "@\n@\nval %s = @[" x;
+            Fmt.fprintf fmt "forall %s . "
+              (qvs |> List.map Ident.show_ident |> String.concat " ");
+            Fmt.fprintf fmt "@[";
+            pp_ty fmt te;
+            Fmt.fprintf fmt "@]";
+            Fmt.fprintf fmt "@]")
+          val_defs;
+        List.iter
+          (fun td ->
+            Fmt.fprintf fmt "@\n@\n";
+            pp_ty_def fmt td)
+          ty_defs;
+        List.iter
+          (fun (name, mt) ->
+            Fmt.fprintf fmt "@\n@\nmodule type %s = " name;
+            pp_mod_ty fmt mt)
+          mod_sigs;
+        List.iter
+          (fun (name, mt) ->
+            Fmt.fprintf fmt "@\n@\nmodule %s : " name;
+            pp_mod_ty fmt mt)
+          mod_defs;
+        Fmt.fprintf fmt "@\n@\n@[<v 2>Owned Modules = { ";
+        List.iter (fun i -> Fmt.fprintf fmt "@\n%d ;" i) owned_mods;
+        Fmt.fprintf fmt "@]@\n}";
+        Fmt.fprintf fmt "@]@\n@\nend"
+    | I.MTFun (mt0, mt1) ->
+        Fmt.fprintf fmt "@[<v 2>functor (_ : ";
+        pp_mod_ty fmt mt0;
+        Fmt.fprintf fmt ")@\n-> @\n";
+        pp_mod_ty fmt mt1
 
   let pp_prog fmt prog =
     List.iter
