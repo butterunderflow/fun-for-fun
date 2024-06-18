@@ -4,7 +4,7 @@
  (inline_tests)
  (wrapped false)
  (preprocess
-  (pps ppx_sexp_conv ppx_inline_test ppx_jane)))
+  (pps ppx_sexp_conv ppx_deriving.eq ppx_deriving.show ppx_inline_test ppx_jane)))
 
 (env
  (dev

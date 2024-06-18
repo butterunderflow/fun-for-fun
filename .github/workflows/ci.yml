@@ -41,7 +41,7 @@ jobs:
         uses: ocaml/setup-ocaml@v2.2.4
         with:
             # The OCaml compiler packages to initialise.
-            ocaml-compiler: 4.14.0
+            ocaml-compiler: 4.13.1
             # The name and URL pair of the repository to fetch the packages from.
       
       - name: Install menhir

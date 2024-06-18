@@ -1,11 +1,25 @@
-type t [@@deriving sexp, compare]
+val compare_string : String.t -> String.t -> int
 
-val same : t -> t -> bool
+val compare_int : int -> int -> int
 
-val from : string -> t
+type ident [@@deriving sexp, show]
 
-val create : hint:string -> t
+type t = ident [@@deriving compare]
 
-val rename : t -> t
+val name_of_ident : ident -> string
 
-val to_string : t -> string
+val index_of_ident : ident -> int
+
+val mk_ident : int -> string -> ident
+
+val same : ident -> ident -> bool
+
+val from : string -> ident
+
+val create : hint:string -> ident
+
+val rename : ident -> ident
+
+val to_string : ident -> string
+
+val refresh : unit -> unit

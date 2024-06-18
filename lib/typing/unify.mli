@@ -1,23 +1,7 @@
-type t
+val unify : Types_in.ty -> Types_in.ty -> unit
 
-val apply : t -> Types.ty -> Types.ty
+val occur : Types_in.tv ref -> Types_in.ty -> bool
 
-val apply_expr : t -> Typedtree.expr -> Typedtree.expr
+exception UnificationError of (string * string)
 
-val ( <$> ) : t -> Types.ty -> Types.ty
-
-val compose : t -> t -> t
-
-val identity : t
-
-val ( <.> ) : t -> t -> t
-
-val apply_lst : t -> Types.ty list -> Types.ty list
-
-val apply_env : t -> Env.t -> Env.t
-
-val make_subst : string -> Types.ty -> t
-
-val make_subst_lst : string list -> Types.ty list -> t
-
-val unify : Types.ty -> Types.ty -> t
+exception OccurError of (Types_in.tv ref * Types_in.ty)

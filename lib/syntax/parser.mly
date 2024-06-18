@@ -12,18 +12,28 @@ let mk_type_ref fon t_args =
 %token <bool> BOOL
 %token <string> STRING
 
+
 %token TYPE
 %token EOF
 %token LET
+%token MODULE
+
+%nonassoc LET TYPE
+%nonassoc over_TOP
+
+%token IF
+%token THEN
+%token ELSE
 %token REC
 %token END
-%token MODULE
 %token SIG
 %token STRUCT
 %token VAL
 %token FUNCTOR
 %token FUN
 %token ARROW
+%token MATCH
+%token WITH
 %token <string> IDENT
 %token <string> MIDENT
 %token <string> TYPEVAR
@@ -48,20 +58,23 @@ let mk_type_ref fon t_args =
 %left     COMMA                        /* (e , e , e) */
 %left     STAR                         /* (e * e * e) */
 
+%left below_APP
+%nonassoc LPAREN
+
 
 %type <Parsetree.program> program
 %type <Parsetree.top_level list> top_levels
 %type <Parsetree.constant> constant
-%type <Parsetree.variant> variant
+%type <Parsetree.evariant> variant
 
-%type <Parsetree.path> path_dbg
-%type <Parsetree.type_expr> type_expr_dbg
+%type <Parsetree.ety> type_expr_dbg
 %type <Parsetree.mod_expr> mod_expr_dbg
-%type <Parsetree.mod_type> mod_type_dbg
+%type <Parsetree.emod_ty> mod_type_dbg
 %type <Parsetree.expr> expr_dbg
+%type <Parsetree.pattern> pattern_dbg
 
 /* Start symbols */
-%start program path_dbg type_expr_dbg mod_expr_dbg mod_type_dbg expr_dbg
+%start program type_expr_dbg mod_expr_dbg mod_type_dbg expr_dbg pattern_dbg
 %%
 
 
@@ -72,35 +85,47 @@ top_levels:
     | (* empty *) { [] }
     | td=type_def rest=top_levels
         { TopTypeDef td :: rest }
-    | LET p=pattern EQ e=expr rest=top_levels  { TopLet (p, e) :: rest }
+    | LET x=IDENT EQ e=expr rest=top_levels
+        { TopLet (x, e) :: rest }
     | LET REC funcs=separated_list(AND, function_bind) rest=top_levels
-        { TopLetRec funcs :: rest } 
-    | MODULE m_name=MIDENT 
+        { TopLetRec funcs :: rest }
+    | MODULE m_name=MIDENT
         EQ m_body=mod_expr rest=top_levels
         { TopMod (m_name, m_body) :: rest }
-    | MODULE REC functors=separated_list(AND, functor_bind) rest=top_levels { TopModRec functors :: rest } ;
+    | MODULE TYPE m_name=MIDENT EQ mt=mod_type rest=top_levels
+        { TopModSig (m_name, mt) :: rest }
+;
 
-mod_expr : 
+mod_expr:
+    | LPAREN me=mod_expr RPAREN { me }
     | m_name=MIDENT { MEName m_name }
     | STRUCT m_body=top_levels END { MEStruct m_body }
     | FUNCTOR LPAREN mp=mod_para RPAREN ARROW f_body=mod_expr { MEFunctor (mp, f_body) }
-    
+    | m = mod_expr DOT n = MIDENT { MEField (m, n) }
+    | m1 = mod_expr LPAREN m2 = mod_expr RPAREN { MEApply (m1, m2) } 
+    | m1 = mod_expr COLON mt1 = mod_type { MERestrict (m1, mt1) }
+;
 
-mod_para : 
+mod_para :
     | m_name=MIDENT COLON m_type=mod_type { (m_name, m_type) }
 
-functor_bind: 
-    | m_name=MIDENT LPAREN mp=mod_para RPAREN ARROW m_body=mod_expr 
+functor_bind:
+    | m_name=MIDENT LPAREN mp=mod_para RPAREN ARROW m_body=mod_expr
        { (m_name, (mp, m_body)) }
 
+type_def:
+    | TYPE LPAREN tvs=separated_list(COMMA, TYPEVAR) RPAREN n=IDENT
+        EQ OR? vs=separated_list(OR, variant) %prec over_TOP
+                { TDAdt (n, (List.map Ident.from tvs), vs) }
 
-type_def: 
-    | TYPE LPAREN tvs=separated_list(COMMA, TYPEVAR) RPAREN n=IDENT 
-        EQ vs=separated_list(OR, variant) END { TDAdt (n, tvs, vs) }
-    | TYPE n=IDENT EQ te=type_expr { TDAlias(n, te) } ;
-
-pattern: 
-    | n=IDENT { PVar n }
+pattern:
+    | n=IDENT { PVar n } (* variable pattern *)
+    | c=constant { PVal c }
+    | c=MIDENT pat=pattern? { PCons (c, pat) }
+    | m=mod_expr DOT n=MIDENT pat=pattern? { PFieldCons (m, n, pat) }
+    | LPAREN pats=separated_nontrivial_llist(COMMA, pattern) RPAREN
+         { PTuple (pats) }
+    ;
 
 parameter:
     | n=IDENT { PBare n }
@@ -110,79 +135,86 @@ function_bind:
     | name=IDENT EQ FUN para=parameter ARROW b=expr
        { (name, (para, b)) }
 
-variant: 
-    | c=MIDENT OF payload=type_expr  { (c, Some payload) } 
+variant:
+    | c=MIDENT OF payload=type_expr  { (c, Some payload) }
     | c=MIDENT                       { (c, None) };
 
-field_def: 
+field_def:
     | n=IDENT COLON t=type_expr  { (n, t) }
 
-field_or_name: 
-    | p=path DOT n=IDENT  { (Some p, n) }
+field_or_name:
+    | p=mod_expr DOT n=IDENT  { (Some p, n) }
     | n=IDENT             { (None, n) }
 
-type_expr: 
+type_expr:
     | LPAREN t_args = separated_list(COMMA, type_expr) RPAREN fon=field_or_name
         { mk_type_ref fon t_args }
     | LPAREN te=type_expr RPAREN { te }
     | ts=separated_nontrivial_llist(STAR, type_expr) { TTuple ts }
     | t_arg = type_expr fon=field_or_name { mk_type_ref fon [t_arg] }
     | n=IDENT { TCons (n, []) }
-    | tv=TYPEVAR { TVar tv }
+    | tv=TYPEVAR { TVar (Ident.from tv) }
     | arg=type_expr ARROW ret=type_expr { TArrow (arg, ret) }
     | LBRACE fields=separated_nontrivial_llist(SEMI, field_def) RBRACE { TRecord fields }
 
+path:
+    | m_name=MIDENT { MEName m_name }
+    | m = path DOT n = MIDENT { MEField (m, n) }
+
 expr:
     | c=constant { EConst c }
+    | func=expr arg=expr { EApp (func, arg) }  %prec below_APP
+    | LPAREN e=expr RPAREN { e }
+    | c=MIDENT { ECons c }
     | p=path DOT v=IDENT { EField (p, v) }
     | p=path DOT v=MIDENT { EFieldCons (p, v) }
-    | v=IDENT { EVar v }
-    | c=MIDENT { ECons c }
-    | LET p=pattern EQ e1=expr IN e2=expr { ELet (p, e1, e2) }
+    | v=IDENT { EVar v } 
+    | LET x=IDENT EQ e1=expr IN e2=expr { ELet (x, e1, e2) }
     | LET REC binds=separated_nonempty_list(AND, function_bind) IN body=expr { ELetrec (binds, body) }
+    | IF e0=expr THEN e1=expr ELSE e2=expr { EIf (e0, e1, e2) }
     | tu=tuple_expr { tu }
-    | func=expr arg=expr { EApp (func, arg) }
-    | LPAREN e=expr RPAREN { e }
+    | FUN para=parameter ARROW body=expr { ELam (para, body) }
+    | MATCH e=expr WITH OR? branches=separated_nonempty_list(OR, branch)
+           { ECase (e, branches) }
     ;
 
-tuple_expr: 
+branch: p=pattern ARROW e=expr { ( p, e ) }
+
+tuple_expr:
     | es = separated_nontrivial_llist(COMMA, expr) %prec below_COMMA
         { ETuple es }
 
-path:
-    | n = MIDENT { PName n } 
-    | p = path DOT n = MIDENT { PMem (p, n) } 
-    | p1 = path LPAREN p2 = path RPAREN { PApply (p1, p2) } ;
-
-
-mod_type: 
+mod_type:
     | m=MIDENT                      { MTName m }
-    | p=path DOT m=MIDENT           { MTField (p, m) }
+    | p=mod_expr DOT m=MIDENT       { MTField (p, m) }
     | SIG comps=list(sig_comp) END  { MTSig comps }
-    | FUNCTOR 
+    | FUNCTOR
         LPAREN p=MIDENT COLON p_ty=mod_type RPAREN
         ARROW body=mod_type         { MTFunctor (p, p_ty, body) }
-                                    
+
 
 sig_comp:
     | VAL v=IDENT COLON ty=type_expr { TValueSpec (v, ty) }
-    | TYPE t=IDENT                   { TAbstTySpec t }
+    | TYPE LPAREN tvs=separated_list(COMMA, TYPEVAR) RPAREN t=IDENT
+        { TAbstTySpec (t, (List.map Ident.from tvs)) }
     | def=type_def                   { TManiTySpec def }
+    | MODULE m_name=MIDENT EQ mt=mod_type { TModSpec (m_name, mt) }
+;
 
-constant: 
+constant:
     | i = INT { CInt i }
     | b = BOOL { CBool b }
     | s = STRING { CString s } ;
 
 (* debug rules: which are normal rules append with an eof *)
-path_dbg: 
-    | p=path EOF { p }
-
-type_expr_dbg: 
+type_expr_dbg:
     | te=type_expr EOF { te }
 
 mod_expr_dbg:
     | me=mod_expr EOF { me }
+
+pattern_dbg:
+    | p=pattern EOF { p }
 
 mod_type_dbg:
     | me=mod_type EOF { me }

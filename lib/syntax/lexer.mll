@@ -31,7 +31,7 @@ let type_var = '\'' (upper_case | underline | lower_case) alphanumerical*
 let digits = digit +
 let integers = (sign?) digits
 
-let boolean = "True" | "False"
+let boolean = "true" | "false"
 
 let strings = '\"' _* '\"'
 
@@ -40,8 +40,13 @@ rule token = parse
     | [' ' '\t' '\n']   { token lexbuf }
     | eof               { EOF }
     | "let"             { LET }
+    | "if"              { IF }
+    | "then"            { THEN }
+    | "else"            { ELSE }
     | "in"              { IN }
     | "rec"             { REC }
+    | "match"           { MATCH }
+    | "with"            { WITH }
     | "type"            { TYPE }
     | "end"             { END }
     | "and"             { AND }
@@ -66,10 +71,10 @@ rule token = parse
     | ':'               { COLON }
     | ';'               { SEMI }
     | mod_ident as m    { MIDENT m}
+    | boolean as b      { BOOL (bool_of_string b)}
     | ident as i        { IDENT i }
     | type_var as t     { TYPEVAR t } 
     | integers as n     { INT   (int_of_string n) }
-    | boolean as b      { BOOL (bool_of_string b)}
     | "."             { DOT}
     | strings as s      { STRING s}
 
