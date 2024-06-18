@@ -175,10 +175,19 @@ module MakePP (Config : PPConfig) = struct
         Fmt.fprintf fmt "(";
         pp_mod fmt me1;
         Fmt.fprintf fmt ")"
-    | MERestrict (me, mt) ->
-        pp_mod fmt me;
-        Fmt.fprintf fmt ":";
-        pp_mod_ty fmt mt
+    | MERestrict (me, mt, mt') ->
+        pp_is_mod_ty fmt true
+          (fun _ ->
+            Fmt.fprintf fmt "(";
+            Fmt.fprintf fmt "@[";
+            pp_mod fmt me;
+            Fmt.fprintf fmt " : ";
+            Fmt.fprintf fmt "@[";
+            pp_mod_ty fmt mt;
+            Fmt.fprintf fmt "@]";
+            Fmt.fprintf fmt "@]";
+            Fmt.fprintf fmt ")")
+          mt'
 
   and pp_top fmt top =
     match top with
@@ -206,7 +215,7 @@ module MakePP (Config : PPConfig) = struct
         pp_mod fmt me;
         Fmt.fprintf fmt "@]"
     | TopModSig (name, mt) ->
-        Fmt.fprintf fmt "module type %s = @[<v 2>@\n" name;
+        Fmt.fprintf fmt "@[<v 2>module type %s = @\n" name;
         pp_mod_ty fmt mt;
         Fmt.fprintf fmt "@]"
 
@@ -336,9 +345,12 @@ module MakePP (Config : PPConfig) = struct
         Fmt.fprintf fmt "@\nid = %d" id;
         List.iter
           (fun (x, ((qvs, te) : I.bind_ty)) ->
-            Fmt.fprintf fmt "@\n@\nval %s = @[" x;
-            Fmt.fprintf fmt "forall %s . "
-              (qvs |> List.map Ident.show_ident |> String.concat " ");
+            Fmt.fprintf fmt "@\n@\nval %s : @[" x;
+            (match qvs with
+            | [] -> ()
+            | _ ->
+                Fmt.fprintf fmt "forall %s . "
+                  (qvs |> List.map Ident.show_ident |> String.concat " "));
             Fmt.fprintf fmt "@[";
             pp_ty fmt te;
             Fmt.fprintf fmt "@]";
@@ -356,17 +368,18 @@ module MakePP (Config : PPConfig) = struct
           mod_sigs;
         List.iter
           (fun (name, mt) ->
-            Fmt.fprintf fmt "@\n@\nmodule %s : " name;
-            pp_mod_ty fmt mt)
+            Fmt.fprintf fmt "@\n@\nmodule %s : @[" name;
+            pp_mod_ty fmt mt;
+            Fmt.fprintf fmt "@]")
           mod_defs;
         Fmt.fprintf fmt "@\n@\n@[<v 2>Owned Modules = { ";
         List.iter (fun i -> Fmt.fprintf fmt "@\n%d ;" i) owned_mods;
         Fmt.fprintf fmt "@]@\n}";
         Fmt.fprintf fmt "@]@\n@\nend"
     | I.MTFun (mt0, mt1) ->
-        Fmt.fprintf fmt "@[<v 2>functor (_ : ";
+        Fmt.fprintf fmt "@[<v 2>functor (_ : @[";
         pp_mod_ty fmt mt0;
-        Fmt.fprintf fmt ")@\n-> @\n";
+        Fmt.fprintf fmt "@])@\n-> @\n";
         pp_mod_ty fmt mt1
 
   let pp_prog fmt prog =

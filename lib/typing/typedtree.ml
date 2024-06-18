@@ -34,7 +34,7 @@ and mod_expr =
     (* functor (M: MT) -> ... *)
   | MEField of mod_expr * string * mod_ty (* M1.M2 *)
   | MEApply of mod_expr * mod_expr * mod_ty (* M1(...) *)
-  | MERestrict of mod_expr * mod_ty
+  | MERestrict of mod_expr * mod_ty * mod_ty
 
 and top_level =
   | TopLet of string * expr
@@ -91,7 +91,7 @@ let rec get_mod_ty (me : mod_expr) =
   | MEName (_, ty)
   | MEStruct (_, ty)
   | MEField (_, _, ty)
-  | MERestrict (_, ty)
+  | MERestrict (_, _, ty)
   | MEApply (_, _, ty) ->
       ty
   | MEFunctor ((_, mt0), me1) -> MTFun (mt0, get_mod_ty me1)

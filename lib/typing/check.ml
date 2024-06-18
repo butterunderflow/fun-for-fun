@@ -464,9 +464,9 @@ and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
             (me0_typed, me1_typed, apply_functor para_mt body_mt mt1 env))
   | T.MERestrict (me, mt) ->
       let me_typed = tc_mod me env in
-      let mty = normalize_mt mt env in
-      let mty, _ = check_subtype (get_mod_ty me_typed) mty in
-      MERestrict (me_typed, mty)
+      let mt = normalize_mt mt env in
+      let mt', _ = check_subtype (get_mod_ty me_typed) mt in
+      MERestrict (me_typed, mt, mt')
 
 (* apply a functor, add returned module type's id into environment *)
 and apply_functor para_mt body_mt arg_mt env =
