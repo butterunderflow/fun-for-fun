@@ -6,6 +6,8 @@ module type PPConfig = sig
   val show_const_ty : bool
 
   val show_bind_ty : bool
+
+  val show_mod_ty : bool
 end
 
 module MakePP (Config : PPConfig) = struct
@@ -150,7 +152,7 @@ module MakePP (Config : PPConfig) = struct
     match me with
     | MEName (name, _) -> Fmt.pp_print_string fmt name
     | MEStruct (tops, mt) ->
-        pp_is_mod_ty fmt true
+        pp_is_mod_ty fmt Config.show_mod_ty
           (fun _ ->
             Fmt.fprintf fmt "@[<v 2>struct";
             List.iter
@@ -176,7 +178,7 @@ module MakePP (Config : PPConfig) = struct
         pp_mod fmt me1;
         Fmt.fprintf fmt ")"
     | MERestrict (me, mt, mt') ->
-        pp_is_mod_ty fmt true
+        pp_is_mod_ty fmt Config.show_mod_ty
           (fun _ ->
             Fmt.fprintf fmt "(";
             Fmt.fprintf fmt "@[";
@@ -391,8 +393,10 @@ module MakePP (Config : PPConfig) = struct
       prog
 end
 
-module ShowAllConfig = struct
+module ShowAllConfig : PPConfig = struct
   let show_const_ty = true
 
   let show_bind_ty = true
+
+  let show_mod_ty = true
 end
