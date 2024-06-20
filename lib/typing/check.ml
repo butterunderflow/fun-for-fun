@@ -619,7 +619,7 @@ and check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) :
                             failwith
                               "number of type parameter not compatible in \
                                opaque type"
-                          else td0)
+                          else I.TDOpaqueI (name, paras))
                   | _ ->
                       let td0 = get_def (I.get_def_name td) tds0 in
                       if td <> td0 then

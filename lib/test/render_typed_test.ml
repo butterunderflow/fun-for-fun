@@ -277,8 +277,7 @@ let%expect_test "Test: pretty print typed program" =
 
                                  val x : () 1.t
 
-                                 type () t =
-                                 | Nil
+                                 type () t
 
                                  Owned Modules = {
                                  }
@@ -362,8 +361,7 @@ let%expect_test "Test: pretty print typed program" =
 
                                  val x : () 2.t
 
-                                 type () t =
-                                 | Nil
+                                 type () t
 
                                  Owned Modules = {
                                  }

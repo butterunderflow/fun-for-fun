@@ -583,7 +583,7 @@ let%expect_test "Test: full program typing" =
            (ty_defs ((TDOpaqueI t ()))) (mod_sigs ()) (mod_defs ())
            (owned_mods ()))
          (MTMod (id 1) (val_defs ((x (() (TConsI (1 t) ())))))
-           (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())
+           (ty_defs ((TDOpaqueI t ()))) (mod_sigs ()) (mod_defs ())
            (owned_mods ()))))) |}];
 
   print_typed
@@ -691,7 +691,7 @@ let%expect_test "Test: full program typing" =
             (ty_defs ((TDOpaqueI t ()))) (mod_sigs ()) (mod_defs ())
             (owned_mods ()))
           (MTMod (id 2) (val_defs ((x (() (TConsI (2 t) ())))))
-            (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())
+            (ty_defs ((TDOpaqueI t ()))) (mod_sigs ()) (mod_defs ())
             (owned_mods ()))))) |}];
 
   print_typed
