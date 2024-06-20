@@ -258,6 +258,10 @@ module MakePP (Config : PPConfig) = struct
         Fmt.fprintf fmt "@\n  @[{@[<v 2>";
         pp_fields fmt fields;
         Fmt.fprintf fmt "@]@\n}@]"
+    | I.TDAliasI (name, te) ->
+        Fmt.fprintf fmt "@[type %s = " name;
+        pp_ty fmt te;
+        Fmt.fprintf fmt "@]"
 
   and pp_ty fmt te =
     match te with

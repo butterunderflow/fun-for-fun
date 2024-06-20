@@ -277,8 +277,7 @@ let%expect_test "Test: pretty print typed program" =
 
                                  val x : () 1.t
 
-                                 type () t =
-                                 | Nil
+                                 type () t
 
                                  Owned Modules = {
                                  }
@@ -304,7 +303,8 @@ let%expect_test "Test: pretty print typed program" =
      end : MIntf
 
      |};
-  [%expect {|
+  [%expect
+    {|
     module type MIntf =
       sig
 
@@ -362,8 +362,7 @@ let%expect_test "Test: pretty print typed program" =
 
                                  val x : () 2.t
 
-                                 type () t =
-                                 | Nil
+                                 type () t
 
                                  Owned Modules = {
                                  }
@@ -429,7 +428,8 @@ functor
 
 module MMM = (M(F).K : I)
      |};
-  [%expect {|
+  [%expect
+    {|
     module type I =
       sig
 
@@ -666,5 +666,61 @@ module MMM = (M(F).K : I)
                                                       Owned Modules = {
                                                       }
 
-                                                    end) |}]
+                                                    end) |}];
 
+  print_typed
+    {|
+     module M = struct
+       type () x = | Nil
+     end
+
+     module N = struct
+       type t = M.x
+
+       type n = t
+     end
+
+     type y = N.n
+|};
+  [%expect {|
+    module M =
+      (struct
+
+         type () x =
+         | Nil
+
+       end is sig
+
+                id = 1
+
+                val Nil : () 1.x
+
+                type () x =
+                | Nil
+
+                Owned Modules = {
+                }
+
+              end)
+
+      module N =
+        (struct
+
+           type t = () 1.x
+
+           type n = () 1.x
+
+         end is sig
+
+                  id = 2
+
+                  type n = () 1.x
+
+                  type t = () 1.x
+
+                  Owned Modules = {
+                  }
+
+                end)
+
+        type y = () 1.x |}]

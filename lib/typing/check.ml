@@ -372,7 +372,7 @@ and tc_toplevel (top : T.top_level) env : top_level * Env.t =
         let constructors = analyze_constructors tid ty_para_names bs in
         let env = Env.add_values constructors env in
         (TopTypeDef def, env)
-    | T.TopTypeDef (TDRecord (_, _, _) as def_ext) ->
+    | T.TopTypeDef (_ as def_ext) ->
         let def = normalize_def def_ext env in
         (TopTypeDef def, Env.add_type_def def env)
     | T.TopMod (name, me) ->
@@ -562,18 +562,7 @@ and check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) :
     fun mt -> mapper#visit_mod_ty () mt
   in
   let mt1 = subst mt1 in
-  let get_def name ty_defs =
-    List.find
-      (fun td ->
-        match td with
-        | I.TDOpaqueI (name', _)
-        | I.TDAdtI (name', _, _)
-        | I.TDRecordI (name', _, _)
-          when name' = name ->
-            true
-        | _ -> false)
-      ty_defs
-  in
+
   let rec compatible mt0 mt1 : I.mod_ty =
     match (mt0, mt1) with
     | ( I.MTMod
@@ -610,7 +599,7 @@ and check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) :
                 (fun td ->
                   match td with
                   | I.TDOpaqueI (name, paras) -> (
-                      let td0 = get_def name tds0 in
+                      let td0 = I.get_def name tds0 in
                       match td0 with
                       | I.TDOpaqueI (_, paras0)
                       | I.TDAdtI (_, paras0, _)
@@ -619,9 +608,14 @@ and check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) :
                             failwith
                               "number of type parameter not compatible in \
                                opaque type"
-                          else td0)
+                          else I.TDOpaqueI (name, paras)
+                      | I.TDAliasI (_, _) ->
+                          (match paras with
+                          | [] -> ()
+                          | _ :: _ -> failwith "type alias has parameter");
+                          I.TDOpaqueI (name, paras))
                   | _ ->
-                      let td0 = get_def (I.get_def_name td) tds0 in
+                      let td0 = I.get_def (I.get_def_name td) tds0 in
                       if td <> td0 then
                         failwith "a type def component not compatible"
                       else td0)
@@ -663,6 +657,7 @@ and normalize_def (t : T.ety_def) env : I.ty_def =
     | T.TDRecord (n, tvs, fields) ->
         I.TDRecordI
           (n, tvs, List.map (fun (x, t) -> (x, normalize t Type env)) fields)
+    | T.TDAlias (n, te) -> I.TDAliasI (n, normalize te Type env)
   in
   normed
 
@@ -671,17 +666,31 @@ and normalize_ty t env = normalize t Let env
 and normalize (t : T.ety) (ctx : norm_ctx) (env : Env.t) : I.ty =
   match t with
   | T.TField (me, n, tes) -> (
-      (* todo: return an transparent type when it get supported *)
       let tes = List.map (fun te -> normalize te ctx env) tes in
       let me_typed = tc_mod me env in
       let mod_ty = get_mod_ty me_typed in
       match mod_ty with
-      | I.MTMod { id; _ } -> TConsI ((id, n), tes)
+      | I.MTMod { id; ty_defs; _ } -> (
+          match I.get_def n ty_defs with
+          | I.TDOpaqueI (_, _)
+          | I.TDAdtI (_, _, _)
+          | I.TDRecordI (_, _, _) ->
+              TConsI ((id, n), tes)
+          | I.TDAliasI (_, te) -> (
+              match tes with
+              | [] -> te
+              | _ :: _ ->
+                  failwith "try to provide type parameter to a type alias"))
       | I.MTFun _ -> failwith "try get a field from functor")
-  | T.TCons (c, tes) ->
+  | T.TCons (c, tes) -> (
       (* todo: fix, use lookuped environment index *)
-      let id, _ = Env.get_type_def c env in
-      TConsI ((id, c), List.map (fun t -> normalize t ctx env) tes)
+      let id, def = Env.get_type_def c env in
+      match def with
+      | I.TDOpaqueI (_, _)
+      | I.TDAdtI (_, _, _)
+      | I.TDRecordI (_, _, _) ->
+          TConsI ((id, c), List.map (fun t -> normalize t ctx env) tes)
+      | I.TDAliasI (_, te) -> te)
   | T.TVar x -> (
       match ctx with
       | Type -> TQVarI x

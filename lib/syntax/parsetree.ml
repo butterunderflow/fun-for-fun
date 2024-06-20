@@ -84,6 +84,7 @@ and ety =
 and ety_def =
   | TDAdt of string * ety_paras * evariant list
   | TDRecord of string * ety_paras * (string * ety) list
+  | TDAlias of string * ety
 
 and ety_paras = Ident.ident list
 

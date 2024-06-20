@@ -189,7 +189,12 @@ print_parsed_program {|
 |};
   [%expect {|
     ((TopLet co (EApp (ECons Cons) (EConst (CInt 1))))
-      (TopLet f (EConst (CInt 1)))) |}]
+      (TopLet f (EConst (CInt 1)))) |}];
+
+  print_parsed_program {|
+       type t =  a list -> b
+|};
+  [%expect {| ((TopTypeDef (TDAlias t (TArrow (TCons list ((TCons a ()))) (TCons b ()))))) |}]
 
 let%expect_test "Test: path parsing" =
   print_parsed_mod_expr {|X|};
