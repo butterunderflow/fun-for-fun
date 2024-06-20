@@ -20,5 +20,19 @@ let get_def_name (td : ty_def) =
   match td with
   | TDOpaqueI (name, _)
   | TDAdtI (name, _, _)
-  | TDRecordI (name, _, _) ->
+  | TDRecordI (name, _, _)
+  | TDAliasI (name, _) ->
       name
+
+let get_def name ty_defs =
+  List.find
+    (fun td ->
+      match td with
+      | TDOpaqueI (name', _)
+      | TDAdtI (name', _, _)
+      | TDRecordI (name', _, _)
+      | TDAliasI (name', _)
+        when name' = name ->
+          true
+      | _ -> false)
+    ty_defs

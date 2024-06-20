@@ -117,6 +117,9 @@ type_def:
     | TYPE LPAREN tvs=separated_list(COMMA, TYPEVAR) RPAREN n=IDENT
         EQ OR? vs=separated_list(OR, variant) %prec over_TOP
                 { TDAdt (n, (List.map Ident.from tvs), vs) }
+    | TYPE n=IDENT
+        EQ te=type_expr %prec over_TOP
+                { TDAlias (n, te) }
 
 pattern:
     | n=IDENT { PVar n } (* variable pattern *)
@@ -152,6 +155,7 @@ type_expr:
     | LPAREN te=type_expr RPAREN { te }
     | ts=separated_nontrivial_llist(STAR, type_expr) { TTuple ts }
     | t_arg = type_expr fon=field_or_name { mk_type_ref fon [t_arg] }
+    | fon=field_or_name { mk_type_ref fon [] }
     | n=IDENT { TCons (n, []) }
     | tv=TYPEVAR { TVar (Ident.from tv) }
     | arg=type_expr ARROW ret=type_expr { TArrow (arg, ret) }

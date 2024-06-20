@@ -101,7 +101,8 @@ let rec get_type_def tn env =
           (function
             | I.TDOpaqueI (x, _)
             | TDAdtI (x, _, _)
-            | TDRecordI (x, _, _) ->
+            | TDRecordI (x, _, _)
+            | TDAliasI (x, _) ->
                 x = tn)
           s.types
       with
@@ -162,7 +163,8 @@ let dbg (env : t) =
            match def with
            | I.TDOpaqueI (name, _) -> (name, def)
            | I.TDAdtI (name, _, _) -> (name, def)
-           | I.TDRecordI (name, _, _) -> (name, def))
+           | I.TDRecordI (name, _, _) -> (name, def)
+           | I.TDAliasI (name, _) -> (name, def))
     |> List.map (fun (name, def) ->
            ( name,
              I.sexp_of_ty_def def

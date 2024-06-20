@@ -26,10 +26,10 @@ and type_paras = Ident.ident list
 and variant = string * ty option
 
 and ty_def =
-  (* todo: add type alias to type definition *)
   | TDOpaqueI of string * type_paras
   | TDAdtI of string * type_paras * variant list
   | TDRecordI of string * type_paras * (string * ty) list
+  | TDAliasI of string * ty
 
 and mod_ty =
   | MTMod of {
