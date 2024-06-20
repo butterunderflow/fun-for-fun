@@ -683,14 +683,16 @@ and normalize (t : T.ety) (ctx : norm_ctx) (env : Env.t) : I.ty =
                   failwith "try to provide type parameter to a type alias"))
       | I.MTFun _ -> failwith "try get a field from functor")
   | T.TCons (c, tes) -> (
-      (* todo: fix, use lookuped environment index *)
       let id, def = Env.get_type_def c env in
       match def with
       | I.TDOpaqueI (_, _)
       | I.TDAdtI (_, _, _)
       | I.TDRecordI (_, _, _) ->
           TConsI ((id, c), List.map (fun t -> normalize t ctx env) tes)
-      | I.TDAliasI (_, te) -> te)
+      | I.TDAliasI (_, te) -> (
+          match tes with
+          | [] -> te
+          | _ -> failwith "apply type to type alias"))
   | T.TVar x -> (
       match ctx with
       | Type -> TQVarI x
