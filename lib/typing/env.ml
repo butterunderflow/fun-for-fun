@@ -43,11 +43,6 @@ let add_constrs binds env =
   | s :: env' -> { s with constrs = binds @ s.constrs } :: env'
   | [] -> failwith "neverreach"
 
-let get_curr (env : t) =
-  match env with
-  | [] -> failwith "neverreach"
-  | s :: _ -> s.curr
-
 let prune env0 env1 =
   match env0 with
   | s :: env0' when env0' == env1 -> s
