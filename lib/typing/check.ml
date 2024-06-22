@@ -166,24 +166,29 @@ and tc_pattern p te env : pattern * (string * I.ty) list =
   match (p, te) with
   | T.PVar x, te -> (PVar (x, te), [ (x, te) ])
   | T.PCons (c, None), te -> (
-      let cons_ty_gen (* type of constructor *) = Env.get_value_type c env in
+      let cons_ty_gen (* type of constructor *), id =
+        Env.get_constr_type c env
+      in
       let cons_ty = inst cons_ty_gen in
       U.unify cons_ty te;
       match cons_ty with
-      | I.TConsI (_, []) -> (PCons (c, None), [])
+      | I.TConsI (_, []) -> (PCons (c, id, None), [])
       | _ -> failwith "wrong type")
-  | T.PFieldCons (p, c, None), te -> (
-      let cons_typed (* constructor *) = tc_field_cons p c env in
+  | T.PFieldCons (me, c, None), te -> (
+      let cons_typed (* constructor *) = tc_field_cons me c env in
+      let[@warning "-8"] (EFieldCons (_, _, id, _)) = cons_typed in
       let cons_ty = get_ty cons_typed in
       U.unify cons_ty te;
       (* unify cons_ty with te *)
       match cons_ty with
-      | I.TConsI (_, _) -> (PCons (c, None), [ (* bind nothing *) ])
+      | I.TConsI (_, _) -> (PCons (c, id, None), [ (* bind nothing *) ])
       | _ -> failwith "wrong type")
   | T.PCons (c, Some p0 (* pattern *)), te ->
-      let cons_ty_gen (* type of constructor *) = Env.get_value_type c env in
+      let cons_ty_gen (* type of constructor *), id =
+        Env.get_constr_type c env
+      in
       let p0, binds = tc_PCons_aux (inst cons_ty_gen) p0 te in
-      (PCons (c, Some p0), binds)
+      (PCons (c, id, Some p0), binds)
   | T.PFieldCons (p (* path *), c, Some p0), te ->
       let cons_typed (* typed constructor *) = tc_field_cons p c env in
       let cons_ty = get_ty cons_typed in
@@ -328,14 +333,15 @@ and tc_tuple es env =
   ETuple (es_typed, tu_te)
 
 and tc_cons c env =
-  let t = Env.get_value_type c env |> inst in
-  ECons (c, t)
+  let t, id = Env.get_constr_type c env in
+  ECons (c, id, inst t)
 
 and tc_field_cons me c env =
   let me_typed = tc_mod me env in
   match get_mod_ty me_typed with
-  | I.MTMod { val_defs; _ } ->
-      EFieldCons (me_typed, c, inst (List.assoc c val_defs))
+  | I.MTMod { constr_defs; _ } ->
+      let t, id = List.assoc c constr_defs in
+      EFieldCons (me_typed, c, id, inst t)
   | I.MTFun _ -> failwith "try get field from functor"
 
 and tc_field me x env =
@@ -370,7 +376,7 @@ and tc_toplevel (top : T.top_level) env : top_level * Env.t =
         let[@warning "-8"] (I.TDAdtI (_, _, bs)) = def in
         let env = Env.add_type_def def env in
         let constructors = analyze_constructors tid ty_para_names bs in
-        let env = Env.add_values constructors env in
+        let env = Env.add_constrs constructors env in
         (TopTypeDef def, env)
     | T.TopTypeDef (_ as def_ext) ->
         let def = normalize_def def_ext env in
@@ -387,22 +393,24 @@ and tc_toplevel (top : T.top_level) env : top_level * Env.t =
   top_typed
 
 and analyze_constructors (tid : I.ty_id) para_names (bs : I.variant list) :
-    (string * I.bind_ty) list =
-  List.map
-    (fun (branch : I.variant) ->
+    (string * (I.bind_ty * int)) list =
+  List.mapi
+    (fun id (branch : I.variant) ->
       match branch with
       | c, None ->
           ( c,
-            ( para_names,
-              I.TConsI (tid, List.map (fun id -> I.TQVarI id) para_names) )
-          )
+            ( ( para_names,
+                I.TConsI (tid, List.map (fun id -> I.TQVarI id) para_names)
+              ),
+              id ) )
       | c, Some payload ->
           ( c,
-            ( para_names,
-              I.TArrowI
-                ( payload,
-                  TConsI (tid, List.map (fun id -> I.TQVarI id) para_names)
-                ) ) ))
+            ( ( para_names,
+                I.TArrowI
+                  ( payload,
+                    TConsI (tid, List.map (fun id -> I.TQVarI id) para_names)
+                  ) ),
+              id ) ))
     bs
 
 (* typing program (content of module) *)
@@ -417,6 +425,7 @@ and tc_tops (prog : T.top_level list) env : program * Env.t =
 and make_scope_mt
     {
       Env.values;
+      constrs;
       types;
       modules;
       module_sigs;
@@ -428,6 +437,7 @@ and make_scope_mt
     {
       id = curr;
       val_defs = values;
+      constr_defs = constrs;
       ty_defs = types;
       mod_sigs = module_sigs;
       mod_defs = modules;
@@ -482,8 +492,15 @@ and shift_mt (mt : I.mod_ty) env : I.mod_ty =
     let rec go mt =
       match (mt : I.mod_ty) with
       | I.MTMod
-          { id; val_defs = _; ty_defs = _; mod_sigs; mod_defs; owned_mods }
-        ->
+          {
+            id;
+            val_defs = _;
+            constr_defs = _;
+            ty_defs = _;
+            mod_sigs;
+            mod_defs;
+            owned_mods;
+          } ->
           List.iter
             (fun id ->
               if not (IntMap.mem id !result) then
@@ -509,10 +526,10 @@ and shift_mt (mt : I.mod_ty) env : I.mod_ty =
       object (_self)
         inherit [_] Types_in.map as super
 
-        method! visit_MTMod () id val_defs ty_defs mod_sigs mod_defs
-            owned_mods =
-          super#visit_MTMod () (IntMap.find id dict) val_defs ty_defs
-            mod_sigs mod_defs
+        method! visit_MTMod () id val_defs constr_defs ty_defs mod_sigs
+            mod_defs owned_mods =
+          super#visit_MTMod () (IntMap.find id dict) val_defs constr_defs
+            ty_defs mod_sigs mod_defs
             (List.map get_id_or_default owned_mods)
 
         method! visit_ty_id () (id, name) =
@@ -568,6 +585,7 @@ and check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) :
     | ( I.MTMod
           {
             val_defs = vds0;
+            constr_defs = cds0;
             ty_defs = tds0;
             mod_defs = mds0;
             mod_sigs = _ms0;
@@ -577,6 +595,7 @@ and check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) :
         I.MTMod
           {
             val_defs = vds1;
+            constr_defs = cds1;
             ty_defs = tds1;
             mod_defs = mds1;
             mod_sigs = ms1;
@@ -594,6 +613,16 @@ and check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) :
                          "a value binding component `%s` not compatible" name)
                   else (name, vd0))
                 vds1;
+            constr_defs =
+              List.map
+                (fun (name, cd1) ->
+                  let cd0 = List.assoc name cds0 in
+                  if cd0 <> cd1 then
+                    failwith
+                      (Printf.sprintf
+                         "a constructor component `%s` not compatible" name)
+                  else (name, cd0))
+                cds1;
             ty_defs =
               List.map
                 (fun td ->

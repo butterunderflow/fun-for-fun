@@ -18,8 +18,15 @@ type expr =
   | EAnn of expr * ty
   | ETuple of expr list * ty
   | EField of mod_expr * string * ty
-  | ECons of string * ty
-  | EFieldCons of mod_expr * string * ty
+  | ECons of
+      (* constructor like Cons *)
+      string * int (* constructor id *) * ty
+  | EFieldCons of
+      (* constructor like M.Cons *)
+      mod_expr
+      * string
+      * int (* constructor id *)
+      * ty
 
 and lambda_typed = string * expr * ty
 
@@ -30,8 +37,7 @@ and mod_body = top_level list
 and mod_expr =
   | MEName of string * mod_ty (* M *)
   | MEStruct of mod_body * mod_ty (* struct ... end *)
-  | MEFunctor of functor_para * mod_expr
-    (* functor (M: MT) -> ... *)
+  | MEFunctor of functor_para * mod_expr (* functor (M: MT) -> ... *)
   | MEField of mod_expr * string * mod_ty (* M1.M2 *)
   | MEApply of mod_expr * mod_expr * mod_ty (* M1(...) *)
   | MERestrict of mod_expr * mod_ty * mod_ty
@@ -48,7 +54,7 @@ and program = top_level list
 and pattern =
   (* simplest pattern is enough after type info has been filled *)
   | PVal of constant
-  | PCons of string * pattern option (* Cons (1, 2) *)
+  | PCons of string * int * pattern option (* Cons (1, 2) *)
   | PVar of string * ty
   | PTuple of pattern list (* (x, y, z) *)
 [@@deriving
@@ -82,8 +88,8 @@ let get_ty = function
   | EAnn (_, ty)
   | ETuple (_, ty)
   | EField (_, _, ty)
-  | ECons (_, ty)
-  | EFieldCons (_, _, ty) ->
+  | ECons (_, _, ty)
+  | EFieldCons (_, _, _, ty) ->
       ty
 
 let rec get_mod_ty (me : mod_expr) =

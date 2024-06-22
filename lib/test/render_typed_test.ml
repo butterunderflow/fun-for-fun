@@ -84,13 +84,13 @@ let%expect_test "Test: pretty print typed program" =
     | Cons of () 0.int
     | Nil
 
-    let co = (Cons is (() 0.int
-                        ->() 0.int_l)) (1 is () 0.int)
+    let co = (Cons[0] is (() 0.int
+                           ->() 0.int_l)) (1 is () 0.int)
 
-    let c = (Nil is () 0.int_l)
+    let c = (Nil[1] is () 0.int_l)
 
     let f = match (c is () 0.int_l) with
-            | (Cons (x is () 0.int)) -> (x is () 0.int)
+            | (Cons[0] (x is () 0.int)) -> (x is () 0.int)
             | Nil -> (0 is () 0.int) |}];
 
   print_typed
@@ -112,7 +112,7 @@ let%expect_test "Test: pretty print typed program" =
          type () t =
          | Nil
 
-         let x = (Nil is () 1.t)
+         let x = (Nil[0] is () 1.t)
 
        end is sig
 
@@ -120,7 +120,7 @@ let%expect_test "Test: pretty print typed program" =
 
                 val x : () 1.t
 
-                val Nil : () 1.t
+                constr Nil[0] : () 1.t
 
                 type () t =
                 | Nil
@@ -160,7 +160,7 @@ let%expect_test "Test: pretty print typed program" =
          type () t =
          | Nil
 
-         let x = (Nil is () 1.t)
+         let x = (Nil[0] is () 1.t)
 
          module N =
            (struct
@@ -172,7 +172,7 @@ let%expect_test "Test: pretty print typed program" =
 
                      id = 2
 
-                     val Nil : () 2.t
+                     constr Nil[0] : () 2.t
 
                      type () t =
                      | Nil
@@ -182,7 +182,7 @@ let%expect_test "Test: pretty print typed program" =
 
                    end)
 
-           let z = (N.Nil is () 2.t)
+           let z = (N.Nil[0] is () 2.t)
 
          end is sig
 
@@ -192,7 +192,7 @@ let%expect_test "Test: pretty print typed program" =
 
                   val x : () 1.t
 
-                  val Nil : () 1.t
+                  constr Nil[0] : () 1.t
 
                   type () t =
                   | Nil
@@ -201,7 +201,7 @@ let%expect_test "Test: pretty print typed program" =
 
                                id = 2
 
-                               val Nil : () 2.t
+                               constr Nil[0] : () 2.t
 
                                type () t =
                                | Nil
@@ -219,7 +219,7 @@ let%expect_test "Test: pretty print typed program" =
 
        let c = (M.x is () 1.t)
 
-       let x = (M.N.Nil is () 2.t)
+       let x = (M.N.Nil[0] is () 2.t)
 
        let y = (M.z is () 2.t) |}];
 
@@ -244,7 +244,7 @@ let%expect_test "Test: pretty print typed program" =
            type () t =
            | Nil
 
-           let x = (Nil is () 1.t)
+           let x = (Nil[0] is () 1.t)
 
          end is sig
 
@@ -252,7 +252,7 @@ let%expect_test "Test: pretty print typed program" =
 
                   val x : () 1.t
 
-                  val Nil : () 1.t
+                  constr Nil[0] : () 1.t
 
                   type () t =
                   | Nil
@@ -327,7 +327,7 @@ let%expect_test "Test: pretty print typed program" =
 
            let z = (1 is () 0.int)
 
-           let x = (Nil is () 2.t)
+           let x = (Nil[0] is () 2.t)
 
          end is sig
 
@@ -337,7 +337,7 @@ let%expect_test "Test: pretty print typed program" =
 
                   val z : () 0.int
 
-                  val Nil : () 2.t
+                  constr Nil[0] : () 2.t
 
                   type () t =
                   | Nil
@@ -693,7 +693,7 @@ module MMM = (M(F).K : I)
 
                 id = 1
 
-                val Nil : () 1.x
+                constr Nil[0] : () 1.x
 
                 type () x =
                 | Nil

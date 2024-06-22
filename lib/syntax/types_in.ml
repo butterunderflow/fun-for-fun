@@ -35,6 +35,8 @@ and mod_ty =
   | MTMod of {
       id : int; (* give every module type an identity *)
       val_defs : (string * bind_ty) list;
+      constr_defs :
+        (string * (bind_ty * int (* constructor id of a adt *))) list;
       ty_defs : ty_def list;
       mod_sigs : (string * mod_ty) list;
       mod_defs : (string * mod_ty) list;

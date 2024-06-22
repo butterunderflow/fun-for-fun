@@ -110,8 +110,7 @@ module MakePP (Config : PPConfig) = struct
             if i = size - 1 then Fmt.fprintf fmt ")"
             else Fmt.fprintf fmt ", ")
           es
-    | EField (me, name, te)
-    | EFieldCons (me, name, te) ->
+    | EField (me, name, te) ->
         pp_is_ty fmt Config.show_bind_ty
           (fun _ ->
             Fmt.fprintf fmt "@[";
@@ -119,9 +118,17 @@ module MakePP (Config : PPConfig) = struct
             Fmt.fprintf fmt ".%s" name;
             Fmt.fprintf fmt "@]")
           te
-    | ECons (c, te) ->
+    | EFieldCons (me, name, id, te) ->
         pp_is_ty fmt Config.show_bind_ty
-          (fun _ -> Fmt.pp_print_string fmt c)
+          (fun _ ->
+            Fmt.fprintf fmt "@[";
+            pp_mod fmt me;
+            Fmt.fprintf fmt ".%s[%d]" name id;
+            Fmt.fprintf fmt "@]")
+          te
+    | ECons (c, id, te) ->
+        pp_is_ty fmt Config.show_bind_ty
+          (fun _ -> Fmt.fprintf fmt "%s[%d]" c id)
           te
 
   and pp_lam fmt (x, e, _te) =
@@ -313,11 +320,11 @@ module MakePP (Config : PPConfig) = struct
     | PVal (CBool b) -> Fmt.pp_print_bool fmt b
     | PVal (CInt i) -> Fmt.pp_print_int fmt i
     | PVal (CString s) -> Fmt.fprintf fmt "\"%s\"" s
-    | PCons (cname, p) -> (
+    | PCons (cname, id, p) -> (
         match p with
         | None -> Fmt.fprintf fmt "%s" cname
         | Some p ->
-            Fmt.fprintf fmt "(%s" cname;
+            Fmt.fprintf fmt "(%s[%d]" cname id;
             Fmt.fprintf fmt "@ ";
             pp_pattern fmt p;
             Fmt.fprintf fmt ")")
@@ -346,7 +353,16 @@ module MakePP (Config : PPConfig) = struct
 
   and pp_mod_ty fmt mt =
     match mt with
-    | I.MTMod { id; val_defs; ty_defs; mod_sigs; mod_defs; owned_mods } ->
+    | I.MTMod
+        {
+          id;
+          val_defs;
+          constr_defs;
+          ty_defs;
+          mod_sigs;
+          mod_defs;
+          owned_mods;
+        } ->
         Fmt.fprintf fmt "@[<v 2>sig@\n";
         Fmt.fprintf fmt "@\nid = %d" id;
         List.iter
@@ -362,6 +378,19 @@ module MakePP (Config : PPConfig) = struct
             Fmt.fprintf fmt "@]";
             Fmt.fprintf fmt "@]")
           val_defs;
+        List.iter
+          (fun (x, ((qvs, te), id)) ->
+            Fmt.fprintf fmt "@\n@\nconstr %s[%d] : @[" x id;
+            (match qvs with
+            | [] -> ()
+            | _ ->
+                Fmt.fprintf fmt "forall %s . "
+                  (qvs |> List.map Ident.show_ident |> String.concat " "));
+            Fmt.fprintf fmt "@[";
+            pp_ty fmt te;
+            Fmt.fprintf fmt "@]";
+            Fmt.fprintf fmt "@]")
+          constr_defs;
         List.iter
           (fun td ->
             Fmt.fprintf fmt "@\n@\n";
