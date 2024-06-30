@@ -16,4 +16,146 @@ let%expect_test "Test: full program lowering" =
   in
 
   print_lowered {| let x = 1 |};
-  [%expect {| (EModObject ((FSimple x (EConst (CInt 1))))) |}]
+  [%expect {| (EModObject ((FSimple x (EConst (CInt 1))))) |}];
+
+  print_lowered
+    {| 
+     module M =
+       struct
+         type () t = Nil
+
+
+         let x = Nil
+
+         let y = 1 
+       end
+     let c = M.x
+
+     let d = M.y
+                 |};
+  [%expect
+    {|
+    (EModObject
+      ((FSimple M
+         (EModObject ((FSimple x (ECons 0)) (FSimple y (EConst (CInt 1))))))
+        (FSimple c (EField (EVar M) x)) (FSimple d (EField (EVar M) y)))) |}];
+
+  print_lowered
+    {|
+     module type I = sig
+        val x : int
+
+        val y : int
+     end
+
+     module type J = sig
+        val x : int
+
+        val y : int
+
+        val z : int
+     end
+
+module MJ = struct
+  let x = 1
+
+  let y = 1
+
+  let z = 1
+end
+
+module Simple = struct
+  let x = 1
+
+  let y = 2
+end
+
+module M =
+functor
+  (MI : functor (MI : I) -> I)
+  ->
+  struct
+    module K = MI (Simple)
+  end
+
+module F =
+functor
+  (MI : I)
+  ->
+  (
+    struct
+      let x = 1
+
+      let y = 1
+
+      let z = 1
+    end :
+      J)
+
+module MMM = (M(F).K : I)
+
+     let rec f = fun x -> x
+     and 
+     g = fun x -> f 1
+
+     |};
+  [%expect
+    {|
+    (EModObject
+      ((FSimple MJ
+         (EModObject
+           ((FSimple x (EConst (CInt 1))) (FSimple y (EConst (CInt 1)))
+             (FSimple z (EConst (CInt 1))))))
+        (FSimple Simple
+          (EModObject
+            ((FSimple x (EConst (CInt 1))) (FSimple y (EConst (CInt 2))))))
+        (FSimple M
+          (ELam
+            (MI (EModObject ((FSimple K (EApp (EVar MI) (EVar Simple)))))
+              (Simple))))
+        (FSimple F
+          (ELam
+            (MI
+              (EModObject
+                ((FSimple x (EConst (CInt 1))) (FSimple y (EConst (CInt 1)))
+                  (FSimple z (EConst (CInt 1)))))
+              ())))
+        (FSimple MMM (EField (EApp (EVar M) (EVar F)) K))
+        (FLetRec
+          ((f (x (EVar x) ())) (g (x (EApp (EVar f) (EConst (CInt 1))) (f))))))) |}];
+
+  print_lowered
+    {|
+
+     let rec f = fun x -> x
+     and 
+     g = fun x -> f 1
+
+|};
+  [%expect
+    {|
+    (EModObject
+      ((FLetRec
+         ((f (x (EVar x) ())) (g (x (EApp (EVar f) (EConst (CInt 1))) (f))))))) |}];
+  print_lowered
+    {|
+     type () int_l
+     = Cons of int
+     | Nil
+
+     let x = Nil
+     let f = fun p -> 
+         match x with
+        | Cons y -> y
+        | Nil    -> 0
+     |};
+  [%expect {|
+    (EModObject
+      ((FSimple x (ECons 1))
+        (FSimple f
+          (ELam
+            (p
+              (ESwitch (EVar x)
+                (((PCons 0 ((PVar y))) (EVar y))
+                  ((PCons 1 ()) (EConst (CInt 0)))))
+              (x)))))) |}]
