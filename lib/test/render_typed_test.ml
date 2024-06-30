@@ -682,7 +682,8 @@ module MMM = (M(F).K : I)
 
      type y = N.n
 |};
-  [%expect {|
+  [%expect
+    {|
     module M =
       (struct
 

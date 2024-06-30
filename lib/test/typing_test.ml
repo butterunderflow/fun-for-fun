@@ -207,8 +207,7 @@ let%expect_test "Test: program toplevel typing" =
                (EConst (CInt 1) (TConsI (0 int) ()))
                (TVarI (Link (TConsI (0 int) ()))))
              (TArrowI (TVarI (Unbound '_t/4)) (TVarI (Link (TConsI (0 int) ()))))))))) |}];
-  print_effect
-    {|
+  print_effect {|
      type () a 
      = Cons of int
      | Nil 

@@ -1,5 +1,4 @@
 open Syntax.Parsing
-
 module L = Lam.Tree
 module C = Lam.Compile
 
