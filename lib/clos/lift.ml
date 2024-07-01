@@ -19,7 +19,7 @@ let rec lift ?(hint = "temp") (e : L.expr) (vars : string list) :
                 (x :: vars, C.FSimple (x, e) :: mem_acc, fns @ fn_acc)
             | L.FLetRec binds ->
                 let xs, _ = List.split binds in
-                let binds, fns = lift_letrec ~hint binds vars in
+                let binds, fns = lift_letrec binds vars in
                 (xs @ vars, C.FLetRec binds :: mem_acc, fns @ fn_acc))
           (vars, [], []) mems
       in
@@ -68,15 +68,16 @@ let rec lift ?(hint = "temp") (e : L.expr) (vars : string list) :
       (C.EClosure (!fvs, fn_id), new_fn :: fns)
   | L.ELetRec (binds, e) ->
       let xs, _ = List.split binds in
-      let cls, fns = lift_letrec ~hint binds vars in
+      let cls, fns = lift_letrec binds vars in
       let e, fns' = lift e (xs @ vars) ~hint in
       (C.ELetRec (cls, e), fns' @ fns)
   | L.EField (e, name) ->
       let e', fns = lift e vars ~hint in
       (C.EField (e', name), fns)
 
-and lift_letrec ~hint binds vars =
+and lift_letrec binds vars =
   let xs = List.map fst binds in
+  let vars = xs @ vars in
   let fvs =
     binds
     |> List.map snd
@@ -84,13 +85,13 @@ and lift_letrec ~hint binds vars =
     |> List.flatten
     |> List_utils.remove_from_left
   in
+  let fvs = xs @ fvs in
   let cls, fns =
     binds
-    |> List.map snd
-    |> List.map (fun (x, e, _fvs) ->
-           let e', fns = lift e (xs @ vars) ~hint:x in
-           let fn_id = Ident.create ~hint in
-           let new_fn = (fn_id, fvs, x, e') in
+    |> List.map (fun (x, (para, e, _fvs)) ->
+           let e', fns = lift e (para :: vars) ~hint:x in
+           let fn_id = Ident.create ~hint:x in
+           let new_fn = (fn_id, fvs, para, e') in
            (fn_id, new_fn :: fns))
     |> List.split
     |> fun (fn_id, fns_l) -> (fn_id, List.flatten fns_l)

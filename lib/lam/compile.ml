@@ -78,7 +78,8 @@ let free_var_analyze e : unit =
     go p;
     !all
   in
-  (* return free variables of e, write free variables to lambda expressions in e*)
+  (* return free variables of e, write free variables to lambda expressions
+     in e*)
   let rec go e vars =
     match e with
     | L.ETuple es -> List.fold_left (fun acc e -> go e vars @ acc) [] es
