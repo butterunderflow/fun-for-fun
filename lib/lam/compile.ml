@@ -135,9 +135,9 @@ let free_var_analyze e : unit =
     let fv_binds =
       binds
       |> List.map (fun (_x, (para, e, fvs)) ->
-             let fvs' = aux_lambda para e vars in
+             let fvs' = capture (aux_lambda para e vars) xs in
              fvs := fvs';
-             capture fvs' xs)
+             fvs')
       |> List.flatten
     in
     fv_binds
