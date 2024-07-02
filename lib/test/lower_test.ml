@@ -149,7 +149,8 @@ module MMM = (M(F).K : I)
         | Cons y -> y
         | Nil    -> 0
      |};
-  [%expect {|
+  [%expect
+    {|
     (EModObject
       ((FSimple x (ECons 1))
         (FSimple f
@@ -158,4 +159,81 @@ module MMM = (M(F).K : I)
               (ESwitch (EVar x)
                 (((PCons 0 ((PVar y))) (EVar y))
                   ((PCons 1 ()) (EConst (CInt 0)))))
-              (x)))))) |}]
+              (x)))))) |}];
+
+  print_lowered
+    {|
+     module M = struct
+       let x = 1
+     end
+
+     module type I = sig
+        val x : int
+     end
+
+     module F = functor (X: I) -> struct
+       let y = M.x
+     end
+     |};
+
+  [%expect
+    {|
+    (EModObject
+      ((FSimple M (EModObject ((FSimple x (EConst (CInt 1))))))
+        (FSimple F (ELam (X (EModObject ((FSimple y (EField (EVar M) x)))) (M))))))|}];
+  print_lowered
+    {|
+     module M = struct
+       let x = 1
+     end
+     module type I = sig
+        val x : int
+     end
+     module F1 =
+       functor (X: I) -> 
+       functor (Y: I) ->
+       struct
+         let y = M.x
+      end
+     |};
+  [%expect
+    {|
+    (EModObject
+      ((FSimple M (EModObject ((FSimple x (EConst (CInt 1))))))
+        (FSimple F1
+          (ELam
+            (X (ELam (Y (EModObject ((FSimple y (EField (EVar M) x)))) (M))) (M)))))) |}];
+
+  print_lowered
+    {|
+     module M = struct
+       let x = 1
+     end
+     module type I = sig
+        val x : int
+     end
+
+     module F2 =
+     functor (X: I) -> 
+     struct
+       module N = struct
+         let x = 2
+       end
+
+       module F3 = functor (Y: I) -> 
+                   struct
+                     let y = N.x
+                   end
+     end
+     |};
+  [%expect {|
+    (EModObject
+      ((FSimple M (EModObject ((FSimple x (EConst (CInt 1))))))
+        (FSimple F2
+          (ELam
+            (X
+              (EModObject
+                ((FSimple N (EModObject ((FSimple x (EConst (CInt 2))))))
+                  (FSimple F3
+                    (ELam (Y (EModObject ((FSimple y (EField (EVar N) x)))) (N))))))
+              ()))))) |}]
