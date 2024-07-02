@@ -1,6 +1,6 @@
 (library
  (name test)
- (libraries sexplib syntax back typing common)
+ (libraries sexplib syntax back typing common lam clos)
  (inline_tests)
  (wrapped false)
  (preprocess

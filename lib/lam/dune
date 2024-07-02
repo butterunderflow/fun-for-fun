@@ -1,0 +1,5 @@
+(library
+ (name lam)
+ (libraries sexplib common typing)
+ (preprocess
+  (pps ppx_sexp_conv)))

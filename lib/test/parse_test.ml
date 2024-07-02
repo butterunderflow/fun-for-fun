@@ -66,12 +66,14 @@ let%expect_test "Test: expression parsing" =
   [%expect {| (ELam ((PBare x) (EVar x))) |}];
   print_parsed {|f 1|};
   [%expect {| (EApp (EVar f) (EConst (CInt 1))) |}];
-  print_parsed {|
+  print_parsed
+    {|
          match c with
          | Cons x -> x
          | Nil    -> 0
                 |};
-  [%expect {|
+  [%expect
+    {|
     (ECase (EVar c)
       (((PCons Cons ((PVar x))) (EVar x)) ((PCons Nil ()) (EConst (CInt 0))))) |}]
 
@@ -172,7 +174,8 @@ functor
     end :
       J)
 |};
-  [%expect {|
+  [%expect
+    {|
     ((TopMod F
        (MEFunctor
          ((MI (MTName I))
@@ -182,19 +185,21 @@ functor
                  (TopLet z (EConst (CInt 1)))))
              (MTName J)))))) |}];
 
-print_parsed_program {|
+  print_parsed_program {|
     let co = Cons 1
 
     let f = 1
 |};
-  [%expect {|
+  [%expect
+    {|
     ((TopLet co (EApp (ECons Cons) (EConst (CInt 1))))
       (TopLet f (EConst (CInt 1)))) |}];
 
   print_parsed_program {|
        type t =  a list -> b
 |};
-  [%expect {| ((TopTypeDef (TDAlias t (TArrow (TCons list ((TCons a ()))) (TCons b ()))))) |}]
+  [%expect
+    {| ((TopTypeDef (TDAlias t (TArrow (TCons list ((TCons a ()))) (TCons b ()))))) |}]
 
 let%expect_test "Test: path parsing" =
   print_parsed_mod_expr {|X|};

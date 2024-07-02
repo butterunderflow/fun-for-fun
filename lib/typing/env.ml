@@ -2,6 +2,7 @@ module I = Types_in
 
 type scope = {
   values : (string * I.bind_ty) list;
+  constrs : (string * (I.bind_ty * int (* constructor id of a adt *))) list;
   types : I.ty_def list;
   modules : (string * I.mod_ty) list; (* module bindings *)
   module_sigs : (string * I.mod_ty) list; (* module bindings *)
@@ -37,10 +38,10 @@ let add_values binds env =
   | s :: env' -> { s with values = binds @ s.values } :: env'
   | [] -> failwith "neverreach"
 
-let get_curr (env : t) =
+let add_constrs binds env =
   match env with
+  | s :: env' -> { s with constrs = binds @ s.constrs } :: env'
   | [] -> failwith "neverreach"
-  | s :: _ -> s.curr
 
 let prune env0 env1 =
   match env0 with
@@ -58,6 +59,14 @@ let rec get_value_type x (env : t) =
   | s :: env' -> (
       match List.assoc_opt x s.values with
       | None -> get_value_type x env'
+      | Some te -> te)
+
+let rec get_constr_type x (env : t) : I.bind_ty * int =
+  match env with
+  | [] -> failwith (Printf.sprintf "constructor `%s` not found" x)
+  | s :: env' -> (
+      match List.assoc_opt x s.constrs with
+      | None -> get_constr_type x env'
       | Some te -> te)
 
 let record_history id (env : t) =
@@ -119,6 +128,7 @@ let get_module_by_id i env = List.assoc i env.module_dict
 let init_scope () =
   {
     values = [];
+    constrs = [];
     types = [];
     modules = [];
     module_sigs = [];
