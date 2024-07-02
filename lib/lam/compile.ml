@@ -18,6 +18,7 @@ let rec compile_expr (e : T.expr) =
   | T.EAnn (e, _) -> compile_expr e
   | T.ETuple (es, _) -> L.ETuple (List.map compile_expr es)
   | T.EField (me, name, _) -> L.EField (compile_mod_expr me, name)
+  | T.ECons (_, id, Syntax.Types_in.TArrowI (_, _)) -> L.EConsWith id
   | T.ECons (_, id, _) -> L.ECons id
   | T.EFieldCons (_, _, id, _) -> L.ECons id
 
@@ -106,6 +107,7 @@ let rec fva_expr e vars =
       assert (List.mem x' vars);
       [ x' ]
   | L.ECons _ -> []
+  | L.EConsWith _ -> []
   | L.EConst _ -> []
   | L.EApp (e0, e1) -> fva_expr e0 vars @ fva_expr e1 vars
   | L.ESwitch (e0, bs) ->

@@ -144,15 +144,19 @@ module MMM = (M(F).K : I)
      | Nil
 
      let x = Nil
+
+     let z = Cons 1
+
      let f = fun p -> 
          match x with
         | Cons y -> y
         | Nil    -> 0
+
      |};
   [%expect
     {|
     (EModObject
-      ((FSimple x (ECons 1))
+      ((FSimple x (ECons 1)) (FSimple z (EApp (EConsWith 0) (EConst (CInt 1))))
         (FSimple f
           (ELam
             (p

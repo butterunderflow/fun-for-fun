@@ -9,6 +9,7 @@ type expr =
   | EStruct of (string * expr) list
   | EVar of string
   | ECons of int
+  | EConsWith of int
   | EConst of constant
   | EApp of expr * expr
   | ESwitch of expr * branch list
