@@ -85,18 +85,18 @@ and lift_letrec binds vars =
     |> List.flatten
     |> List_utils.remove_from_left
   in
-  let fvs = xs @ fvs in
+  let captures = xs @ fvs in
   let cls, fns =
     binds
     |> List.map (fun (x, (para, e, _fvs)) ->
            let e', fns = lift e (para :: vars) ~hint:x in
            let fn_id = Ident.create ~hint:x in
-           let new_fn = (fn_id, fvs, para, e') in
+           let new_fn = (fn_id, captures, para, e') in
            (fn_id, new_fn :: fns))
     |> List.split
     |> fun (fn_id, fns_l) -> (fn_id, List.flatten fns_l)
   in
-  ((fvs, List.combine xs cls), fns)
+  ((captures, List.combine xs cls), fns)
 
 let lift e =
   Ident.refresh ();
