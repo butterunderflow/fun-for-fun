@@ -7,6 +7,8 @@ type constant = T.constant [@@deriving sexp]
 type expr =
   | ETuple of expr list
   | EModObject of object_field list
+      (** 1. An object can cast to another when possible ;
+          2. Field of an object is visible in the scope following its declaration. *)
   | EStruct of (string * expr) list
   | EVar of string
   | ECons of int
