@@ -62,88 +62,93 @@ and compile_top_levels tops =
          | T.TopModSig (_, _) -> None)
        tops)
 
+let capture fvs vars = List.filter (fun x -> not (List.mem x vars)) fvs
+
+let get_pat_vars (p : L.pattern) =
+  let all = ref [] in
+  let rec go p =
+    match p with
+    | L.PVar x -> all := x :: !all
+    | L.PVal _ -> ()
+    | L.PCons (_, None) -> ()
+    | L.PCons (_, Some p) -> go p
+    | L.PTuple ps -> List.iter go ps
+  in
+  go p;
+  !all
+
+let rec fva_expr e vars =
+  match e with
+  | L.ETuple es -> List.fold_left (fun acc e -> fva_expr e vars @ acc) [] es
+  | L.EModObject mems ->
+      let capture_vars = ref [] in
+      let vars = ref vars in
+      List.fold_left
+        (fun acc mem ->
+          match mem with
+          | L.FSimple (name, e) ->
+              let fv_binds =
+                capture (fva_expr e !vars @ acc) !capture_vars
+              in
+              vars := name :: !vars;
+              capture_vars := name :: !capture_vars;
+              fv_binds
+          | L.FLetRec binds ->
+              let xs, _ = List.split binds in
+              capture_vars := xs @ !capture_vars;
+              let fvs = capture (fva_letrec binds !vars) !capture_vars in
+              vars := xs @ !vars;
+              fvs @ acc)
+        [] mems
+  | L.EStruct fields ->
+      List.fold_left (fun acc (_, e) -> acc @ fva_expr e vars) [] fields
+  | L.EVar x' ->
+      assert (List.mem x' vars);
+      [ x' ]
+  | L.ECons _ -> []
+  | L.EConst _ -> []
+  | L.EApp (e0, e1) -> fva_expr e0 vars @ fva_expr e1 vars
+  | L.ESwitch (e0, bs) ->
+      fva_expr e0 vars
+      @ (bs
+        |> List.map (fun (p, e) ->
+               let p_vars = get_pat_vars p in
+               capture (fva_expr e (p_vars @ vars)) p_vars)
+        |> List.flatten)
+  | L.ELet (x', e0, e1) ->
+      fva_expr e0 vars @ capture (fva_expr e1 (x' :: vars)) [ x' ]
+  | L.EIf (e0, e1, e2) ->
+      fva_expr e0 vars @ fva_expr e1 vars @ fva_expr e2 vars
+  | L.ELam (para, e, fvs) ->
+      let fvs' = fva_lambda para e vars in
+      fvs := fvs';
+      fvs'
+  | L.ELetRec (binds, e) ->
+      let xs, _ = List.split binds in
+      let fv_binds = fva_letrec binds vars in
+      fv_binds @ capture (fva_expr e (xs @ vars)) xs
+  | L.EField (e, _) -> fva_expr e vars
+
+and fva_lambda x e vars =
+  let vars = x :: vars in
+  capture (fva_expr e vars) [ x ] |> List_utils.remove_from_left
+
+and fva_letrec binds vars =
+  let xs, _ = List.split binds in
+  let vars = xs @ vars in
+  let fv_binds =
+    binds
+    |> List.map (fun (_x, (para, e, fvs)) ->
+           let fvs' = capture (fva_lambda para e vars) xs in
+           fvs := fvs';
+           fvs')
+    |> List.flatten
+  in
+  fv_binds
+
 (* analyze free variables, write free variables to lambda expression *)
 let free_var_analyze e : unit =
-  let capture fvs vars = List.filter (fun x -> not (List.mem x vars)) fvs in
-  let get_pat_vars (p : L.pattern) =
-    let all = ref [] in
-    let rec go p =
-      match p with
-      | L.PVar x -> all := x :: !all
-      | L.PVal _ -> ()
-      | L.PCons (_, None) -> ()
-      | L.PCons (_, Some p) -> go p
-      | L.PTuple ps -> List.iter go ps
-    in
-    go p;
-    !all
-  in
-  (* return free variables of e, write free variables to lambda expressions
-     in e*)
-  let rec go e vars =
-    match e with
-    | L.ETuple es -> List.fold_left (fun acc e -> go e vars @ acc) [] es
-    | L.EModObject mems ->
-        let capture_vars = ref [] in
-        let vars = ref vars in
-        List.fold_left
-          (fun acc mem ->
-            match mem with
-            | L.FSimple (name, e) ->
-                let fv_binds = capture (go e !vars @ acc) !capture_vars in
-                vars := name :: !vars;
-                capture_vars := name :: !capture_vars;
-                fv_binds
-            | L.FLetRec binds ->
-                let xs, _ = List.split binds in
-                capture_vars := xs @ !capture_vars;
-                let fvs = capture (aux_letrec binds !vars) !capture_vars in
-                vars := xs @ !vars;
-                fvs @ acc)
-          [] mems
-    | L.EStruct fields ->
-        List.fold_left (fun acc (_, e) -> acc @ go e vars) [] fields
-    | L.EVar x' ->
-        assert (List.mem x' vars);
-        [ x' ]
-    | L.ECons _ -> []
-    | L.EConst _ -> []
-    | L.EApp (e0, e1) -> go e0 vars @ go e1 vars
-    | L.ESwitch (e0, bs) ->
-        go e0 vars
-        @ (bs
-          |> List.map (fun (p, e) ->
-                 let p_vars = get_pat_vars p in
-                 capture (go e (p_vars @ vars)) p_vars)
-          |> List.flatten)
-    | L.ELet (x', e0, e1) -> go e0 vars @ capture (go e1 (x' :: vars)) [ x' ]
-    | L.EIf (e0, e1, e2) -> go e0 vars @ go e1 vars @ go e2 vars
-    | L.ELam (para, e, fvs) ->
-        let fvs' = aux_lambda para e vars in
-        fvs := fvs';
-        fvs'
-    | L.ELetRec (binds, e) ->
-        let xs, _ = List.split binds in
-        let fv_binds = aux_letrec binds vars in
-        fv_binds @ capture (go e (xs @ vars)) xs
-    | L.EField (e, _) -> go e vars
-  and aux_lambda x e vars =
-    let vars = x :: vars in
-    capture (go e vars) [ x ] |> List_utils.remove_from_left
-  and aux_letrec binds vars =
-    let xs, _ = List.split binds in
-    let vars = xs @ vars in
-    let fv_binds =
-      binds
-      |> List.map (fun (_x, (para, e, fvs)) ->
-             let fvs' = capture (aux_lambda para e vars) xs in
-             fvs := fvs';
-             fvs')
-      |> List.flatten
-    in
-    fv_binds
-  in
-  let fvs = go e [] in
+  let fvs = fva_expr e [] in
   assert (fvs = [])
 
 let compile_program program =
