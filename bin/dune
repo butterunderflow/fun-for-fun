@@ -1,4 +1,4 @@
 (executable
- (public_name fun4fun)
+ (public_name fff)
  (name main)
  (libraries syntax typing lam clos))

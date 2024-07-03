@@ -25,7 +25,7 @@ let speclist =
     ("--stdout", Arg.Set output_stdout, "Output to stdout");
   ]
 
-let help_msg = "fun4fun: a functional programming language build for fun"
+let help_msg = "fff: a functional programming language build for fun"
 
 let usage () = Arg.usage speclist help_msg
 
