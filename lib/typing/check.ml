@@ -730,7 +730,6 @@ and normalize (t : T.ety) (ctx : norm_ctx) (env : Env.t) : I.ty =
   | T.TTuple ts -> TTupleI (List.map (fun t -> normalize t ctx env) ts)
   | T.TRecord fields ->
       TRecordI (List.map (fun (x, t) -> (x, normalize t ctx env)) fields)
-  | T.TInternal ti -> ti
 
 and normalize_mt (me : T.emod_ty) env : I.mod_ty =
   match me with

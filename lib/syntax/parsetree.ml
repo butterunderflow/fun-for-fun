@@ -79,7 +79,6 @@ and ety =
   | TArrow of ety * ety
   | TTuple of ety list
   | TRecord of (string * ety) list
-  | TInternal of Types_in.ty
 
 and ety_def =
   | TDAdt of string * ety_paras * evariant list
@@ -110,8 +109,6 @@ class virtual ['self] map =
 
     inherit! ['self] tree_map
 
-    inherit! ['self] Types_in.ty_map
-
     method visit_ident env id =
       Ident.mk_ident
         (self#visit_int env (Ident.index_of_ident id))
@@ -123,8 +120,6 @@ class virtual ['self] iter =
     inherit ['self] constant_iter
 
     inherit! ['self] tree_iter
-
-    inherit! ['self] Types_in.ty_iter
 
     method visit_ident env id =
       self#visit_int env (Ident.index_of_ident id);
