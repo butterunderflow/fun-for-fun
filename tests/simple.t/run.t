@@ -22,12 +22,23 @@
   
   Global C functions: 
 
-  $ fun4fun simple.fun -o simple.fun.out
+  $ fun4fun simple.fun -o simple.out
 
-  $ cat simple.fun.out
+  $ cat simple.out
   Lifted main expression: 
   (EModObject ((FSimple x (EConst (CInt 1)))))
   
   Global C functions: 
 
+  $ fun4fun simple.fun -o simple1.out --debug
+
+  $ ls
+  a.out
+  simple.fun
+  simple.out
+  simple1.out
+  simple1.out.closure
+  simple1.out.lambda
+  simple1.out.parsing
+  simple1.out.typed
 
