@@ -42,3 +42,28 @@
   simple1.out.parsing
   simple1.out.typed
 
+  $ cat simple1.out
+  Lifted main expression: 
+  (EModObject ((FSimple x (EConst (CInt 1)))))
+  
+  Global C functions: 
+
+  $ cat simple1.out.closure
+  Lifted main expression: 
+  (EModObject ((FSimple x (EConst (CInt 1)))))
+  
+  Global C functions: 
+
+  $ cat simple1.out.lambda
+  (EModObject ((FSimple x (EConst (CInt 1)))))
+
+  $ cat simple1.out.parsing
+  ((TopLet x (EConst (CInt 1))))
+
+  $ cat simple1.out.typed
+  
+  
+  let x = (1 is () 0.int)
+
+
+
