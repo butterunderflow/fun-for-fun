@@ -423,7 +423,8 @@ module MakePP (Config : PPConfig) = struct
         Fmt.fprintf fmt "@\n";
         Fmt.fprintf fmt "@\n";
         pp_top fmt top)
-      prog
+      prog;
+    Format.pp_print_flush fmt ()
 end
 
 module ShowAllConfig : PPConfig = struct
@@ -433,3 +434,11 @@ module ShowAllConfig : PPConfig = struct
 
   let show_mod_ty = true
 end
+
+module DefaultPP = MakePP (ShowAllConfig)
+
+let default_dbg prog =
+  let buf = Buffer.create 50 in
+  let fmt = Format.formatter_of_buffer buf in
+  DefaultPP.pp_prog fmt prog;
+  Buffer.contents buf

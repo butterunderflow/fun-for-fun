@@ -32,3 +32,7 @@ and object_field =
 and lambda = string * expr * string list ref
 
 and branch = pattern * expr [@@deriving sexp]
+
+let dbg e =
+  let s = sexp_of_expr e in
+  Sexplib.Sexp.to_string_hum ?indent:(Some 2) s
