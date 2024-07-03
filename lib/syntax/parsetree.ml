@@ -100,6 +100,10 @@ and evariant = string * ety option
     visitors { variety = "iter"; name = "tree_iter" },
     visitors { variety = "map"; name = "tree_map" }]
 
+let dbg prog =
+  let s = sexp_of_program prog in
+  Sexplib.Sexp.to_string_hum ?indent:(Some 2) s
+
 class virtual ['self] map =
   object (self : 'self)
     inherit ['self] constant_map

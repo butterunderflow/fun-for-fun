@@ -39,13 +39,23 @@ let read_file filename =
 let out_sexp oc s =
   Printf.fprintf oc "%s\n" (Sexplib.Sexp.to_string_hum ?indent:(Some 2) s)
 
-let out_clos_prog oc e fns =
-  Printf.fprintf oc "Lifted main expression: \n";
-  out_sexp oc (Clos.Closure.sexp_of_expr e);
-  Printf.fprintf oc "\nGlobal C functions: \n";
-  List.iter (fun fn -> out_sexp oc (Clos.Closure.sexp_of_func fn)) fns
-
 let default_output_file = "a.out"
+
+let get_output_file ?postfix:(post = "") () =
+  let output_basename =
+    if !output_file = "" then default_output_file else !output_file
+  in
+  Printf.sprintf "%s%s" output_basename post
+
+let debug_compose prog (pass, dbg, post) =
+  let result = pass prog in
+  if !debug then (
+    let oc = open_out (get_output_file ~postfix:post ()) in
+    Printf.fprintf oc "%s" (dbg result);
+    close_out oc);
+  result
+
+let ( |-> ) = debug_compose
 
 let () =
   Arg.parse speclist store_input help_msg;
@@ -54,19 +64,23 @@ let () =
     | None -> assert false
     | Some f -> f
   in
-  let main_prog, c_fns =
+  let prog =
     input_file
     |> read_file
-    |> S.Parsing.parse_string_program
-    |> (fun prog -> fst (Typing.Check.tc_program prog (Typing.Env.init ())))
-    |> (fun prog -> Lo.compile_program prog)
-    |> fun prog -> Li.lift prog
+    |-> (S.Parsing.parse_string_program, S.Parsetree.dbg, ".parsing")
+    |-> ( (fun prog ->
+            let typed, _env =
+              Typing.Check.tc_program prog (Typing.Env.init ())
+            in
+            typed),
+          Typing.Render.default_dbg,
+          ".typed" )
+    |-> (Lo.compile_program, Lam.Tree.dbg, ".lambda")
+    |-> (Li.lift, Clos.Closure.dbg, ".closure")
   in
-  if !output_stdout then out_clos_prog Stdlib.stdout main_prog c_fns
+  if !output_stdout then print_string (Clos.Closure.dbg prog)
   else
-    let output_file =
-      if !output_file = "" then default_output_file else !output_file
-    in
+    let output_file = get_output_file () in
     let oc = open_out output_file in
-    out_clos_prog oc main_prog c_fns;
+    Stdlib.output_string oc (Clos.Closure.dbg prog);
     close_out oc
