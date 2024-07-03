@@ -423,7 +423,8 @@ module MakePP (Config : PPConfig) = struct
         Fmt.fprintf fmt "@\n";
         Fmt.fprintf fmt "@\n";
         pp_top fmt top)
-      prog
+      prog;
+    Format.pp_print_flush fmt ()
 end
 
 module ShowAllConfig : PPConfig = struct

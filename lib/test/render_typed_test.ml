@@ -8,7 +8,8 @@ let%expect_test "Test: pretty print typed expression" =
     let e = parse_string_expr str in
     let typed = Check.tc_expr e (Env.init ()) in
     let fmt = Format.std_formatter in
-    DefaultPP.pp_expr fmt typed
+    DefaultPP.pp_expr fmt typed;
+    Format.pp_print_flush fmt ()
   in
   print_typed "1";
   [%expect {| (1 is () 0.int) |}];
@@ -61,7 +62,8 @@ let%expect_test "Test: pretty print typed program" =
     let prog = parse_string_program str in
     let typed, _env = Check.tc_program prog (Env.init ()) in
     let fmt = Format.std_formatter in
-    DefaultPP.pp_prog fmt typed
+    DefaultPP.pp_prog fmt typed;
+    Format.pp_print_flush fmt ()
   in
 
   print_typed
