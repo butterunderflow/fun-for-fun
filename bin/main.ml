@@ -34,7 +34,7 @@ let speclist =
 
 let help_msg = "ff: a functional programming language build for fun"
 
-let usage () = Arg.usage speclist help_msg
+let show_usage () = Arg.usage speclist help_msg
 
 let read_file filename =
   (* open_in_bin works correctly on Unix and Windows *)
@@ -71,7 +71,10 @@ let () =
     exit 0);
   let input_file =
     match !input_file with
-    | None -> assert false
+    | None ->
+        Printf.printf "No input file provided!\n";
+        show_usage ();
+        exit 0
     | Some f -> f
   in
   let prog =
