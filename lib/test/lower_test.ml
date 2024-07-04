@@ -230,7 +230,8 @@ module MMM = (M(F).K : I)
                    end
      end
      |};
-  [%expect {|
+  [%expect
+    {|
     (EModObject
       ((FSimple M (EModObject ((FSimple x (EConst (CInt 1))))))
         (FSimple F2

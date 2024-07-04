@@ -20,14 +20,12 @@ let%expect_test "Test: full program lowering" =
     Printf.printf "Lifted main expression: \n";
     print_sexp (C.sexp_of_expr e);
     Printf.printf "\nGlobal C functions: \n";
-    List.iter
-      (fun fn ->
-        print_sexp (C.sexp_of_func fn))
-      fns
+    List.iter (fun fn -> print_sexp (C.sexp_of_func fn)) fns
   in
 
   print_lifted {| let x = 1 |};
-  [%expect {|
+  [%expect
+    {|
     Lifted main expression:
     (EModObject ((FSimple x (EConst (CInt 1)))))
 
@@ -48,7 +46,8 @@ let%expect_test "Test: full program lowering" =
 
      let d = M.y
                  |};
-  [%expect {|
+  [%expect
+    {|
     Lifted main expression:
     (EModObject
       ((FSimple d (EField (EVar M) y)) (FSimple c (EField (EVar M) x))
@@ -65,12 +64,11 @@ let%expect_test "Test: full program lowering" =
      g = fun x -> f 1
 
      |};
-  [%expect {|
+  [%expect
+    {|
     Lifted main expression:
     (EModObject ((FLetRec ((f g) ((f f/1) (g g/2))))))
 
     Global C functions:
     (f/1 (f g) x (EVar x))
     (g/2 (f g) x (EApp (EVar f) (EConst (CInt 1)))) |}]
-
-

@@ -66,7 +66,7 @@ class virtual ['self] map =
   object (self : 'self)
     inherit ['self] Syntax.Parsetree.constant_map
 
-    inherit! ['self] Syntax.Types_in.ty_map
+    inherit! ['self] Types_in.ty_map
 
     method visit_ident env id =
       Ident.mk_ident

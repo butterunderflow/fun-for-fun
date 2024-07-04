@@ -25,7 +25,7 @@ let%expect_test "Test: expression typing" =
     Ident.refresh ();
     let e = parse_string_expr str in
     let typed = Typing.Check.tc_expr e (Typing.Env.init ()) in
-    typed |> T.get_ty |> Syntax.Types_in.sexp_of_ty |> print_sexp
+    typed |> T.get_ty |> Typing.Types_in.sexp_of_ty |> print_sexp
   in
   print_typed "1";
   [%expect {| (EConst (CInt 1) (TConsI (0 int) ())) |}];
