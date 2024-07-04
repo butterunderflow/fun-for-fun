@@ -32,7 +32,7 @@ let speclist =
     ("--stdout", Arg.Set output_stdout, "Output to stdout");
   ]
 
-let help_msg = "fff: a functional programming language build for fun"
+let help_msg = "ff: a functional programming language build for fun"
 
 let usage () = Arg.usage speclist help_msg
 
@@ -67,7 +67,7 @@ let ( |-> ) = debug_compose
 let () =
   Arg.parse speclist store_input help_msg;
   if !show_version then (
-    Printf.printf "fff: (%s %s)\n" version build_date;
+    Printf.printf "ff: (%s %s)\n" version build_date;
     exit 0);
   let input_file =
     match !input_file with

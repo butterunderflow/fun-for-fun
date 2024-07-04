@@ -1,7 +1,7 @@
 
 
-  $ fff --help
-  fff: a functional programming language build for fun
+  $ ff --help
+  ff: a functional programming language build for fun
     -o Set output file name
     --version Show version number
     --debug Enable debug
@@ -9,7 +9,7 @@
     -help  Display this list of options
     --help  Display this list of options
 
-  $ fff simple.fun
+  $ ff simple.fun
 
   $ cat a.out
   Lifted main expression: 
@@ -17,13 +17,13 @@
   
   Global C functions: 
 
-  $ fff simple.fun --stdout
+  $ ff simple.fun --stdout
   Lifted main expression: 
   (EModObject ((FSimple x (EConst (CInt 1)))))
   
   Global C functions: 
 
-  $ fff simple.fun -o simple.out
+  $ ff simple.fun -o simple.out
 
   $ cat simple.out
   Lifted main expression: 
@@ -31,7 +31,7 @@
   
   Global C functions: 
 
-  $ fff simple.fun -o simple1.out --debug
+  $ ff simple.fun -o simple1.out --debug
 
   $ ls
   a.out

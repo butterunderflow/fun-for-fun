@@ -1,5 +1,5 @@
 (executable
- (public_name fff)
+ (public_name ff)
  (name main)
  (libraries syntax typing lam clos)
  (preprocess
