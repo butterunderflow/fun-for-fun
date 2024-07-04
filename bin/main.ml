@@ -90,10 +90,11 @@ let () =
           ".typed" )
     |-> (Lo.compile_program, Lam.Tree.dbg, ".lambda")
     |-> (Li.lift, Clos.Closure.dbg, ".closure")
+    |-> (Back.Closure_translator.translate, (fun x -> x), ".c_dbg")
   in
-  if !output_stdout then print_string (Clos.Closure.dbg prog)
+  if !output_stdout then print_string prog
   else
     let output_file = get_output_file () in
     let oc = open_out output_file in
-    Stdlib.output_string oc (Clos.Closure.dbg prog);
+    Stdlib.output_string oc prog;
     close_out oc

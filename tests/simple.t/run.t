@@ -12,24 +12,30 @@
   $ ff simple.fun
 
   $ cat a.out
-  Lifted main expression: 
-  (EModObject ((FSimple x (EConst (CInt 1)))))
   
-  Global C functions: 
+  #include<stdio.h>
+  int main()
+  {
+    printf("Hello World");
+  }
 
   $ ff simple.fun --stdout
-  Lifted main expression: 
-  (EModObject ((FSimple x (EConst (CInt 1)))))
   
-  Global C functions: 
+  #include<stdio.h>
+  int main()
+  {
+    printf("Hello World");
+  }
 
   $ ff simple.fun -o simple.out
 
   $ cat simple.out
-  Lifted main expression: 
-  (EModObject ((FSimple x (EConst (CInt 1)))))
   
-  Global C functions: 
+  #include<stdio.h>
+  int main()
+  {
+    printf("Hello World");
+  }
 
   $ ff simple.fun -o simple1.out --debug
 
@@ -38,16 +44,19 @@
   simple.fun
   simple.out
   simple1.out
+  simple1.out.c_dbg
   simple1.out.closure
   simple1.out.lambda
   simple1.out.parsing
   simple1.out.typed
 
   $ cat simple1.out
-  Lifted main expression: 
-  (EModObject ((FSimple x (EConst (CInt 1)))))
   
-  Global C functions: 
+  #include<stdio.h>
+  int main()
+  {
+    printf("Hello World");
+  }
 
   $ cat simple1.out.closure
   Lifted main expression: 

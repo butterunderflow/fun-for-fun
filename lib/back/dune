@@ -1,6 +1,6 @@
 (library
  (name back)
- (libraries sexplib FrontC)
+ (libraries sexplib FrontC clos)
  (preprocess
   (pps ppx_sexp_conv)))
 
