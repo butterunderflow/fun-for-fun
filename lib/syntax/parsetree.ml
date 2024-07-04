@@ -4,10 +4,7 @@ type constant =
   | CBool of bool
   | CInt of int
   | CString of string
-[@@deriving
-  sexp,
-    visitors { variety = "iter"; name = "constant_iter" },
-    visitors { variety = "map"; name = "constant_map" }]
+[@@deriving sexp]
 
 type program = top_level list
 
