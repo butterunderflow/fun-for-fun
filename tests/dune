@@ -1,4 +1,4 @@
 (cram
  (package fun4fun)
  (applies_to :whole_subtree)
- (deps %{bin:fff}))
+ (deps %{bin:ff}))

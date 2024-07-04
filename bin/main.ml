@@ -18,16 +18,23 @@ let store_input filename =
 
 let debug = ref false
 
+let version = "%%VERSION%%"
+
+let build_date = "%%BUILD_DATE%%"
+
+let show_version = ref false
+
 let speclist =
   [
     ("-o", Arg.Set_string output_file, "Set output file name");
+    ("--version", Arg.Set show_version, "Show version number");
     ("--debug", Arg.Set debug, "Enable debug");
     ("--stdout", Arg.Set output_stdout, "Output to stdout");
   ]
 
-let help_msg = "fff: a functional programming language build for fun"
+let help_msg = "ff: a functional programming language build for fun"
 
-let usage () = Arg.usage speclist help_msg
+let show_usage () = Arg.usage speclist help_msg
 
 let read_file filename =
   (* open_in_bin works correctly on Unix and Windows *)
@@ -59,9 +66,15 @@ let ( |-> ) = debug_compose
 
 let () =
   Arg.parse speclist store_input help_msg;
+  if !show_version then (
+    Printf.printf "ff: (%s %s)\n" version build_date;
+    exit 0);
   let input_file =
     match !input_file with
-    | None -> assert false
+    | None ->
+        Printf.printf "No input file provided!\n";
+        show_usage ();
+        exit 0
     | Some f -> f
   in
   let prog =
