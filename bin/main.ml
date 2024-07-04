@@ -18,9 +18,16 @@ let store_input filename =
 
 let debug = ref false
 
+let version = "%%VERSION%%"
+
+let build_date = "%%BUILD_DATE%%"
+
+let show_version = ref false
+
 let speclist =
   [
     ("-o", Arg.Set_string output_file, "Set output file name");
+    ("--version", Arg.Set show_version, "Show version number");
     ("--debug", Arg.Set debug, "Enable debug");
     ("--stdout", Arg.Set output_stdout, "Output to stdout");
   ]
@@ -59,6 +66,9 @@ let ( |-> ) = debug_compose
 
 let () =
   Arg.parse speclist store_input help_msg;
+  if !show_version then (
+    Printf.printf "fff: (%s %s)\n" version build_date;
+    exit 0);
   let input_file =
     match !input_file with
     | None -> assert false

@@ -3,6 +3,7 @@
   $ fff --help
   fff: a functional programming language build for fun
     -o Set output file name
+    --version Show version number
     --debug Enable debug
     --stdout Output to stdout
     -help  Display this list of options
