@@ -1,15 +1,10 @@
-[@@@warning "-17"]
-
 open Sexplib.Conv
 
 type constant =
   | CBool of bool
   | CInt of int
   | CString of string
-[@@deriving
-  sexp,
-    visitors { variety = "iter"; name = "constant_iter" },
-    visitors { variety = "map"; name = "constant_map" }]
+[@@deriving sexp]
 
 type program = top_level list
 
@@ -79,7 +74,6 @@ and ety =
   | TArrow of ety * ety
   | TTuple of ety list
   | TRecord of (string * ety) list
-  | TInternal of Types_in.ty
 
 and ety_def =
   | TDAdt of string * ety_paras * evariant list
@@ -94,39 +88,8 @@ and emod_ty =
   | MTSig of ety_comp list
   | MTFunctor of string * emod_ty * emod_ty
 
-and evariant = string * ety option
-[@@deriving
-  sexp,
-    visitors { variety = "iter"; name = "tree_iter" },
-    visitors { variety = "map"; name = "tree_map" }]
+and evariant = string * ety option [@@deriving sexp]
 
 let dbg prog =
   let s = sexp_of_program prog in
   Sexplib.Sexp.to_string_hum ?indent:(Some 2) s
-
-class virtual ['self] map =
-  object (self : 'self)
-    inherit ['self] constant_map
-
-    inherit! ['self] tree_map
-
-    inherit! ['self] Types_in.ty_map
-
-    method visit_ident env id =
-      Ident.mk_ident
-        (self#visit_int env (Ident.index_of_ident id))
-        (self#visit_string env (Ident.name_of_ident id))
-  end
-
-class virtual ['self] iter =
-  object (self : 'self)
-    inherit ['self] constant_iter
-
-    inherit! ['self] tree_iter
-
-    inherit! ['self] Types_in.ty_iter
-
-    method visit_ident env id =
-      self#visit_int env (Ident.index_of_ident id);
-      self#visit_string env (Ident.name_of_ident id)
-  end

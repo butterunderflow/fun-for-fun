@@ -1,5 +1,5 @@
 open Typedtree
-module I = Syntax.Types_in
+module I = Types_in
 module Fmt = Format
 
 module type PPConfig = sig

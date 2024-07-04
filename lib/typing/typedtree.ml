@@ -2,9 +2,9 @@ open Sexplib.Conv
 open Types_in
 module T = Syntax.Parsetree
 
-type constant = T.constant [@@deriving sexp]
-
 [@@@warning "-17"]
+
+type constant = T.constant [@@deriving sexp]
 
 type expr =
   | EConst of constant * ty
@@ -57,24 +57,7 @@ and pattern =
   | PCons of string * int * pattern option (* Cons (1, 2) *)
   | PVar of string * ty
   | PTuple of pattern list (* (x, y, z) *)
-[@@deriving
-  sexp,
-    visitors { variety = "iter"; name = "tree_iter" },
-    visitors { variety = "map"; name = "tree_map" }]
-
-class virtual ['self] map =
-  object (self : 'self)
-    inherit ['self] Syntax.Parsetree.constant_map
-
-    inherit! ['self] Syntax.Types_in.ty_map
-
-    method visit_ident env id =
-      Ident.mk_ident
-        (self#visit_int env (Ident.index_of_ident id))
-        (self#visit_string env (Ident.name_of_ident id))
-
-    inherit! ['self] tree_map
-  end
+[@@deriving sexp]
 
 let get_ty = function
   | EConst (_, ty)

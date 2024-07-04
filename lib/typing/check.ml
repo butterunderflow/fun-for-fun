@@ -14,14 +14,18 @@ let make_tv_of hint = I.TVarI (ref (I.Unbound (Ident.create ~hint)))
 let inst_with (t : I.bind_ty) tes : I.ty =
   let qvs, te = t in
   let dict = List.combine qvs tes in
-  let mapper =
-    object (_self : 'self)
-      inherit ['self] I.map
-
-      method! visit_TQVarI () qtv = List.assoc qtv dict
-    end
+  let rec go te =
+    match (te : I.ty) with
+    | I.TConsI (tid, tes) -> I.TConsI (tid, List.map go tes)
+    | I.TVarI { contents = I.Unbound _ } -> te
+    | I.TVarI { contents = I.Link t } -> go t
+    | I.TQVarI qtv -> List.assoc qtv dict
+    | I.TArrowI (te0, te1) -> TArrowI (go te0, go te1)
+    | I.TTupleI tes -> TTupleI (List.map go tes)
+    | I.TRecordI fields ->
+        I.TRecordI (List.map (fun (name, te) -> (name, go te)) fields)
   in
-  mapper#visit_ty () te
+  go te
 
 let inst (t : I.bind_ty) : I.ty =
   (* We can gaurantee that captured type variables will never duplicated with
@@ -32,40 +36,25 @@ let inst (t : I.bind_ty) : I.ty =
   in
   inst_with t new_tvs
 
-let get_all_tvs (e : I.ty) : I.tv ref list =
+let get_all_tvs (te : I.ty) : I.tv ref list =
   let tvs = ref [] in
-  let collector =
-    object (self : 'self)
-      inherit ['self] Types_in.iter
-
-      method! visit_TVarI () tv =
-        match !tv with
-        | I.Unbound _ ->
-            tvs := tv :: !tvs (* only collect unbound type variable *)
-        | I.Link te -> self#visit_ty () te
-    end
+  let rec go te =
+    match te with
+    | I.TConsI (_, tes)
+    | I.TTupleI tes ->
+        List.iter go tes
+    | I.TVarI ({ contents = I.Unbound _ } as tv) ->
+        (* only collect unbound type variable *)
+        tvs := tv :: !tvs
+    | I.TVarI { contents = I.Link te } -> go te
+    | I.TQVarI _ -> assert false
+    | I.TArrowI (te0, te1) ->
+        go te0;
+        go te1
+    | I.TRecordI fields -> List.iter (fun (_, te) -> go te) fields
   in
-  collector#visit_ty () e;
-  List.rev
-    (List.fold_left
-       (fun xs x -> if List.memq x xs then xs else x :: xs)
-       [] !tvs)
-
-let get_all_qtvs (e : I.ty) : Ident.t list =
-  let qtvs = ref [] in
-  let collector =
-    object (_self : 'self)
-      inherit ['self] Types_in.iter
-
-      method! visit_TQVarI () name =
-        qtvs := name :: !qtvs (* only collect unbound type variable *)
-    end
-  in
-  collector#visit_ty () e;
-  List.rev
-    (List.fold_left
-       (fun xs x -> if List.mem x xs then xs else x :: xs)
-       [] !qtvs)
+  go te;
+  List_utils.remove_from_left !tvs
 
 let generalize (t : I.ty) (env : Env.t) : I.bind_ty =
   let tvs = get_all_tvs t in
@@ -524,6 +513,7 @@ and shift_mt (mt : I.mod_ty) env : I.mod_ty =
     in
     let mapper =
       object (_self)
+        (* todo: remove this object *)
         inherit [_] Types_in.map as super
 
         method! visit_MTMod () id val_defs constr_defs ty_defs mod_sigs
@@ -568,6 +558,7 @@ and check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) :
   let subst =
     let mapper =
       object
+        (* todo: remove this object *)
         inherit [_] Types_in.map
 
         method! visit_ty_id () (id, name) =
@@ -730,7 +721,6 @@ and normalize (t : T.ety) (ctx : norm_ctx) (env : Env.t) : I.ty =
   | T.TTuple ts -> TTupleI (List.map (fun t -> normalize t ctx env) ts)
   | T.TRecord fields ->
       TRecordI (List.map (fun (x, t) -> (x, normalize t ctx env)) fields)
-  | T.TInternal ti -> ti
 
 and normalize_mt (me : T.emod_ty) env : I.mod_ty =
   match me with
