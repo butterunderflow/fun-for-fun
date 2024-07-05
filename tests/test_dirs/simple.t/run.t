@@ -14,16 +14,22 @@
   $ cat a.out
   
   #include<stdio.h>
+  #include"fun_rt.h"
+  
   int main()
   {
+    test_rt();
     printf("Hello World");
   }
 
   $ ff simple.fun --stdout
   
   #include<stdio.h>
+  #include"fun_rt.h"
+  
   int main()
   {
+    test_rt();
     printf("Hello World");
   }
 
@@ -32,8 +38,11 @@
   $ cat simple.out
   
   #include<stdio.h>
+  #include"fun_rt.h"
+  
   int main()
   {
+    test_rt();
     printf("Hello World");
   }
 
@@ -53,8 +62,11 @@
   $ cat simple1.out
   
   #include<stdio.h>
+  #include"fun_rt.h"
+  
   int main()
   {
+    test_rt();
     printf("Hello World");
   }
 

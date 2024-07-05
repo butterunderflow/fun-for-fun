@@ -4,9 +4,10 @@
   (FF ff_wrapper))))
 
 (cram
- (package fun4fun)
  (applies_to :whole_subtree)
  (deps
    %{bin:ff}
-   %{bin:ff_wrapper}))
+   %{bin:ff_wrapper}
+   %{lib-private:runtime:fun_rt.h}
+   %{lib-private:runtime:libfun_rt.a}))
 

@@ -2,4 +2,5 @@
 
 ff $1 -o $1.c
 
-gcc $1.c -o $1.out
+gcc $1.c -o $1.out -I $DUNE_SOURCEROOT/_build/install/default/share/fun4fun \
+                      $DUNE_SOURCEROOT/_build/install/default/share/fun4fun/libfun_rt.a

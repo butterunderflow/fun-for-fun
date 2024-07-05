@@ -7,8 +7,11 @@ let trans_expr buf (_e : expr) =
   Printf.bprintf buf
 {|
 #include<stdio.h>
+#include"fun_rt.h"
+
 int main()
 {
+  test_rt();
   printf("Hello World");
 }
 |}
