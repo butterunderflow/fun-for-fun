@@ -50,9 +50,9 @@ let%expect_test "Test: full program lowering" =
     {|
     Lifted main expression:
     (EModObject
-      ((FSimple d (EField (EVar M) y)) (FSimple c (EField (EVar M) x))
-        (FSimple M
-          (EModObject ((FSimple y (EConst (CInt 1))) (FSimple x (ECons 0)))))))
+      ((FSimple M
+         (EModObject ((FSimple x (ECons 0)) (FSimple y (EConst (CInt 1))))))
+        (FSimple c (EField (EVar M) x)) (FSimple d (EField (EVar M) y))))
 
     Global C functions: |}];
 
