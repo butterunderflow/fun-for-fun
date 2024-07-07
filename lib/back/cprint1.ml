@@ -1,11 +1,11 @@
 (* cprint -- pretty printer of C program from abstract syntax *)
 
-open Cabs
+open Ctree
 
 let version = "Cprint 4.0 Hugues Cassé et al."
 
 (* ** FrontC Pretty printer *)
-let out = ref (Buffer.create 50)
+let out = ref (Buffer.create 20)
 
 let width = ref 80
 
@@ -140,12 +140,6 @@ let escape_string str =
   in
   build 0
 
-let rec has_extension attrs =
-  match attrs with
-  | [] -> false
-  | GNU_EXTENSION :: _ -> true
-  | _ :: attrs -> has_extension attrs
-
 (* ** Base Type Printing *)
 let get_sign si =
   match si with
@@ -167,7 +161,6 @@ let rec print_base_type typ =
   | BOOL -> print "_Bool"
   | CHAR sign -> print (get_sign sign ^ "char")
   | INT (size, sign) -> print (get_sign sign ^ get_size size ^ "int")
-  | BITFIELD (sign, _) -> print (get_sign sign ^ "int")
   | FLOAT size -> print ((if size then "long " else "") ^ "float")
   | DOUBLE size -> print ((if size then "long " else "") ^ "double")
   | COMPLEX_FLOAT -> print "float _Complex"
@@ -177,20 +170,16 @@ let rec print_base_type typ =
   | ENUM (id, items) -> print_enum id items
   | STRUCT (id, flds) -> print_fields ("struct " ^ id) flds
   | UNION (id, flds) -> print_fields ("union " ^ id) flds
-  | PROTO (typ, _, _) -> print_base_type typ
-  | OLD_PROTO (typ, _, _) -> print_base_type typ
+  | PROTO (typ, _) -> print_base_type typ
   | PTR typ -> print_base_type typ
   | RESTRICT_PTR typ -> print_base_type typ
   | ARRAY (typ, _) -> print_base_type typ
   | CONST typ -> print_base_type typ
   | VOLATILE typ -> print_base_type typ
-  | GNU_TYPE (attrs, typ) ->
-      print_attributes attrs;
-      print_base_type typ
   | BUILTIN_TYPE t -> print t
   | TYPE_LINE (_, _, _type) -> print_base_type _type
 
-and print_fields id (flds : name_group list) =
+and print_fields id (flds : decl_name list) =
   print id;
   if flds = [] then ()
   else (
@@ -198,7 +187,7 @@ and print_fields id (flds : name_group list) =
     indent ();
     List.iter
       (fun fld ->
-        print_name_group fld;
+        print_decl_name fld;
         print ";";
         new_line ())
       flds;
@@ -267,11 +256,7 @@ and print_array typ =
 and print_type (fct : unit -> unit) (typ : base_type) =
   let base = get_base_type typ in
   match base with
-  | BITFIELD (_, exp) ->
-      fct ();
-      print " : ";
-      print_expression exp 1
-  | PROTO (typ', pars, ell) ->
+  | PROTO (typ', pars) ->
       print_type
         (fun _ ->
           if base <> typ then print "(";
@@ -280,19 +265,7 @@ and print_type (fct : unit -> unit) (typ : base_type) =
           print_array typ;
           if base <> typ then print ")";
           print "(";
-          print_params pars ell;
-          print ")")
-        typ'
-  | OLD_PROTO (typ', pars, ell) ->
-      print_type
-        (fun _ ->
-          if base <> typ then print "(";
-          print_pointer typ;
-          fct ();
-          print_array typ;
-          if base <> typ then print ")";
-          print "(";
-          print_old_params pars ell;
+          print_params pars false;
           print ")")
         typ'
   | _ ->
@@ -304,14 +277,7 @@ and print_onlytype typ =
   print_base_type typ;
   print_type (fun _ -> ()) typ
 
-and print_name ((id, typ, attr, exp) : name) =
-  print_type (fun _ -> print id) typ;
-  print_attributes attr;
-  if exp <> NOTHING then (
-    space ();
-    print "= ";
-    print_expression exp 1)
-  else ()
+and print_name ((id, typ) : name) = print_type (fun _ -> print id) typ
 
 and get_storage sto =
   match sto with
@@ -321,21 +287,7 @@ and get_storage sto =
   | EXTERN -> "extern"
   | REGISTER -> "register"
 
-and print_name_group (typ, sto, names) =
-  let extension =
-    List.exists (fun (_, _, attrs, _) -> has_extension attrs) names
-  in
-  if extension then (
-    print "__extension__";
-    space ());
-  if sto <> NO_STORAGE then (
-    print (get_storage sto);
-    space ());
-  print_base_type typ;
-  space ();
-  print_commas false print_name names
-
-and print_single_name (typ, sto, name) =
+and print_decl_name (sto, ((_, typ) as name)) =
   if sto <> NO_STORAGE then (
     print (get_storage sto);
     space ());
@@ -343,7 +295,12 @@ and print_single_name (typ, sto, name) =
   space ();
   print_name name
 
-and print_params (pars : single_name list) (ell : bool) =
+and print_single_name (name, typ) =
+  print_base_type typ;
+  space ();
+  print_name (name, typ)
+
+and print_params (pars : name list) (ell : bool) =
   print_commas false print_single_name pars;
   if ell then print (if pars = [] then "..." else ", ...") else ()
 
@@ -599,18 +556,6 @@ and print_statement stat =
   | GOTO name ->
       print ("goto " ^ name ^ ";");
       new_line ()
-  | ASM desc -> print ("asm(\"" ^ escape_string desc ^ "\");")
-  | GNU_ASM (desc, output, input, mods) ->
-      print ("asm(" ^ escape_string desc ^ "\"");
-      print " : ";
-      print_commas false print_gnu_asm_arg output;
-      print " : ";
-      print_commas false print_gnu_asm_arg input;
-      if mods <> [] then (
-        print " : ";
-        print_commas false print mods);
-      print ");"
-  | STAT_LINE (stat, _, _) -> print_statement stat
 
 and print_gnu_asm_arg (id, desc, exp) =
   if id <> "" then print ("[" ^ id ^ "]");
@@ -636,35 +581,6 @@ and print_substatement stat =
       print_statement stat;
       unindent ()
 
-(* ** GCC Attributes *)
-and print_attributes attrs =
-  match attrs with
-  | [] -> ()
-  | [ GNU_EXTENSION ] -> ()
-  | _ ->
-      if attrs <> [] then (
-        print " __attribute__ ((";
-        print_commas false print_attribute attrs;
-        print ")) ")
-
-and print_attribute attr =
-  match attr with
-  | GNU_NONE -> ()
-  | GNU_ID id -> print id
-  | GNU_CALL (id, args) ->
-      print id;
-      print "(";
-      print_commas false print_attribute args;
-      print ")"
-  | GNU_CST cst -> print_constant cst
-  | GNU_EXTENSION -> print "__extension__"
-  | GNU_INLINE -> print "__inline__"
-  | GNU_TYPE_ARG (typ, sto) ->
-      if sto <> NO_STORAGE then (
-        print (get_storage sto);
-        space ());
-      print_base_type typ
-
 (* ** Declaration printing *)
 and print_defs defs =
   let prev = ref false in
@@ -685,36 +601,28 @@ and print_def def =
       let decs, stat = body in
       print_statement (BLOCK (decs, stat));
       force_new_line ()
-  | OLDFUNDEF (proto, decs, body) ->
-      print_single_name proto;
-      force_new_line ();
-      List.iter
-        (fun dec ->
-          print_name_group dec;
-          print ";";
-          new_line ())
-        decs;
-      let decs, stat = body in
-      print_statement (BLOCK (decs, stat));
-      force_new_line ()
-  | DECDEF names ->
-      print_name_group names;
+  | DECDEF name ->
+      print_decl_name name;
       print ";";
       new_line ()
-  | TYPEDEF (names, attrs) ->
-      if has_extension attrs then (
-        print "__extension__";
-        space ());
+  | TYPEDEF names ->
       print "typedef ";
-      print_name_group names;
+      print_decl_name names;
       print ";";
       new_line ();
       force_new_line ()
-  | ONLYTYPEDEF names ->
-      print_name_group names;
+  | ONLYTYPEDEF name ->
+      print_decl_name name;
       print ";";
       new_line ();
       force_new_line ()
+
+(*  print abstrac_syntax -> ()
+ **		Pretty printing the given abstract syntax program.
+ *)
+let print (result : Buffer.t) (defs : definition list) =
+  out := result;
+  print_defs defs
 
 let set_tab t = tab := t
 

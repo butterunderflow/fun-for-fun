@@ -1,4 +1,4 @@
-open Cabs
+open Back.Ctree
 module P = Back.Cprint1
 
 let%expect_test "Test: Backend" =

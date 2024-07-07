@@ -23,7 +23,7 @@ let rec lift ?(hint = "temp") (e : L.expr) (vars : string list) :
                 (xs @ vars, C.FLetRec binds :: mem_acc, fns @ fn_acc))
           (vars, [], []) mems
       in
-      (C.EModObject mems, fns)
+      (C.EModObject (List.rev mems), fns)
   | L.EStruct mems ->
       let mems, fns =
         List.fold_left
