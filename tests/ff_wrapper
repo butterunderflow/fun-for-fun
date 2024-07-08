@@ -1,6 +1,6 @@
 #!/bin/sh
 
-ff $1 -o $1.c
+ff $1 -o $1.cpp
 
-gcc $1.c -o $1.out -I $DUNE_SOURCEROOT/_build/install/default/share/fun4fun \
+gcc $1.cpp -o $1.out -I $DUNE_SOURCEROOT/_build/install/default/share/fun4fun \
                       $DUNE_SOURCEROOT/_build/install/default/share/fun4fun/libfun_rt.a

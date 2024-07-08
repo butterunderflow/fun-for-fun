@@ -1,4 +1,4 @@
-#include "fun_rt.h"
+#include "fun_rt.hpp"
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -35,7 +35,7 @@ ff_closure_t* GC_alloc_closure(int64_t fvs_n) {
 }
 
 ff_obj_member_t* GC_alloc_member() {
-    ff_obj_member_t* member = malloc(sizeof(ff_obj_member_t));
+    ff_obj_member_t* member = (ff_obj_member_t*)malloc(sizeof(ff_obj_member_t));
     return member;
 }
 
@@ -89,11 +89,13 @@ ff_obj_t ff_constructor(ff_fvs_t fvs, ff_obj_t x) {
 ff_obj_t ff_make_constr_payload(int64_t id) {
     ff_obj_t* id_obj = GC_alloc_n_objs(1);
     id_obj[0] = ff_make_int(id);
-    ff_obj_t constructor = ff_make_closure(id_obj, 1, ff_constructor);
+    ff_obj_t constructor =
+        ff_make_closure(id_obj, 1, (ff_erased_fptr)ff_constructor);
     return constructor;
 }
 
-ff_obj_t ff_make_closure(const ff_obj_t* fvs, int64_t fvs_n, ff_cfunc_t cfn) {
+ff_obj_t
+ff_make_closure(const ff_obj_t* fvs, int64_t fvs_n, ff_erased_fptr cfn) {
     ff_closure_t* closure = GC_alloc_closure(fvs_n);
     closure->cfn = cfn;
     memcpy(closure->fvs, fvs, fvs_n * (sizeof(ff_obj_t)));
@@ -103,7 +105,7 @@ ff_obj_t ff_make_closure(const ff_obj_t* fvs, int64_t fvs_n, ff_cfunc_t cfn) {
 
 void ff_fill_letrec_closure(ff_obj_t* fvs,
                             int64_t fvs_n,
-                            ff_cfunc_t* cfns,
+                            ff_erased_fptr* cfns,
                             int64_t self_n,
                             ff_obj_t** binds) {
 
@@ -146,12 +148,6 @@ ff_obj_t ff_get_member(ff_obj_t base, const char* name) {
         member = member->next;
     }
     assert(0 && "Member not exists, type system may unsound");
-}
-
-ff_obj_t ff_apply(ff_obj_t op, ff_obj_t arg) {
-    assert(op.tag == FF_CLOSURE_TAG);
-    ff_closure_t* clos = (ff_closure_t*)op.data;
-    return clos->cfn(clos->fvs, arg);
 }
 
 ff_obj_t ff_make_placeholder() {

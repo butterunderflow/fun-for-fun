@@ -12,7 +12,7 @@
   $ ff simple.fun
   $ ff simple.fun --stdout
   
-  #include"fun_rt.h"
+  #include"fun_rt.hpp"
   #include<stdio.h>
   
   ff_obj_t _ff_main_1();
@@ -37,11 +37,11 @@
   	x_3 = temp_2;
   	temp_4 = ff_make_int(1);
   	y_5 = temp_4;
-  	clos_6 = ff_make_closure((ff_obj_t[]){y_5}, 1, z_1);
+  	clos_6 = ff_make_closure((ff_obj_t[]){y_5}, 1, (ff_erased_fptr)z_1);
   	z_7 = clos_6;
-  	clos_8 = ff_make_closure((ff_obj_t[]){}, 0, w_2);
+  	clos_8 = ff_make_closure((ff_obj_t[]){}, 0, (ff_erased_fptr)w_2);
   	w_9 = clos_8;
-  	clos_10 = ff_make_closure((ff_obj_t[]){w_9}, 1, m_3);
+  	clos_10 = ff_make_closure((ff_obj_t[]){w_9}, 1, (ff_erased_fptr)m_3);
   	m_11 = clos_10;
   	mod_12 = ff_make_mod_obj(5, (char const *[]){"x", "y", "z", "w", "m"},
   		(ff_obj_t[]){x_3, y_5, z_7, w_9, m_11});
@@ -55,7 +55,7 @@
   	ff_obj_t w_1;
   	w_1 = fvs_3[0];
   	temp_5 = ff_make_int(1);
-  	app_res_4 = ff_apply(w_1, temp_5);
+  	app_res_4 = ff_apply_generic(w_1, temp_5);
   	return app_res_4;
   }
   

@@ -8,7 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Source files
-file(GLOB SOURCES ${PROJECT_SOURCE_DIR}/src/*.c)
+file(GLOB SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
 
 add_library(fun_rt STATIC ${SOURCES})
 

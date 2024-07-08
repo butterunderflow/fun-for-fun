@@ -2,7 +2,7 @@
  (name runtime))
 
 (rule
- (targets libfun_rt.a fun_rt.h)
+ (targets libfun_rt.a fun_rt.hpp)
  (deps
   (source_tree include)
   (source_tree src)
@@ -12,8 +12,8 @@
    (run cmake -B build -S .)
    (run cmake --build build)
    (run cp build/libfun_rt.a ./)
-   (run cp include/fun_rt.h ./))))
+   (run cp include/fun_rt.hpp ./))))
 
 (install
  (section share)
- (files fun_rt.h libfun_rt.a))
+ (files fun_rt.hpp libfun_rt.a))

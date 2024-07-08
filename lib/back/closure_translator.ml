@@ -23,6 +23,8 @@ let ff_obj_typename = C.NAMED_TYPE "ff_obj_t"
 
 let ff_fvs_typename = C.NAMED_TYPE "ff_fvs_t"
 
+let ff_erased_fptr_typename = C.NAMED_TYPE "ff_erased_fptr"
+
 let ff_obj_array_type = C.ARRAY (ff_obj_typename, NOTHING)
 
 let ff_str_type = C.PTR (CONST (CHAR NO_SIGN))
@@ -37,7 +39,7 @@ let ff_make_str = C.VARIABLE "ff_make_str"
 
 let ff_make_tuple = C.VARIABLE "ff_make_tuple"
 
-let ff_apply = C.VARIABLE "ff_apply"
+let ff_apply = C.VARIABLE "ff_apply_generic"
 
 let ff_get_mem = C.VARIABLE "ff_get_member"
 
@@ -54,7 +56,7 @@ let ff_make_mod_obj = C.VARIABLE "ff_make_mod_obj"
 let ff_fill_letrec_closure = C.VARIABLE "ff_fill_letrec_closure"
 
 let header = {|
-#include"fun_rt.h"
+#include"fun_rt.hpp"
 #include<stdio.h>
 
 |}
@@ -101,7 +103,7 @@ let rec trans_main_expr buf (_e : expr) =
   Printf.bprintf buf
     {|
 #include<stdio.h>
-#include"fun_rt.h"
+#include"fun_rt.hpp"
 
 int main()
 {
@@ -231,7 +233,7 @@ and trans_expr ctx e =
                    make_compound ff_obj_typename
                      (List.map (fun v -> C.VARIABLE v) fvs_c);
                    CONSTANT (CONST_INT (string_of_int (List.length fvs)));
-                   VARIABLE cfn_name;
+                   CAST (ff_erased_fptr_typename, VARIABLE cfn_name);
                  ] ));
         ] )
   | ELetRec ((fvs, binds), body) ->

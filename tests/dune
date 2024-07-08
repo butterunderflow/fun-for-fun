@@ -8,6 +8,6 @@
  (deps
    %{bin:ff}
    %{bin:ff_wrapper}
-   %{lib-private:runtime:fun_rt.h}
+   %{lib-private:runtime:fun_rt.hpp}
    %{lib-private:runtime:libfun_rt.a}))
 
