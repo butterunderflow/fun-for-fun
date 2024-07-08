@@ -111,18 +111,20 @@ module MMM = (M(F).K : I)
             ((FSimple x (EConst (CInt 1))) (FSimple y (EConst (CInt 2))))))
         (FSimple M
           (ELam
-            (MI (EModObject ((FSimple K (EApp (EVar MI) (EVar Simple)))))
+            ((MI) (EModObject ((FSimple K (EApp (EVar MI) ((EVar Simple))))))
               (Simple))))
         (FSimple F
           (ELam
-            (MI
+            ((MI)
               (EModObject
                 ((FSimple x (EConst (CInt 1))) (FSimple y (EConst (CInt 1)))
                   (FSimple z (EConst (CInt 1)))))
               ())))
-        (FSimple MMM (EField (EApp (EVar M) (EVar F)) K))
+        (FSimple MMM (EField (EApp (EVar M) ((EVar F))) K))
         (FLetRec
-          ((f (x (EVar x) ())) (g (x (EApp (EVar f) (EConst (CInt 1))) ())))))) |}];
+          ((f ((x) (EVar x) ()))
+            (g ((x) (EApp (EVar f) ((EConst (CInt 1)))) ()))))))
+    |}];
 
   print_lowered
     {|
@@ -136,7 +138,8 @@ module MMM = (M(F).K : I)
     {|
     (EModObject
       ((FLetRec
-         ((f (x (EVar x) ())) (g (x (EApp (EVar f) (EConst (CInt 1))) ())))))) |}];
+         ((f ((x) (EVar x) ())) (g ((x) (EApp (EVar f) ((EConst (CInt 1)))) ()))))))
+    |}];
   print_lowered
     {|
      type () int_l
@@ -156,14 +159,15 @@ module MMM = (M(F).K : I)
   [%expect
     {|
     (EModObject
-      ((FSimple x (ECons 1)) (FSimple z (EApp (EConsWith 0) (EConst (CInt 1))))
+      ((FSimple x (ECons 1)) (FSimple z (EApp (EConsWith 0) ((EConst (CInt 1)))))
         (FSimple f
           (ELam
-            (p
+            ((p)
               (ESwitch (EVar x)
                 (((PCons 0 ((PVar y))) (EVar y))
                   ((PCons 1 ()) (EConst (CInt 0)))))
-              (x)))))) |}];
+              (x))))))
+    |}];
 
   print_lowered
     {|
@@ -184,7 +188,9 @@ module MMM = (M(F).K : I)
     {|
     (EModObject
       ((FSimple M (EModObject ((FSimple x (EConst (CInt 1))))))
-        (FSimple F (ELam (X (EModObject ((FSimple y (EField (EVar M) x)))) (M))))))|}];
+        (FSimple F
+          (ELam ((X) (EModObject ((FSimple y (EField (EVar M) x)))) (M))))))
+    |}];
   print_lowered
     {|
      module M = struct
@@ -206,7 +212,9 @@ module MMM = (M(F).K : I)
       ((FSimple M (EModObject ((FSimple x (EConst (CInt 1))))))
         (FSimple F1
           (ELam
-            (X (ELam (Y (EModObject ((FSimple y (EField (EVar M) x)))) (M))) (M)))))) |}];
+            ((X) (ELam ((Y) (EModObject ((FSimple y (EField (EVar M) x)))) (M)))
+              (M))))))
+    |}];
 
   print_lowered
     {|
@@ -236,9 +244,11 @@ module MMM = (M(F).K : I)
       ((FSimple M (EModObject ((FSimple x (EConst (CInt 1))))))
         (FSimple F2
           (ELam
-            (X
+            ((X)
               (EModObject
                 ((FSimple N (EModObject ((FSimple x (EConst (CInt 2))))))
                   (FSimple F3
-                    (ELam (Y (EModObject ((FSimple y (EField (EVar N) x)))) (N))))))
-              ()))))) |}]
+                    (ELam
+                      ((Y) (EModObject ((FSimple y (EField (EVar N) x)))) (N))))))
+              ())))))
+    |}]

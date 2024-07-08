@@ -181,15 +181,18 @@ and trans_expr ctx e =
                     (e2_stmts
                     @ [ make_assign (VARIABLE ifel_v) (VARIABLE e2_v) ]) ));
           ] )
-  | EApp (e0, e1) ->
+  | EApp (e0, e1s) ->
       let app_v = create_decl "app_res" ctx in
       let e0_v, e0_stmts = trans_expr ctx e0 in
-      let e1_v, e1_stmts = trans_expr ctx e1 in
+      let e1_vs, e1_stmts = List.(split (map (trans_expr ctx) e1s)) in
+      let e1_stmts = List.flatten e1_stmts in
       ( app_v,
         e0_stmts @ e1_stmts
         @ [
             make_assign (VARIABLE app_v)
-              (CALL (ff_apply, [ VARIABLE e0_v; VARIABLE e1_v ]));
+              (CALL
+                 ( ff_apply,
+                   VARIABLE e0_v :: List.map (fun x -> C.VARIABLE x) e1_vs ));
           ] )
   | ECons i ->
       let constr_v = create_decl (Printf.sprintf "constr%d" i) ctx in
@@ -312,11 +315,18 @@ and trans_letrec fvs binds ctx =
   in
   (binds_c, todo_inits @ letrec_init, ctx)
 
-and trans_fn (cfunc, fvs, para, e) =
+and trans_fn (cfunc, fvs, paras, e) =
   Ident.refresh ();
   let ctx, c_fvs = make_context fvs in
   let cfn_name = to_c_ident cfunc in
-  let c_para, ctx = create_var ~need_decl:false para ctx in
+  let c_paras, ctx =
+    List.(
+      fold_left
+        (fun (c_para_acc, ctx) p ->
+          let c_para, ctx = create_var ~need_decl:false p ctx in
+          (c_para_acc @ [ c_para ], ctx))
+        ([], ctx) paras)
+  in
   let fvs_para, ctx = create_var ~need_decl:false "fvs" ctx in
   let var, body = trans_expr ctx e in
   let var_decls = get_var_decls ctx in
@@ -338,7 +348,8 @@ and trans_fn (cfunc, fvs, para, e) =
   let proto =
     C.PROTO
       ( ff_obj_typename,
-        [ (fvs_para, ff_fvs_typename); (c_para, ff_obj_typename) ] )
+        (fvs_para, ff_fvs_typename)
+        :: List.map (fun c_para -> (c_para, ff_obj_typename)) c_paras )
   in
   ( C.FUNDEF
       ( (cfn_name, proto),

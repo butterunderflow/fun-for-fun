@@ -70,5 +70,6 @@ let%expect_test "Test: full program lowering" =
     (EModObject ((FLetRec ((f g) ((f f/1) (g g/2))))))
 
     Global C functions:
-    (f/1 (f g) x (EVar x))
-    (g/2 (f g) x (EApp (EVar f) (EConst (CInt 1)))) |}]
+    (f/1 (f g) (x) (EVar x))
+    (g/2 (f g) (x) (EApp (EVar f) ((EConst (CInt 1)))))
+    |}]

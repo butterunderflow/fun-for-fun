@@ -14,7 +14,7 @@ type expr =
   | ECons of int
   | EConsWith of int
   | EConst of constant
-  | EApp of expr * expr
+  | EApp of expr * expr list
   | ESwitch of expr * branch list
   | ELet of string * expr * expr
   | EIf of expr * expr * expr
@@ -37,7 +37,7 @@ and branch = pattern * expr
 and func =
   Ident.ident (* function name *)
   * string list (* captures *)
-  * string (* parameter *)
+  * string list (* parameters *)
   * expr
 [@@deriving sexp]
 

@@ -101,14 +101,14 @@
       (FSimple m (EClosure ((w) m/3)))))
   
   Global C functions: 
-  (m/3 (w) x (EApp (EVar w) (EConst (CInt 1))))(w/2 () x (EConst (CInt 0)))(z/1 (y) x (EVar y))
+  (m/3 (w) (x) (EApp (EVar w) ((EConst (CInt 1)))))(w/2 () (x) (EConst (CInt 0)))(z/1 (y) (x) (EVar y))
 
   $ cat simple1.out.lambda
   (EModObject
     ((FSimple x (EConst (CInt 1))) (FSimple y (EConst (CInt 1)))
-      (FSimple z (ELam (x (EVar y) (y))))
-      (FSimple w (ELam (x (EConst (CInt 0)) ())))
-      (FSimple m (ELam (x (EApp (EVar w) (EConst (CInt 1))) (w))))))
+      (FSimple z (ELam ((x) (EVar y) (y))))
+      (FSimple w (ELam ((x) (EConst (CInt 0)) ())))
+      (FSimple m (ELam ((x) (EApp (EVar w) ((EConst (CInt 1)))) (w))))))
 
   $ cat simple1.out.parsing
   ((TopLet x (EConst (CInt 1))) (TopLet y (EConst (CInt 1)))

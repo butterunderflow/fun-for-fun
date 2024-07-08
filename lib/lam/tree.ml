@@ -11,7 +11,7 @@ type expr =
   | ECons of int
   | EConsWith of int
   | EConst of constant
-  | EApp of expr * expr
+  | EApp of expr * expr list
   | ESwitch of expr * branch list
   | ELet of string * expr * expr
   | EIf of expr * expr * expr
@@ -29,7 +29,10 @@ and object_field =
   | FSimple of string * expr
   | FLetRec of (string * lambda) list
 
-and lambda = string * expr * string list ref
+and lambda =
+  string list (* lambda parameters *)
+  * expr
+  * string list ref (* free variables, filled in free varialble analysis *)
 
 and branch = pattern * expr [@@deriving sexp]
 
