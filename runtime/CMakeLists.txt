@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.9)
 
 project(fun_rt DESCRIPTION "runtime for fun4fun")
 
+set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
+
 enable_testing()
 
 # compile_commands.json

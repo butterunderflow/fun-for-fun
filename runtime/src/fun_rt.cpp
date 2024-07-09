@@ -39,18 +39,6 @@ ff_obj_member_t* GC_alloc_member() {
     return member;
 }
 
-int64_t ff_get_tag(ff_obj_t* obj) {
-    return obj->tag;
-}
-
-const void* ff_get_data(ff_obj_t* obj) {
-    return obj->data;
-}
-
-int64_t ff_get_int(ff_obj_t* obj) {
-    return (int64_t)obj->data;
-}
-
 ff_obj_t ff_make_int(int64_t val) {
     ff_obj_t ret = {.tag = FF_INT_TAG};
     ret.data = (void*)val;
@@ -138,6 +126,26 @@ ff_obj_t ff_make_mod_obj(const int64_t size,
     return ret;
 }
 
+int64_t ff_get_tag(ff_obj_t obj) {
+    return obj.tag;
+}
+
+const void* ff_get_data(ff_obj_t obj) {
+    return obj.data;
+}
+
+int64_t ff_get_int(ff_obj_t obj) {
+    return reinterpret_cast<int64_t>(obj.data);
+}
+
+bool ff_get_bool(ff_obj_t obj) {
+    return bool(reinterpret_cast<int64_t>(obj.data));
+}
+
+const char* ff_get_str(ff_obj_t obj) {
+    return reinterpret_cast<const char*>(obj.data);
+}
+
 ff_obj_t ff_get_member(ff_obj_t base, const char* name) {
     assert(base.tag == FF_MODOBJ_TAG);
     ff_obj_member_t* member = (ff_obj_member_t*)base.data;
@@ -153,4 +161,10 @@ ff_obj_t ff_get_member(ff_obj_t base, const char* name) {
 ff_obj_t ff_make_placeholder() {
     ff_obj_t ret = {.tag = FF_PLACEHOLDER_TAG, .data = NULL};
     return ret;
+}
+
+ff_obj_t ff_add_int(ff_obj_t x, ff_obj_t y) {
+    assert(x.tag == FF_INT_TAG);
+    assert(y.tag == FF_INT_TAG);
+    return ff_make_int(ff_get_int(x) + ff_get_int(y));
 }
