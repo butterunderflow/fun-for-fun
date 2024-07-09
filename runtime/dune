@@ -6,6 +6,7 @@
  (deps
   (source_tree include)
   (source_tree src)
+  (source_tree tests)
   (file CMakeLists.txt))
  (action
   (progn

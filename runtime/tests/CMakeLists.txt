@@ -23,9 +23,12 @@ add_executable(
 target_link_libraries(
   fun_rt_test
   GTest::gtest_main
+  fun_rt
 )
 
 include(GoogleTest)
+
+target_include_directories(fun_rt_test PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
 gtest_discover_tests(fun_rt_test)
 
