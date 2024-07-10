@@ -377,10 +377,12 @@ and tc_toplevel (top : T.top_level) env : top_level * Env.t =
     | T.TopModSig (name, emt) ->
         let mt = normalize_mt emt env in
         (TopModSig (name, mt), Env.add_module_sig name mt env)
-    | T.TopExternal (_name, te, _ext_name) ->
-        let _te = normalize te Let env in
-        failwith "todo"
+    | T.TopExternal (name, e_ty, ext_name) ->
+        let te = normalize e_ty Let env in
+        let gen = generalize te env in
+        (TopExternal (name, te, ext_name), Env.add_value name gen env)
   in
+
   tv_pool := old_pool;
   top_typed
 

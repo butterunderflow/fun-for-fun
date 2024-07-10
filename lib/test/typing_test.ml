@@ -1073,4 +1073,14 @@ module MMM = (M(F).K : I)
       0
     ++++++++++++++++++Scope Debug Info Begin++++++++++++++++++
 
-    ------------------Envirment Debug Info End-------------------------- |}]
+    ------------------Envirment Debug Info End-------------------------- |}];
+
+  print_typed {|
+external add : int -> int -> int = "ff_add"
+               |};
+  [%expect {|
+    ((TopExternal add
+       (TArrowI (TConsI (0 int) ())
+         (TArrowI (TConsI (0 int) ()) (TConsI (0 int) ())))
+       ff_add))
+    |}]

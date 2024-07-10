@@ -37,6 +37,7 @@ let rec lift ?(hint = "temp") (e : L.expr) (vars : string list) :
   | L.EVar x ->
       assert (List.mem x vars);
       (C.EVar x, [])
+  | L.EExt x -> (C.EExt x, [])
   | L.ECons i -> (C.ECons i, [])
   | L.EConsWith i -> (C.EConsWith i, [])
   | L.EConst c -> (C.EConst c, [])

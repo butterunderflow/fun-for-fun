@@ -251,4 +251,10 @@ module MMM = (M(F).K : I)
                     (ELam
                       ((Y) (EModObject ((FSimple y (EField (EVar N) x)))) (N))))))
               ())))))
-    |}]
+    |}];
+
+print_lowered {|
+external add : int -> int -> int = "ff_add"
+|};
+  [%expect {| (EModObject ((FSimple add (EExt ff_add)))) |}]
+

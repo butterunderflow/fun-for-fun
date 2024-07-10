@@ -48,6 +48,7 @@ and top_level =
   | TopTypeDef of ty_def
   | TopMod of string * mod_expr
   | TopModSig of string * mod_ty
+  | TopExternal of string * ty * string
 
 and program = top_level list
 

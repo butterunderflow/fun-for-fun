@@ -8,6 +8,7 @@ type expr =
   | EModObject of object_field list
   | EStruct of (string * expr) list
   | EVar of string
+  | EExt of string
   | ECons of int
   | EConsWith of int
   | EConst of constant

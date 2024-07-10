@@ -227,6 +227,10 @@ module MakePP (Config : PPConfig) = struct
         Fmt.fprintf fmt "@[<v 2>module type %s = @\n" name;
         pp_mod_ty fmt mt;
         Fmt.fprintf fmt "@]"
+    | TopExternal (name, te, ext_name) ->
+        Fmt.fprintf fmt "@[<v 2>external %s : " name;
+        pp_ty fmt te;
+        Fmt.fprintf fmt "= \"%s\"@]" ext_name
 
   and pp_ty_def fmt td =
     match td with
