@@ -1,4 +1,5 @@
 #include "fun_rt.hpp"
+#include <algorithm>
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -80,6 +81,16 @@ ff_obj_t ff_make_constr_payload(int64_t id) {
     ff_obj_t constructor =
         ff_make_closure(id_obj, 1, (ff_erased_fptr)ff_constructor);
     return constructor;
+}
+
+ff_obj_t ff_make_closure(std::initializer_list<ff_obj_t>&& fvs,
+                         int64_t fvs_n,
+                         ff_erased_fptr cfn) {
+    ff_closure_t* closure = GC_alloc_closure(fvs_n);
+    closure->cfn = cfn;
+    std::copy(fvs.begin(), fvs.end(), closure->fvs);
+    ff_obj_t ret = {.tag = FF_CLOSURE_TAG, .data = closure};
+    return ret;
 }
 
 ff_obj_t
