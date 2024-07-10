@@ -114,6 +114,9 @@ int main()
 and trans_expr ctx e =
   match e with
   | EVar x -> (List.assoc x ctx.dict, [])
+  | EExt ff_name ->
+      ( ff_name (* assume we can access an ff object by its external name*),
+        [] )
   | ELet (x, e0, e1) ->
       let e0_v, e0_stmts = trans_expr ctx e0 in
       let result_stmt = e0_stmts in
