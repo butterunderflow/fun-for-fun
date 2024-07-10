@@ -2,8 +2,8 @@
 #define FUN4FUN_RUNTIME_FUN_RT_H
 #include <assert.h>
 #include <initializer_list>
-#include <vector>
 #include <stdint.h>
+#include <vector>
 
 extern const int64_t FF_PLACEHOLDER_TAG;
 extern const int64_t FF_INT_TAG;
@@ -40,7 +40,7 @@ ff_obj_t ff_make_int(int64_t val);
 ff_obj_t ff_make_str(const char* val);
 
 ff_obj_t ff_make_mod_obj(const int64_t size,
-                         std::vector<const char*> &&fields,
+                         std::vector<const char*>&& fields,
                          std::vector<ff_obj_t> values);
 
 ff_obj_t
@@ -79,4 +79,7 @@ ff_obj_t ff_apply_generic(ff_obj_t op, Types... args) {
 
 ff_obj_t ff_add_int(ff_obj_t x, ff_obj_t y);
 
+extern const ff_obj_t ff_builtin_add;
+
+extern const ff_obj_t ff_builtin_print_int;
 #endif

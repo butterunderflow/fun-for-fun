@@ -46,7 +46,6 @@ TEST(FunRuntimeTest, SimpleClosureCreation) {
     EXPECT_EQ(ff_get_int(result), 6);
 }
 
-
 // fun y ->  x + y + z
 ff_obj_t adder_closure_cfn1(ff_fvs_t fvs, ff_obj_t arg_y) {
     auto fv_z = fvs[0];
@@ -70,4 +69,12 @@ TEST(FunRuntimeTest, AdderClosureCreation) {
 
     auto result = ff_apply_generic(clos2, ff_make_int(3));
     EXPECT_EQ(ff_get_int(result), 6);
+}
+
+TEST(FunRuntimeTest, BuiltinAdder) {
+    auto adder = ff_apply_generic(ff_builtin_add, ff_make_int(5));
+    auto result = ff_apply_generic(adder, ff_make_int(10));
+
+    EXPECT_EQ(ff_get_tag(result), FF_INT_TAG);
+    EXPECT_EQ(ff_get_int(result), 15);
 }
