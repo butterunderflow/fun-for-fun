@@ -43,6 +43,7 @@ rule token = parse
     | "if"              { IF }
     | "then"            { THEN }
     | "else"            { ELSE }
+    | "external"        { EXTERNAL }
     | "in"              { IN }
     | "rec"             { REC }
     | "match"           { MATCH }

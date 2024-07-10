@@ -199,7 +199,15 @@ functor
        type t =  a list -> b
 |};
   [%expect
-    {| ((TopTypeDef (TDAlias t (TArrow (TCons list ((TCons a ()))) (TCons b ()))))) |}]
+    {| ((TopTypeDef (TDAlias t (TArrow (TCons list ((TCons a ()))) (TCons b ()))))) |}];
+
+  print_parsed_program {|
+  external x : int -> int -> int = "ff_add"
+|};
+  [%expect {|
+    ((TopExternal x
+       (TArrow (TCons int ()) (TArrow (TCons int ()) (TCons int ()))) ff_add))
+    |}]
 
 let%expect_test "Test: path parsing" =
   print_parsed_mod_expr {|X|};

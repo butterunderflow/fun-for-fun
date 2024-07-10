@@ -14,6 +14,7 @@ and top_level =
   | TopTypeDef of ety_def
   | TopMod of string * mod_expr
   | TopModSig of string * emod_ty
+  | TopExternal of string * ety * string
 
 and para =
   | PAnn of string * ety
