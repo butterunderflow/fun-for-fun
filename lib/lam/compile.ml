@@ -14,7 +14,7 @@ let rec compile_expr (e : T.expr) =
       L.EIf (compile_expr e0, compile_expr e1, compile_expr e2)
   | T.ECase (e0, bs, _) ->
       L.ESwitch (compile_expr e0, List.map compile_branch bs)
-  | T.EApp (e0, e1, _) -> L.EApp (compile_expr e0, compile_expr e1)
+  | T.EApp (e0, e1, _) -> L.EApp (compile_expr e0, [ compile_expr e1 ])
   | T.EAnn (e, _) -> compile_expr e
   | T.ETuple (es, _) -> L.ETuple (List.map compile_expr es)
   | T.EField (me, name, _) -> L.EField (compile_mod_expr me, name)
@@ -22,7 +22,7 @@ let rec compile_expr (e : T.expr) =
   | T.ECons (_, id, _) -> L.ECons id
   | T.EFieldCons (_, _, id, _) -> L.ECons id
 
-and compile_lam (x, e, _) = (x, compile_expr e, ref [])
+and compile_lam (x, e, _) = ([ x ], compile_expr e, ref [])
 
 and compile_branch (p, e) : L.branch =
   let compile_pattern p =
@@ -42,10 +42,11 @@ and compile_mod_expr me =
   match me with
   | T.MEName (x, _) -> L.EVar x
   | T.MEStruct (tops, _) -> compile_top_levels tops
-  | T.MEFunctor ((x, _), body) -> L.ELam (x, compile_mod_expr body, ref [])
+  | T.MEFunctor ((x, _), body) ->
+      L.ELam ([ x ], compile_mod_expr body, ref [])
   | T.MEField (me, name, _) -> L.EField (compile_mod_expr me, name)
   | T.MEApply (me0, me1, _) ->
-      L.EApp (compile_mod_expr me0, compile_mod_expr me1)
+      L.EApp (compile_mod_expr me0, [ compile_mod_expr me1 ])
   | T.MERestrict (me', _, _) -> compile_mod_expr me'
 
 and compile_top_levels tops =
@@ -109,7 +110,8 @@ let rec fva_expr e vars =
   | L.ECons _ -> []
   | L.EConsWith _ -> []
   | L.EConst _ -> []
-  | L.EApp (e0, e1) -> fva_expr e0 vars @ fva_expr e1 vars
+  | L.EApp (e0, e1s) ->
+      fva_expr e0 vars @ List.concat_map (fun e1 -> fva_expr e1 vars) e1s
   | L.ESwitch (e0, bs) ->
       fva_expr e0 vars
       @ (bs
@@ -132,8 +134,8 @@ let rec fva_expr e vars =
   | L.EField (e, _) -> fva_expr e vars
 
 and fva_lambda x e vars =
-  let vars = x :: vars in
-  capture (fva_expr e vars) [ x ] |> List_utils.remove_from_left
+  let vars = x @ vars in
+  capture (fva_expr e vars) x |> List_utils.remove_from_left
 
 and fva_letrec binds vars =
   let xs, _ = List.split binds in

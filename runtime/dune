@@ -1,0 +1,20 @@
+(library
+ (name runtime))
+
+(rule
+ (targets libfun_rt.a fun_rt.hpp)
+ (deps
+  (source_tree include)
+  (source_tree src)
+  (source_tree tests)
+  (file CMakeLists.txt))
+ (action
+  (progn
+   (run cmake -B build -S .)
+   (run cmake --build build)
+   (run cp build/libfun_rt.a ./)
+   (run cp include/fun_rt.hpp ./))))
+
+(install
+ (section share)
+ (files fun_rt.hpp libfun_rt.a))

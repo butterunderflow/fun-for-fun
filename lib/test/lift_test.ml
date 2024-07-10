@@ -50,9 +50,9 @@ let%expect_test "Test: full program lowering" =
     {|
     Lifted main expression:
     (EModObject
-      ((FSimple d (EField (EVar M) y)) (FSimple c (EField (EVar M) x))
-        (FSimple M
-          (EModObject ((FSimple y (EConst (CInt 1))) (FSimple x (ECons 0)))))))
+      ((FSimple M
+         (EModObject ((FSimple x (ECons 0)) (FSimple y (EConst (CInt 1))))))
+        (FSimple c (EField (EVar M) x)) (FSimple d (EField (EVar M) y))))
 
     Global C functions: |}];
 
@@ -70,5 +70,6 @@ let%expect_test "Test: full program lowering" =
     (EModObject ((FLetRec ((f g) ((f f/1) (g g/2))))))
 
     Global C functions:
-    (f/1 (f g) x (EVar x))
-    (g/2 (f g) x (EApp (EVar f) (EConst (CInt 1)))) |}]
+    (f/1 (f g) (x) (EVar x))
+    (g/2 (f g) (x) (EApp (EVar f) ((EConst (CInt 1)))))
+    |}]

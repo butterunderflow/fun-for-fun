@@ -23,7 +23,7 @@ let rec lift ?(hint = "temp") (e : L.expr) (vars : string list) :
                 (xs @ vars, C.FLetRec binds :: mem_acc, fns @ fn_acc))
           (vars, [], []) mems
       in
-      (C.EModObject mems, fns)
+      (C.EModObject (List.rev mems), fns)
   | L.EStruct mems ->
       let mems, fns =
         List.fold_left
@@ -40,10 +40,11 @@ let rec lift ?(hint = "temp") (e : L.expr) (vars : string list) :
   | L.ECons i -> (C.ECons i, [])
   | L.EConsWith i -> (C.EConsWith i, [])
   | L.EConst c -> (C.EConst c, [])
-  | L.EApp (e0, e1) ->
+  | L.EApp (e0, e1s) ->
       let e0, fns0 = lift e0 vars in
-      let e1, fns1 = lift e1 vars in
-      (C.EApp (e0, e1), fns0 @ fns1)
+      let e1s, fns1 = List.(split (map (fun e1 -> lift e1 vars) e1s)) in
+      let fns1 = List.flatten fns1 in
+      (C.EApp (e0, e1s), fns0 @ fns1)
   | L.ESwitch (e0, bs) ->
       let e0, fns0 = lift e0 vars in
       let ps, es = List.split bs in
@@ -62,10 +63,10 @@ let rec lift ?(hint = "temp") (e : L.expr) (vars : string list) :
       let e1, fns1 = lift ~hint e1 vars in
       let e2, fns2 = lift ~hint e2 vars in
       (C.EIf (e0, e1, e2), fns0 @ fns1 @ fns2)
-  | L.ELam (x, e, fvs) ->
+  | L.ELam (xs, e, fvs) ->
       let fn_id = Ident.create ~hint in
-      let e', fns = lift e (x :: vars) ~hint in
-      let new_fn = (fn_id, !fvs, x, e') in
+      let e', fns = lift e (xs @ vars) ~hint in
+      let new_fn = (fn_id, !fvs, xs, e') in
       (C.EClosure (!fvs, fn_id), new_fn :: fns)
   | L.ELetRec (binds, e) ->
       let xs, _ = List.split binds in
@@ -89,10 +90,10 @@ and lift_letrec binds vars =
   let captures = xs @ fvs in
   let cls, fns =
     binds
-    |> List.map (fun (x, (para, e, _fvs)) ->
-           let e', fns = lift e (para :: vars) ~hint:x in
+    |> List.map (fun (x, (paras, e, _fvs)) ->
+           let e', fns = lift e (paras @ vars) ~hint:x in
            let fn_id = Ident.create ~hint:x in
-           let new_fn = (fn_id, captures, para, e') in
+           let new_fn = (fn_id, captures, paras, e') in
            (fn_id, new_fn :: fns))
     |> List.split
     |> fun (fn_id, fns_l) -> (fn_id, List.flatten fns_l)

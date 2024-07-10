@@ -1,4 +1,13 @@
+(env (_
+ (binaries ff_wrapper)
+ (env-vars
+  (FF ff_wrapper))))
+
 (cram
- (package fun4fun)
  (applies_to :whole_subtree)
- (deps %{bin:ff}))
+ (deps
+   %{bin:ff}
+   %{bin:ff_wrapper}
+   %{lib-private:runtime:fun_rt.hpp}
+   %{lib-private:runtime:libfun_rt.a}))
+

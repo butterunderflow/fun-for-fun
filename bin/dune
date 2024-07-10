@@ -1,7 +1,7 @@
 (executable
  (public_name ff)
  (name main)
- (libraries syntax typing lam clos)
+ (libraries syntax typing lam clos back)
  (preprocess
   (action
    (run ./watermark.sh %{input-file}))))
