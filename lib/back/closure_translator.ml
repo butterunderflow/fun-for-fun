@@ -88,8 +88,7 @@ let make_stmt_seq stmts =
 
 let make_assign lhs rhs = C.(COMPUTATION (BINARY (ASSIGN, lhs, rhs)))
 
-let make_compound element_typ es =
-  C.CAST (ARRAY (element_typ, NOTHING), CONSTANT (CONST_COMPOUND es))
+let make_compound es = C.CONSTANT (CONST_COMPOUND es)
 
 let get_all_member_names (mems : object_field list) =
   mems
@@ -230,8 +229,7 @@ and trans_expr ctx e =
             (CALL
                ( ff_make_closure,
                  [
-                   make_compound ff_obj_typename
-                     (List.map (fun v -> C.VARIABLE v) fvs_c);
+                   make_compound (List.map (fun v -> C.VARIABLE v) fvs_c);
                    CONSTANT (CONST_INT (string_of_int (List.length fvs)));
                    CAST (ff_erased_fptr_typename, VARIABLE cfn_name);
                  ] ));
@@ -267,12 +265,11 @@ and trans_expr ctx e =
                    [
                      CONSTANT
                        (CONST_INT (string_of_int (List.length mems_c)));
-                     make_compound ff_str_type
+                     make_compound
                        (get_all_member_names members
                        |> List.map (fun name ->
                               C.CONSTANT (CONST_STRING name)));
-                     make_compound ff_obj_typename
-                       (List.map (fun x -> C.VARIABLE x) mems_c);
+                     make_compound (List.map (fun x -> C.VARIABLE x) mems_c);
                    ] ));
           ] )
   | ESwitch (_, _)
@@ -302,15 +299,14 @@ and trans_letrec fvs binds ctx =
         (CALL
            ( ff_fill_letrec_closure,
              [
-               make_compound ff_obj_typename
-                 (List.map (fun x -> C.VARIABLE x) fvs_c);
+               make_compound (List.map (fun x -> C.VARIABLE x) fvs_c);
                CONSTANT (CONST_INT (string_of_int (List.length fvs)));
-               make_compound ff_obj_typename
+               make_compound
                  (List.map
                     (fun (_, cfunc) -> C.VARIABLE (to_c_ident cfunc))
                     binds);
                CONSTANT (CONST_INT (string_of_int (List.length binds)));
-               make_compound (C.PTR ff_obj_typename)
+               make_compound
                  (List.map (fun x -> C.(UNARY (ADDROF, VARIABLE x))) binds_c);
              ] ));
     ]

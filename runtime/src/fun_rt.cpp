@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <vector>
 
 void test_rt() {
     printf("Hello Runtime\n");
@@ -86,6 +87,7 @@ ff_obj_t ff_make_constr_payload(int64_t id) {
 ff_obj_t ff_make_closure(std::initializer_list<ff_obj_t>&& fvs,
                          int64_t fvs_n,
                          ff_erased_fptr cfn) {
+    assert(fvs_n == fvs.size());
     ff_closure_t* closure = GC_alloc_closure(fvs_n);
     closure->cfn = cfn;
     std::copy(fvs.begin(), fvs.end(), closure->fvs);
@@ -102,7 +104,7 @@ ff_make_closure(const ff_obj_t* fvs, int64_t fvs_n, ff_erased_fptr cfn) {
     return ret;
 }
 
-void ff_fill_letrec_closure(ff_obj_t* fvs,
+void ff_fill_letrec_closure(std::initializer_list<ff_obj_t>&& fvs,
                             int64_t fvs_n,
                             ff_erased_fptr* cfns,
                             int64_t self_n,
@@ -118,12 +120,13 @@ void ff_fill_letrec_closure(ff_obj_t* fvs,
         fvs_all[i].data = self_i;
         *binds[i] = fvs_all[i];
     }
-    memcpy(fvs_all + self_n, fvs, fvs_n);
+    std::copy(fvs.begin(), fvs.end(), fvs_all);
 }
 
 ff_obj_t ff_make_mod_obj(const int64_t size,
-                         const char** fields,
-                         const ff_obj_t* values) {
+                         std::vector<const char*> &&fields,
+                         std::vector<ff_obj_t> values) {
+    /* todo: reduce memory usage */
     /* todo: use sequenced memory for module members */
     ff_obj_member_t* members = NULL;
     for (int64_t i = 0; i < size; i++) {
