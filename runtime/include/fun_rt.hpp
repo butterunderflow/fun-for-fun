@@ -82,4 +82,6 @@ ff_obj_t ff_add_int(ff_obj_t x, ff_obj_t y);
 extern const ff_obj_t ff_builtin_add;
 
 extern const ff_obj_t ff_builtin_print_int;
+
+extern const ff_obj_t ff_builtin_print_str;
 #endif

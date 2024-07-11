@@ -209,3 +209,12 @@ ff_obj_t ff_print_int_cfn(ff_fvs_t fvs, ff_obj_t x) {
 
 const ff_obj_t ff_builtin_print_int =
     ff_make_closure({}, 0, (ff_erased_fptr)ff_print_int_cfn);
+
+ff_obj_t ff_print_str_cfn(ff_fvs_t fvs, ff_obj_t x) {
+    auto value = ff_get_str(x);
+    std::printf("%s", value);
+    return ff_make_int(0);
+}
+
+const ff_obj_t ff_builtin_print_str =
+    ff_make_closure({}, 0, (ff_erased_fptr)ff_print_str_cfn);
