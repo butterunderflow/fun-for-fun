@@ -1,6 +1,7 @@
 #ifndef FUN4FUN_RUNTIME_FUN_RT_H
 #define FUN4FUN_RUNTIME_FUN_RT_H
 #include <assert.h>
+#include <cstdint>
 #include <initializer_list>
 #include <stdint.h>
 #include <vector>
@@ -38,6 +39,12 @@ struct ff_obj_member_t {
 ff_obj_t ff_make_int(int64_t val);
 
 ff_obj_t ff_make_str(const char* val);
+
+ff_obj_t ff_make_constr_no_payload(int64_t id);
+
+ff_obj_t ff_make_constr_payload(int64_t id);
+
+ff_obj_t ff_make_tuple(const ff_obj_t* objs, int64_t size);
 
 ff_obj_t ff_make_mod_obj(const int64_t size,
                          std::vector<const char*>&& fields,
@@ -84,4 +91,9 @@ extern const ff_obj_t ff_builtin_add;
 extern const ff_obj_t ff_builtin_print_int;
 
 extern const ff_obj_t ff_builtin_print_str;
+
+bool ff_match_constr(int64_t id, ff_obj_t cond);
+
+bool ff_match_constr(int64_t id, ff_obj_t cond, ff_obj_t* payload);
+
 #endif

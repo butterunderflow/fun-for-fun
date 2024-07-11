@@ -55,6 +55,10 @@ let ff_make_mod_obj = C.VARIABLE "ff_make_mod_obj"
 
 let ff_fill_letrec_closure = C.VARIABLE "ff_fill_letrec_closure"
 
+let ff_match_constr = C.VARIABLE "ff_match_constr"
+
+let ff_match_tuple = C.VARIABLE "ff_match_tuple"
+
 let header = {|
 #include"fun_rt.hpp"
 #include<stdio.h>
@@ -89,6 +93,12 @@ let make_stmt_seq stmts =
 let make_assign lhs rhs = C.(COMPUTATION (BINARY (ASSIGN, lhs, rhs)))
 
 let make_compound es = C.CONSTANT (CONST_COMPOUND es)
+
+let make_addrof e = C.(UNARY (ADDROF, e))
+
+type match_operation =
+  | Bind of C.expression
+  | CheckTag of C.expression
 
 let get_all_member_names (mems : object_field list) =
   mems
@@ -275,9 +285,98 @@ and trans_expr ctx e =
                      make_compound (List.map (fun x -> C.VARIABLE x) mems_c);
                    ] ));
           ] )
-  | ESwitch (_, _)
-  | EStruct _ ->
-      ("todo", [])
+  | ESwitch (e, bs) ->
+      (* match x with | Cons[1](y, z, w) -> e 
+       *
+         =>
+         ff_obj_t match_res; 
+         do{
+         if (match_seq(x, 1, {&y, &z, &w})) {
+            // sub pattern match
+            // evaluation statements
+            switch_res = _
+            break
+         } 
+         
+         } while(false)
+       *)
+      let res = create_decl "match_res" ctx in
+      let cond_v, e_stmts = trans_expr ctx e in
+      let branches =
+        List.map (fun (p, e) -> trans_switch res cond_v p e ctx) bs
+      in
+      ( res,
+        [
+          C.DOWHILE
+            (C.CONSTANT (C.CONST_INT "0"), make_stmt_seq (e_stmts @ branches));
+        ] )
+  | EStruct _ -> ("todo", [])
+
+and trans_switch res cond p e ctx =
+  let match_seq, ctx = analyze_match_sequence cond p ctx in
+  let res', stmt = trans_expr ctx e in
+  let stmt =
+    make_stmt_seq
+      (stmt @ [ make_assign (VARIABLE res) (VARIABLE res'); C.BREAK ])
+  in
+  List.fold_right
+    (fun match_expr stmt_acc ->
+      match match_expr with
+      | Bind bind_expr -> C.SEQUENCE (C.COMPUTATION bind_expr, stmt_acc)
+      | CheckTag check_expr -> C.IF (check_expr, stmt_acc, C.NOP))
+    match_seq stmt
+
+and analyze_match_sequence (cond_var : string) (p : pattern) ctx :
+    match_operation list * context =
+  match p with
+  | PVar x ->
+      let x, ctx = create_var ~need_decl:true x ctx in
+      ([ Bind C.(BINARY (ASSIGN, VARIABLE x, VARIABLE cond_var)) ], ctx)
+  | PVal _ -> failwith "todo"
+  | PCons (id, None) ->
+      ( [
+          CheckTag
+            (C.CALL
+               ( ff_match_constr,
+                 [
+                   CONSTANT (CONST_INT (string_of_int id)); VARIABLE cond_var;
+                 ] ));
+        ],
+        ctx )
+  | PCons (id, Some p) ->
+      let pat_var = create_decl "pat_var" ctx in
+      let check =
+        CheckTag
+          (C.CALL
+             ( ff_match_constr,
+               [
+                 CONSTANT (CONST_INT (string_of_int id));
+                 VARIABLE cond_var;
+                 make_addrof (VARIABLE pat_var);
+               ] ))
+      in
+      let match_seq, ctx = analyze_match_sequence pat_var p ctx in
+      (check :: match_seq, ctx)
+  | PTuple ps ->
+      let pat_vars =
+        List.mapi
+          (fun index _ -> create_decl (Printf.sprintf "tu_%dth" index) ctx)
+          ps
+      in
+      (* First, check if it's a tuple *)
+      let check =
+        CheckTag
+          (C.CALL
+             ( ff_match_tuple,
+               [ make_compound (List.map (fun x -> C.VARIABLE x) pat_vars) ]
+             ))
+      in
+      (* Analyze sub-pattens' match operations*)
+      List.fold_left2
+        (fun (seq_acc, ctx) pat_var pat ->
+          let match_seq, ctx = analyze_match_sequence pat_var pat ctx in
+          (seq_acc @ match_seq, ctx))
+        ([ check ], ctx) pat_vars ps
 
 and trans_letrec fvs binds ctx =
   let fvs_c = List.map (fun fv -> List.assoc fv ctx.dict) fvs in
