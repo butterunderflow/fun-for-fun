@@ -33,7 +33,8 @@ let integers = (sign?) digits
 
 let boolean = "true" | "false"
 
-let strings = '\"' _* '\"'
+let strings = '\"' alphanumerical* '\"' 
+(* todo: support full featured string literal *)
 
 rule token = parse
     (* Meta-characters *)
@@ -43,6 +44,7 @@ rule token = parse
     | "if"              { IF }
     | "then"            { THEN }
     | "else"            { ELSE }
+    | "external"        { EXTERNAL }
     | "in"              { IN }
     | "rec"             { REC }
     | "match"           { MATCH }

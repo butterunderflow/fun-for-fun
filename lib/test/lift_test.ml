@@ -72,4 +72,15 @@ let%expect_test "Test: full program lowering" =
     Global C functions:
     (f/1 (f g) (x) (EVar x))
     (g/2 (f g) (x) (EApp (EVar f) ((EConst (CInt 1)))))
+    |}];
+
+  print_lifted {|
+external add : int -> int -> int = "ff_add"
+|};
+  [%expect
+    {|
+    Lifted main expression:
+    (EModObject ((FSimple add (EExt ff_add))))
+
+    Global C functions:
     |}]

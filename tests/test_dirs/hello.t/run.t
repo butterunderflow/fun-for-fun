@@ -3,3 +3,4 @@
 
   $ ./hello.fun.out
   Hello Runtime
+  "Hello_ff"

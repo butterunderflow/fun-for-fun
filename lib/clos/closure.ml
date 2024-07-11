@@ -11,6 +11,7 @@ type expr =
           2. Field of an object is visible in the scope following its declaration. *)
   | EStruct of (string * expr) list
   | EVar of string
+  | EExt of string
   | ECons of int
   | EConsWith of int
   | EConst of constant

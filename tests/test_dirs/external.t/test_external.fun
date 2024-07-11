@@ -1,0 +1,1 @@
+external add : int -> int -> int = "ff_add"

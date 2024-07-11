@@ -24,6 +24,7 @@ let mk_type_ref fon t_args =
 %token IF
 %token THEN
 %token ELSE
+%token EXTERNAL
 %token REC
 %token END
 %token SIG
@@ -89,6 +90,8 @@ top_levels:
         { TopLet (x, e) :: rest }
     | LET REC funcs=separated_list(AND, function_bind) rest=top_levels
         { TopLetRec funcs :: rest }
+    | EXTERNAL x=IDENT COLON te=type_expr EQ s=STRING  rest=top_levels
+        { TopExternal (x, te, String.(sub s 1 (length s - 2))) :: rest }
     | MODULE m_name=MIDENT
         EQ m_body=mod_expr rest=top_levels
         { TopMod (m_name, m_body) :: rest }

@@ -99,6 +99,7 @@ let get_root_def tn =
   ( 0,
     match tn with
     | "int" -> I.TDAdtI ("int", [], [])
+    | "string" -> I.TDAdtI ("string", [], [])
     | tn -> failwith (Printf.sprintf "cant get type `%s`" tn) )
 
 let rec get_type_def tn env =

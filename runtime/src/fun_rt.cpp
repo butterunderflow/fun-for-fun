@@ -1,6 +1,7 @@
 #include "fun_rt.hpp"
 #include <algorithm>
 #include <assert.h>
+#include <cstdio>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -21,6 +22,9 @@ const int64_t FF_MODOBJ_TAG = 5;
 const int64_t FF_CONSTR_BARRIER = 10;
 
 ff_obj_t* GC_alloc_n_objs(int64_t n) {
+    if (n == 0) {
+        return nullptr;
+    }
     return (ff_obj_t*)malloc(n * sizeof(ff_obj_t));
 }
 
@@ -124,7 +128,7 @@ void ff_fill_letrec_closure(std::initializer_list<ff_obj_t>&& fvs,
 }
 
 ff_obj_t ff_make_mod_obj(const int64_t size,
-                         std::vector<const char*> &&fields,
+                         std::vector<const char*>&& fields,
                          std::vector<ff_obj_t> values) {
     /* todo: reduce memory usage */
     /* todo: use sequenced memory for module members */
@@ -182,3 +186,35 @@ ff_obj_t ff_add_int(ff_obj_t x, ff_obj_t y) {
     assert(y.tag == FF_INT_TAG);
     return ff_make_int(ff_get_int(x) + ff_get_int(y));
 }
+
+ff_obj_t ff_adder_cfn(ff_fvs_t fvs, ff_obj_t y) {
+    auto x = fvs[0];
+    auto result = ff_add_int(x, y);
+    return result;
+}
+
+ff_obj_t ff_make_adder_cfn(ff_fvs_t fvs, ff_obj_t x) {
+    auto adder = ff_make_closure({x}, 1, (ff_erased_fptr)ff_adder_cfn);
+    return adder;
+}
+
+const ff_obj_t ff_builtin_add =
+    ff_make_closure({}, 0, (ff_erased_fptr)ff_make_adder_cfn);
+
+ff_obj_t ff_print_int_cfn(ff_fvs_t fvs, ff_obj_t x) {
+    auto value = ff_get_int(x);
+    std::printf("%ld", value);
+    return ff_make_int(0);
+}
+
+const ff_obj_t ff_builtin_print_int =
+    ff_make_closure({}, 0, (ff_erased_fptr)ff_print_int_cfn);
+
+ff_obj_t ff_print_str_cfn(ff_fvs_t fvs, ff_obj_t x) {
+    auto value = ff_get_str(x);
+    std::printf("%s", value);
+    return ff_make_int(0);
+}
+
+const ff_obj_t ff_builtin_print_str =
+    ff_make_closure({}, 0, (ff_erased_fptr)ff_print_str_cfn);

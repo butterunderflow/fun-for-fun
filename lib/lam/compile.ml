@@ -61,7 +61,9 @@ and compile_top_levels tops =
                   (List.map (fun (x, lam) -> (x, compile_lam lam)) binds))
          | T.TopTypeDef _ -> None
          | T.TopMod (x, me) -> Some (L.FSimple (x, compile_mod_expr me))
-         | T.TopModSig (_, _) -> None)
+         | T.TopModSig (_, _) -> None
+         | T.TopExternal (name, _, ext_name) ->
+             Some (L.FSimple (name, L.EExt ext_name)))
        tops)
 
 let capture fvs vars = List.filter (fun x -> not (List.mem x vars)) fvs
@@ -107,6 +109,7 @@ let rec fva_expr e vars =
   | L.EVar x' ->
       assert (List.mem x' vars);
       [ x' ]
+  | L.EExt _x' -> []
   | L.ECons _ -> []
   | L.EConsWith _ -> []
   | L.EConst _ -> []
