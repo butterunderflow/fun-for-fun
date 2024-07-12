@@ -48,12 +48,14 @@ let rec lift ?(hint = "temp") (e : L.expr) (vars : string list) :
       (C.EApp (e0, e1s), fns0 @ fns1)
   | L.ESwitch (e0, bs) ->
       let e0, fns0 = lift e0 vars in
-      let ps, es = List.split bs in
       let es, fns1 =
-        List.map (fun e -> lift e vars) es
+        bs
+        |> List.map (fun (p, e) ->
+               lift e (Lam__Compile.get_pat_vars p @ vars))
         |> List.split
         |> fun (e, fns) -> (e, List.flatten fns)
       in
+      let ps, _ = List.split bs in
       (C.ESwitch (e0, List.combine ps es), fns0 @ fns1)
   | L.ELet (x, e0, e1) ->
       let e0, fns0 = lift ~hint:x e0 vars in
