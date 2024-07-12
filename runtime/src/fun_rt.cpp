@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <cstdint>
 #include <cstdio>
+#include <cstring>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -251,4 +252,40 @@ bool ff_match_tuple(ff_obj_t cond, std::vector<ff_obj_t*> payloads) {
         *payloads[i] = tu_ptr->payloads[i];
     }
     return true;
+}
+
+bool ff_is_equal_aux(const ff_obj_t& x, const ff_obj_t& y) {
+    if (x.tag != y.tag) {
+        return false;
+    }
+    if (x.tag == FF_INT_TAG) {
+        return ff_get_int(x) == ff_get_int(y);
+    }
+    if (x.tag == FF_STR_TAG) {
+        return strcmp((const char*)x.data, (const char*)y.data);
+    }
+    if (x.tag == FF_TUPLE_TAG) {
+        const auto& x_1 = *reinterpret_cast<const ff_tuple_t*>(x.data);
+        const auto& x_2 = *reinterpret_cast<const ff_tuple_t*>(x.data);
+        if (x_1.size != x_2.size) {
+            return false;
+        }
+        return std::memcmp(&x_1, &x_2, x_1.size);
+    }
+    if (x.tag == FF_CLOSURE_TAG) {
+        assert(false && "try to compare between closures");
+        return false;
+    }
+    assert(x.tag >= FF_CONSTR_BARRIER);
+    const auto& x_1 = *reinterpret_cast<const ff_obj_t*>(x.data);
+    const auto& x_2 = *reinterpret_cast<const ff_obj_t*>(y.data);
+    return ff_is_equal_aux(x_1, x_2);
+}
+
+ff_obj_t ff_is_equal(ff_obj_t x, ff_obj_t y) {
+    return ff_make_int(ff_is_equal_aux(x, y));
+}
+
+ff_obj_t ff_is_not_equal(ff_obj_t x, ff_obj_t y) {
+    return ff_make_int(!ff_is_equal_aux(x, y));
 }
