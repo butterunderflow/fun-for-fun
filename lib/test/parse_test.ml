@@ -80,7 +80,11 @@ let%expect_test "Test: expression parsing" =
   [%expect
     {|
     (ECase (EVar c)
-      (((PCons Cons ((PVar x))) (EVar x)) ((PCons Nil ()) (EConst (CInt 0))))) |}]
+      (((PCons Cons ((PVar x))) (EVar x)) ((PCons Nil ()) (EConst (CInt 0))))) |}];
+  print_parsed {| x = y |};
+  [%expect {| (ECmp Eq (EVar x) (EVar y)) |}];
+  print_parsed {| x <> y |};
+  [%expect {| (ECmp Neq (EVar x) (EVar y)) |}]
 
 let%expect_test "Test: pattern parsing" =
   let print_parsed str =

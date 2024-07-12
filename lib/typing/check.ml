@@ -129,6 +129,7 @@ let rec tc_expr (e : T.expr) (env : Env.t) : expr =
   | T.EField (p, x) -> tc_field p x env
   | T.ECons c -> tc_cons c env
   | T.EFieldCons (p, c) -> tc_field_cons p c env
+  | T.ECmp _ -> failwith "todo"
 
 and tc_const c =
   match c with
