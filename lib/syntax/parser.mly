@@ -36,6 +36,7 @@ let mk_type_ref fon t_args =
 %token <string> MIDENT
 %token <string> TYPEVAR
 %token EQ
+%token NEQ
 %token STAR
 %token OR
 %token IN
@@ -185,7 +186,12 @@ expr:
     | FUN para=parameter ARROW body=expr %prec over_TOP { ELam (para, body) }
     | MATCH e=expr WITH OR? branches=separated_nonempty_list(OR, branch) %prec over_TOP
            { ECase (e, branches) }
+    | e=bin_expr { e }
     ;
+
+bin_expr:
+    | e0=expr EQ e1=expr { ECmp (Eq, e0, e1) }
+    | e0=expr NEQ e1=expr { ECmp (Neq, e0, e1) }
 
 branch: p=pattern ARROW e=expr %prec over_TOP { ( p, e ) }
 

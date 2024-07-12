@@ -129,6 +129,7 @@ let rec tc_expr (e : T.expr) (env : Env.t) : expr =
   | T.EField (p, x) -> tc_field p x env
   | T.ECons c -> tc_cons c env
   | T.EFieldCons (p, c) -> tc_field_cons p c env
+  | T.ECmp (op, e0, e1) -> tc_cmp op e0 e1 env
 
 and tc_const c =
   match c with
@@ -281,6 +282,12 @@ and tc_app op arg env =
   U.unify op_ty (I.TArrowI (arg_ty, tv));
 
   EApp (op_typed, arg_typed, tv)
+
+and tc_cmp op e0 e1 env =
+  let e0_typed = tc_expr e0 env in
+  let e1_typed = tc_expr e1 env in
+  U.unify (get_ty e0_typed) (get_ty e1_typed);
+  ECmp (op, e0_typed, e1_typed, I.bool_ty)
 
 and tc_cases e bs env =
   let e_typed = tc_expr e env in

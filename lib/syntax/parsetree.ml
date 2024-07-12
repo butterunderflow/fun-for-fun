@@ -22,6 +22,10 @@ and para =
 
 and paras = para list
 
+and cmp_op =
+  | Eq
+  | Neq
+
 and expr =
   | EConst of constant
   | EVar of string
@@ -36,6 +40,7 @@ and expr =
   | ETuple of expr list
   | EField of mod_expr * string
   | EFieldCons of mod_expr * string
+  | ECmp of cmp_op * expr * expr
 
 and pattern =
   | PVal of constant

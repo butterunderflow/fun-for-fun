@@ -19,6 +19,7 @@ type expr =
   | ELam of lambda
   | ELetRec of (string * lambda) list * expr
   | EField of expr * string
+  | ECmp of T.cmp_op * expr * expr
 
 and pattern =
   | PVar of string

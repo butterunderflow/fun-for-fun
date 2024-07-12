@@ -22,6 +22,7 @@ type expr =
   | EClosure of closure
   | ELetRec of closure_rec * expr
   | EField of expr * string
+  | ECmp of T.cmp_op * expr * expr
 
 and pattern = L.pattern
 

@@ -130,6 +130,15 @@ module MakePP (Config : PPConfig) = struct
         pp_is_ty fmt Config.show_bind_ty
           (fun _ -> Fmt.fprintf fmt "%s[%d]" c id)
           te
+    | ECmp (op, e0, e1, te) ->
+        pp_is_ty fmt Config.show_bind_ty
+          (fun _ ->
+            pp_expr fmt e0;
+            (match op with
+            | T.Eq -> Fmt.fprintf fmt " = "
+            | T.Neq -> Fmt.fprintf fmt " <> ");
+            pp_expr fmt e1)
+          te
 
   and pp_lam fmt (x, e, _te) =
     Fmt.fprintf fmt "@[<v 2>fun %s -> @\n" x;

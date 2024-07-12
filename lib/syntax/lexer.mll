@@ -61,6 +61,7 @@ rule token = parse
     | "of"              { OF }
     | "->"              { ARROW }
     | "="               { EQ }
+    | "<>"              { NEQ }
     | "*"               { STAR }
     | "|"               { OR }
     | '('               { LPAREN }

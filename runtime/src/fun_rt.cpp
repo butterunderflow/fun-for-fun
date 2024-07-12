@@ -1,7 +1,9 @@
 #include "fun_rt.hpp"
 #include <algorithm>
 #include <assert.h>
+#include <cstdint>
 #include <cstdio>
+#include <cstring>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -34,6 +36,14 @@ ff_closure_t* GC_alloc_empty_closure() {
     return closure_ptr;
 }
 
+ff_tuple_t* GC_alloc_tuple(int64_t size) {
+    assert(size > 0);
+    auto tu_ptr = reinterpret_cast<ff_tuple_t*>(
+        malloc(sizeof(int64_t) + size * sizeof(ff_obj_t)));
+    tu_ptr->size = size;
+    return tu_ptr;
+}
+
 ff_closure_t* GC_alloc_closure(int64_t fvs_n) {
     ff_closure_t* closure_ptr = GC_alloc_empty_closure();
     closure_ptr->fvs = GC_alloc_n_objs(fvs_n);
@@ -60,11 +70,11 @@ ff_obj_t ff_make_str(const char* val) {
 ff_obj_t ff_make_tuple(std::vector<ff_obj_t> objs, int64_t size) {
     assert(objs.size() == size);
     ff_obj_t ret = {.tag = FF_TUPLE_TAG};
-    ff_obj_t* arr = GC_alloc_n_objs(size);
+    ff_tuple_t* tu = GC_alloc_tuple(size);
     for (size_t i = 0; i < size; i++) {
-        arr[i] = objs[i];
+        tu->payloads[i] = objs[i];
     }
-    ret.data = arr;
+    ret.data = tu;
     return ret;
 }
 
@@ -209,8 +219,22 @@ ff_obj_t ff_print_int_cfn(ff_fvs_t fvs, ff_obj_t x) {
     return ff_make_int(0);
 }
 
+ff_obj_t ff_print_bool_cfn(ff_fvs_t fvs, ff_obj_t x) {
+    assert(x.tag == FF_INT_TAG);
+    auto value = ff_get_int(x);
+    if (value == 0) {
+        std::printf("false");
+    } else {
+        std::printf("true");
+    }
+    return ff_make_int(0);
+}
+
 const ff_obj_t ff_builtin_print_int =
     ff_make_closure({}, 0, (ff_erased_fptr)ff_print_int_cfn);
+
+const ff_obj_t ff_builtin_print_bool =
+    ff_make_closure({}, 0, (ff_erased_fptr)ff_print_bool_cfn);
 
 ff_obj_t ff_print_str_cfn(ff_fvs_t fvs, ff_obj_t x) {
     auto value = ff_get_str(x);
@@ -237,8 +261,53 @@ bool ff_match_tuple(ff_obj_t cond, std::vector<ff_obj_t*> payloads) {
     if (cond.tag != FF_TUPLE_TAG) {
         return false;
     }
+    auto tu_ptr = reinterpret_cast<const ff_tuple_t*>(cond.data);
     for (size_t i = 0; i < payloads.size(); i++) {
-        *payloads[i] = reinterpret_cast<const ff_obj_t*>(cond.data)[i];
+        *payloads[i] = tu_ptr->payloads[i];
     }
     return true;
+}
+
+bool ff_is_equal_aux(const ff_obj_t& x, const ff_obj_t& y) {
+    if (x.tag != y.tag) {
+        return false;
+    }
+    if (x.data == y.data) {
+        return true;
+    }
+    if (x.tag == FF_INT_TAG) {
+        return ff_get_int(x) == ff_get_int(y);
+    }
+    if (x.tag == FF_STR_TAG) {
+        return strcmp((const char*)x.data, (const char*)y.data);
+    }
+    if (x.tag == FF_TUPLE_TAG) {
+        const auto& x_1 = *reinterpret_cast<const ff_tuple_t*>(x.data);
+        const auto& y_1 = *reinterpret_cast<const ff_tuple_t*>(y.data);
+        if (x_1.size != y_1.size) {
+            return false;
+        }
+        auto result = true;
+        for (auto i = 0; i < x_1.size; i++) {
+            result =
+                result && (ff_is_equal_aux(x_1.payloads[i], y_1.payloads[i]));
+        }
+        return result;
+    }
+    if (x.tag == FF_CLOSURE_TAG) {
+        assert(false && "try to compare between closures");
+        return false;
+    }
+    assert(x.tag >= FF_CONSTR_BARRIER);
+    const auto& x_1 = *reinterpret_cast<const ff_obj_t*>(x.data);
+    const auto& x_2 = *reinterpret_cast<const ff_obj_t*>(y.data);
+    return ff_is_equal_aux(x_1, x_2);
+}
+
+ff_obj_t ff_is_equal(ff_obj_t x, ff_obj_t y) {
+    return ff_make_int(ff_is_equal_aux(x, y));
+}
+
+ff_obj_t ff_is_not_equal(ff_obj_t x, ff_obj_t y) {
+    return ff_make_int(!ff_is_equal_aux(x, y));
 }

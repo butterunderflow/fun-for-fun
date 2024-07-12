@@ -36,6 +36,11 @@ struct ff_obj_member_t {
     ff_obj_member_t* next;
 };
 
+struct ff_tuple_t {
+    int64_t size;
+    ff_obj_t payloads[];
+};
+
 ff_obj_t ff_make_int(int64_t val);
 
 ff_obj_t ff_make_str(const char* val);
@@ -86,11 +91,17 @@ ff_obj_t ff_apply_generic(ff_obj_t op, Types... args) {
 
 ff_obj_t ff_add_int(ff_obj_t x, ff_obj_t y);
 
+ff_obj_t ff_is_equal(ff_obj_t x, ff_obj_t y);
+
+ff_obj_t ff_is_not_equal(ff_obj_t x, ff_obj_t y);
+
 extern const ff_obj_t ff_builtin_add;
 
 extern const ff_obj_t ff_builtin_print_int;
 
 extern const ff_obj_t ff_builtin_print_str;
+
+extern const ff_obj_t ff_builtin_print_bool;
 
 bool ff_match_constr(int64_t id, ff_obj_t cond);
 

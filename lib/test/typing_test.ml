@@ -1089,4 +1089,16 @@ external print_int : int ->  int = "ff_builtin_print_int"
        ff_add)
       (TopExternal print_int (TArrowI (TConsI (0 int) ()) (TConsI (0 int) ()))
         ff_builtin_print_int))
+    |}];
+
+  print_typed
+    {|
+     let x = 1
+     let n = x = 1
+|};
+  [%expect {|
+    ((TopLet x (EConst (CInt 1) (TConsI (0 int) ())))
+      (TopLet n
+        (ECmp Eq (EVar x (TConsI (0 int) ()))
+          (EConst (CInt 1) (TConsI (0 int) ())) (TConsI (0 bool) ()))))
     |}]
