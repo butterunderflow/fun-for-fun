@@ -57,7 +57,8 @@ ff_obj_t ff_make_str(const char* val) {
     return ret;
 }
 
-ff_obj_t ff_make_tuple(const ff_obj_t* objs, int64_t size) {
+ff_obj_t ff_make_tuple(std::vector<ff_obj_t> objs, int64_t size) {
+    assert(objs.size() == size);
     ff_obj_t ret = {.tag = FF_TUPLE_TAG};
     ff_obj_t* arr = GC_alloc_n_objs(size);
     for (size_t i = 0; i < size; i++) {
@@ -202,6 +203,7 @@ const ff_obj_t ff_builtin_add =
     ff_make_closure({}, 0, (ff_erased_fptr)ff_make_adder_cfn);
 
 ff_obj_t ff_print_int_cfn(ff_fvs_t fvs, ff_obj_t x) {
+    assert(x.tag == FF_INT_TAG);
     auto value = ff_get_int(x);
     std::printf("%ld", value);
     return ff_make_int(0);
@@ -218,3 +220,25 @@ ff_obj_t ff_print_str_cfn(ff_fvs_t fvs, ff_obj_t x) {
 
 const ff_obj_t ff_builtin_print_str =
     ff_make_closure({}, 0, (ff_erased_fptr)ff_print_str_cfn);
+
+bool ff_match_constr(int64_t id, ff_obj_t cond) {
+    return cond.tag == id + FF_CONSTR_BARRIER;
+}
+
+bool ff_match_constr(int64_t id, ff_obj_t cond, ff_obj_t* payload) {
+    if (cond.tag != id + FF_CONSTR_BARRIER) {
+        return false;
+    }
+    *payload = *(reinterpret_cast<const ff_obj_t*>(cond.data));
+    return true;
+}
+
+bool ff_match_tuple(ff_obj_t cond, std::vector<ff_obj_t*> payloads) {
+    if (cond.tag != FF_TUPLE_TAG) {
+        return false;
+    }
+    for (size_t i = 0; i < payloads.size(); i++) {
+        *payloads[i] = reinterpret_cast<const ff_obj_t*>(cond.data)[i];
+    }
+    return true;
+}
