@@ -21,8 +21,13 @@ let%expect_test "Test: expression parsing" =
   [%expect {| (EVar x) |}];
   print_parsed "1";
   [%expect {| (EConst (CInt 1)) |}];
+  print_parsed {|a b c d|};
   print_parsed "true";
-  [%expect {| (EConst (CBool true)) |}];
+  [%expect
+    {|
+    (EApp (EApp (EApp (EVar a) (EVar b)) (EVar c)) (EVar d))
+    (EConst (CBool true))
+    |}];
   print_parsed "let x = 1 in y";
   [%expect {| (ELet x (EConst (CInt 1)) (EVar y)) |}];
   print_parsed {| Nil |};
@@ -204,10 +209,32 @@ functor
   print_parsed_program {|
   external x : int -> int -> int = "ff_add"
 |};
-  [%expect {|
+  [%expect
+    {|
     ((TopExternal x
        (TArrow (TCons int ()) (TArrow (TCons int ()) (TCons int ()))) ff_add))
-    |}]
+    |}];
+
+  print_parsed_program
+    {|
+let x = match a with
+      | Cons -> 0
+
+let y = 2
+|};
+  [%expect
+    {|
+    ((TopLet x (ECase (EVar a) (((PCons Cons ()) (EConst (CInt 0))))))
+      (TopLet y (EConst (CInt 2))))
+    |}];
+
+  print_parsed_program
+    {|
+let x = fun x -> y
+
+let y = 2
+|};
+  [%expect {| ((TopLet x (ELam ((PBare x) (EVar y)))) (TopLet y (EConst (CInt 2)))) |}]
 
 let%expect_test "Test: path parsing" =
   print_parsed_mod_expr {|X|};
