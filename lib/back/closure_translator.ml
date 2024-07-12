@@ -317,7 +317,9 @@ and trans_expr ctx e =
           C.DOWHILE
             (C.CONSTANT (C.CONST_INT "0"), make_stmt_seq (e_stmts @ branches));
         ] )
-  | EStruct _ -> ("todo", [])
+  | ECmp _
+  | EStruct _ ->
+      ("todo", [])
 
 and trans_switch res cond p e ctx =
   let match_seq, ctx = analyze_match_sequence cond p ctx in

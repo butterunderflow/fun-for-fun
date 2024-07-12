@@ -46,6 +46,10 @@ let rec lift ?(hint = "temp") (e : L.expr) (vars : string list) :
       let e1s, fns1 = List.(split (map (fun e1 -> lift e1 vars) e1s)) in
       let fns1 = List.flatten fns1 in
       (C.EApp (e0, e1s), fns0 @ fns1)
+  | L.ECmp (op, e0, e1) ->
+      let e0, fns0 = lift e0 vars in
+      let e1, fns1 = lift e1 vars in
+      (C.ECmp (op, e0, e1), fns0 @ fns1)
   | L.ESwitch (e0, bs) ->
       let e0, fns0 = lift e0 vars in
       let es, fns1 =

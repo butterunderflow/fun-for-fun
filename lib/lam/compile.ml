@@ -21,7 +21,7 @@ let rec compile_expr (e : T.expr) =
   | T.ECons (_, id, Typing.Types_in.TArrowI (_, _)) -> L.EConsWith id
   | T.ECons (_, id, _) -> L.ECons id
   | T.EFieldCons (_, _, id, _) -> L.ECons id
-  | T.ECmp (_, _, _, _) -> failwith "todo"
+  | T.ECmp (op, e1, e2, _) -> L.ECmp (op, compile_expr e1, compile_expr e2)
 
 and compile_lam (x, e, _) = ([ x ], compile_expr e, ref [])
 
@@ -116,6 +116,7 @@ let rec fva_expr e vars =
   | L.EConst _ -> []
   | L.EApp (e0, e1s) ->
       fva_expr e0 vars @ List.concat_map (fun e1 -> fva_expr e1 vars) e1s
+  | L.ECmp (_, e0, e1) -> fva_expr e0 vars @ fva_expr e1 vars
   | L.ESwitch (e0, bs) ->
       fva_expr e0 vars
       @ (bs

@@ -83,4 +83,21 @@ external add : int -> int -> int = "ff_add"
     (EModObject ((FSimple add (EExt ff_add))))
 
     Global C functions:
+    |}];
+  print_lifted {|
+let x = 1
+
+let y = 2
+
+let z = fun z -> x = y
+|};
+  [%expect {|
+    Lifted main expression:
+    (EModObject
+      ((FSimple x (EConst (CInt 1))) (FSimple y (EConst (CInt 2)))
+        (FSimple z (EClosure ((x y) z/1)))))
+
+    Global C functions:
+    (z/1 (x y) (z) (ECmp Eq (EVar x) (EVar y)))
     |}]
+
