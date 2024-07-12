@@ -21,6 +21,7 @@ let rec compile_expr (e : T.expr) =
   | T.ECons (_, id, Typing.Types_in.TArrowI (_, _)) -> L.EConsWith id
   | T.ECons (_, id, _) -> L.ECons id
   | T.EFieldCons (_, _, id, _) -> L.ECons id
+  | T.ECmp (_, _, _, _) -> failwith "todo"
 
 and compile_lam (x, e, _) = ([ x ], compile_expr e, ref [])
 
