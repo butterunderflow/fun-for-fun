@@ -219,8 +219,22 @@ ff_obj_t ff_print_int_cfn(ff_fvs_t fvs, ff_obj_t x) {
     return ff_make_int(0);
 }
 
+ff_obj_t ff_print_bool_cfn(ff_fvs_t fvs, ff_obj_t x) {
+    assert(x.tag == FF_INT_TAG);
+    auto value = ff_get_int(x);
+    if (value == 0) {
+        std::printf("false");
+    } else {
+        std::printf("true");
+    }
+    return ff_make_int(0);
+}
+
 const ff_obj_t ff_builtin_print_int =
     ff_make_closure({}, 0, (ff_erased_fptr)ff_print_int_cfn);
+
+const ff_obj_t ff_builtin_print_bool =
+    ff_make_closure({}, 0, (ff_erased_fptr)ff_print_bool_cfn);
 
 ff_obj_t ff_print_str_cfn(ff_fvs_t fvs, ff_obj_t x) {
     auto value = ff_get_str(x);
@@ -258,6 +272,9 @@ bool ff_is_equal_aux(const ff_obj_t& x, const ff_obj_t& y) {
     if (x.tag != y.tag) {
         return false;
     }
+    if (x.data == y.data) {
+        return true;
+    }
     if (x.tag == FF_INT_TAG) {
         return ff_get_int(x) == ff_get_int(y);
     }
@@ -266,11 +283,16 @@ bool ff_is_equal_aux(const ff_obj_t& x, const ff_obj_t& y) {
     }
     if (x.tag == FF_TUPLE_TAG) {
         const auto& x_1 = *reinterpret_cast<const ff_tuple_t*>(x.data);
-        const auto& x_2 = *reinterpret_cast<const ff_tuple_t*>(x.data);
-        if (x_1.size != x_2.size) {
+        const auto& y_1 = *reinterpret_cast<const ff_tuple_t*>(y.data);
+        if (x_1.size != y_1.size) {
             return false;
         }
-        return std::memcmp(&x_1, &x_2, x_1.size);
+        auto result = true;
+        for (auto i = 0; i < x_1.size; i++) {
+            result =
+                result && (ff_is_equal_aux(x_1.payloads[i], y_1.payloads[i]));
+        }
+        return result;
     }
     if (x.tag == FF_CLOSURE_TAG) {
         assert(false && "try to compare between closures");

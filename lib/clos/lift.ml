@@ -63,7 +63,7 @@ let rec lift ?(hint = "temp") (e : L.expr) (vars : string list) :
       (C.ESwitch (e0, List.combine ps es), fns0 @ fns1)
   | L.ELet (x, e0, e1) ->
       let e0, fns0 = lift ~hint:x e0 vars in
-      let e1, fns1 = lift e1 vars ~hint in
+      let e1, fns1 = lift e1 (x :: vars) ~hint in
       (C.ELet (x, e0, e1), fns0 @ fns1)
   | L.EIf (e0, e1, e2) ->
       let e0, fns0 = lift ~hint e0 vars in

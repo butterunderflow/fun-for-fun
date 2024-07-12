@@ -41,6 +41,10 @@ let ff_make_tuple = C.VARIABLE "ff_make_tuple"
 
 let ff_apply = C.VARIABLE "ff_apply_generic"
 
+let ff_is_equal = C.VARIABLE "ff_is_equal"
+
+let ff_is_not_equal = C.VARIABLE "ff_is_not_equal"
+
 let ff_get_mem = C.VARIABLE "ff_get_member"
 
 let ff_constr_p = C.VARIABLE "ff_make_constr_payload"
@@ -317,9 +321,22 @@ and trans_expr ctx e =
           C.DOWHILE
             (C.CONSTANT (C.CONST_INT "0"), make_stmt_seq (e_stmts @ branches));
         ] )
-  | ECmp _
-  | EStruct _ ->
-      ("todo", [])
+  | ECmp (op, e0, e1) ->
+      let is_eq_v = create_decl "is_eq" ctx in
+      let e0_v, e0_stmts = trans_expr ctx e0 in
+      let e1_v, e1_stmts = trans_expr ctx e1 in
+      let eq_fn =
+        match op with
+        | Eq -> ff_is_equal
+        | Neq -> ff_is_not_equal
+      in
+      ( is_eq_v,
+        e0_stmts @ e1_stmts
+        @ [
+            make_assign (VARIABLE is_eq_v)
+              (CALL (eq_fn, [ VARIABLE e0_v; VARIABLE e1_v ]));
+          ] )
+  | EStruct _ -> ("todo", [])
 
 and trans_switch res cond p e ctx =
   let match_seq, ctx = analyze_match_sequence cond p ctx in

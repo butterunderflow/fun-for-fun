@@ -101,6 +101,8 @@ extern const ff_obj_t ff_builtin_print_int;
 
 extern const ff_obj_t ff_builtin_print_str;
 
+extern const ff_obj_t ff_builtin_print_bool;
+
 bool ff_match_constr(int64_t id, ff_obj_t cond);
 
 bool ff_match_constr(int64_t id, ff_obj_t cond, ff_obj_t* payload);
