@@ -12,7 +12,29 @@
   
   ff_obj_t _ff_main_1()
   {
-  	ff_obj_t mod_15;
+  	ff_obj_t mod_37;
+  	ff_obj_t m_36;
+  	ff_obj_t app_res_35;
+  	ff_obj_t b_34;
+  	ff_obj_t a_33;
+  	ff_obj_t tu_1th_32;
+  	ff_obj_t tu_0th_31;
+  	ff_obj_t pat_var_30;
+  	ff_obj_t match_res_29;
+  	ff_obj_t m_28;
+  	ff_obj_t app_res_27;
+  	ff_obj_t b_26;
+  	ff_obj_t a_25;
+  	ff_obj_t tu_1th_24;
+  	ff_obj_t tu_0th_23;
+  	ff_obj_t pat_var_22;
+  	ff_obj_t match_res_21;
+  	ff_obj_t n_20;
+  	ff_obj_t tu_19;
+  	ff_obj_t temp_18;
+  	ff_obj_t temp_17;
+  	ff_obj_t constr0_16;
+  	ff_obj_t app_res_15;
   	ff_obj_t n_14;
   	ff_obj_t temp_13;
   	ff_obj_t constr0_12;
@@ -39,9 +61,49 @@
   	app_res_11 = ff_apply_generic(constr0_12, temp_13);
   	app_res_10 = ff_apply_generic(f_6, app_res_11);
   	n_14 = app_res_10;
-  	mod_15 = ff_make_mod_obj(5, {"print_int", "x", "f", "n", "n"},
-  		{print_int_2, x_4, f_6, n_9, n_14});
-  	return mod_15;
+  	constr0_16 = ff_make_constr_payload(0);
+  	temp_17 = ff_make_int(10);
+  	temp_18 = ff_make_int(22);
+  	tu_19 = ff_make_tuple({temp_17, temp_18}, 2);
+  	app_res_15 = ff_apply_generic(constr0_16, tu_19);
+  	n_20 = app_res_15;
+  	do
+  	{
+  		if(ff_match_constr(0, n_20, &pat_var_22))
+  		{
+  			if(ff_match_tuple(pat_var_22, {&tu_0th_23, &tu_1th_24}))
+  			{
+  				a_25 = tu_0th_23;
+  				b_26 = tu_1th_24;
+  				app_res_27 = ff_apply_generic(print_int_2,
+  					a_25);
+  				match_res_21 = app_res_27;
+  				break;
+  			}
+  		}
+  	}
+  	while(0);
+  	m_28 = match_res_21;
+  	do
+  	{
+  		if(ff_match_constr(0, n_20, &pat_var_30))
+  		{
+  			if(ff_match_tuple(pat_var_30, {&tu_0th_31, &tu_1th_32}))
+  			{
+  				a_33 = tu_0th_31;
+  				b_34 = tu_1th_32;
+  				app_res_35 = ff_apply_generic(print_int_2,
+  					b_34);
+  				match_res_29 = app_res_35;
+  				break;
+  			}
+  		}
+  	}
+  	while(0);
+  	m_36 = match_res_29;
+  	mod_37 = ff_make_mod_obj(8, {"print_int", "x", "f", "n", "n", "n", "m",
+  		"m"}, {print_int_2, x_4, f_6, n_9, n_14, n_20, m_28, m_36});
+  	return mod_37;
   }
   
   ff_obj_t f_1(ff_fvs_t fvs_3, ff_obj_t x_2)
@@ -84,4 +146,4 @@
 
   $ ./test_match.fun.out
   Hello Runtime
-  1998
+  19981022

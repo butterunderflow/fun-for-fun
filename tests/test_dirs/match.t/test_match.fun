@@ -13,3 +13,16 @@ let f = (fun x ->
 let n = (f Nil)
 
 let n = (f (Cons 998))
+
+
+type () int_tu
+= Tu of (int * int)
+
+
+let n = Tu (10, 22)
+
+let m = (match n with
+         | Tu (a, b) -> print_int a)
+
+let m = (match n with
+         | Tu (a, b) -> print_int b)

@@ -94,6 +94,8 @@ let make_assign lhs rhs = C.(COMPUTATION (BINARY (ASSIGN, lhs, rhs)))
 
 let make_compound es = C.CONSTANT (CONST_COMPOUND es)
 
+let make_const_int i = C.CONSTANT (CONST_INT (string_of_int i))
+
 let make_addrof e = C.(UNARY (ADDROF, e))
 
 type match_operation =
@@ -163,7 +165,7 @@ and trans_expr ctx e =
   | ETuple es ->
       let es_v, stmts_list = List.split (List.map (trans_expr ctx) es) in
       let stmts = List.flatten stmts_list in
-      let tu = make_c_ident "tu" in
+      let tu = create_decl "tu" ctx in
       let stmts =
         stmts
         @ [
@@ -172,8 +174,13 @@ and trans_expr ctx e =
                 (BINARY
                    ( ASSIGN,
                      VARIABLE tu,
-                     CALL (ff_make_tuple, List.map (fun v -> VARIABLE v) es_v)
-                   )));
+                     CALL
+                       ( ff_make_tuple,
+                         [
+                           make_compound
+                             (List.map (fun v -> VARIABLE v) es_v);
+                           make_const_int (List.length es_v);
+                         ] ) )));
           ]
       in
       (tu, stmts)
@@ -368,8 +375,11 @@ and analyze_match_sequence (cond_var : string) (p : pattern) ctx :
         CheckTag
           (C.CALL
              ( ff_match_tuple,
-               [ make_compound (List.map (fun x -> C.VARIABLE x) pat_vars) ]
-             ))
+               [
+                 VARIABLE cond_var;
+                 make_compound
+                   (List.map (fun x -> make_addrof (VARIABLE x)) pat_vars);
+               ] ))
       in
       (* Analyze sub-pattens' match operations*)
       List.fold_left2

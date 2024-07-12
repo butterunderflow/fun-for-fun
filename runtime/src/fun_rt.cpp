@@ -57,7 +57,8 @@ ff_obj_t ff_make_str(const char* val) {
     return ret;
 }
 
-ff_obj_t ff_make_tuple(const ff_obj_t* objs, int64_t size) {
+ff_obj_t ff_make_tuple(std::vector<ff_obj_t> objs, int64_t size) {
+    assert(objs.size() == size);
     ff_obj_t ret = {.tag = FF_TUPLE_TAG};
     ff_obj_t* arr = GC_alloc_n_objs(size);
     for (size_t i = 0; i < size; i++) {

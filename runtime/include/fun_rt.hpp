@@ -44,7 +44,7 @@ ff_obj_t ff_make_constr_no_payload(int64_t id);
 
 ff_obj_t ff_make_constr_payload(int64_t id);
 
-ff_obj_t ff_make_tuple(const ff_obj_t* objs, int64_t size);
+ff_obj_t ff_make_tuple(std::vector<ff_obj_t> objs, int64_t size);
 
 ff_obj_t ff_make_mod_obj(const int64_t size,
                          std::vector<const char*>&& fields,
@@ -95,5 +95,7 @@ extern const ff_obj_t ff_builtin_print_str;
 bool ff_match_constr(int64_t id, ff_obj_t cond);
 
 bool ff_match_constr(int64_t id, ff_obj_t cond, ff_obj_t* payload);
+
+bool ff_match_tuple(ff_obj_t cond, std::vector<ff_obj_t*> payloads);
 
 #endif
