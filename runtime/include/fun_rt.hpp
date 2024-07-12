@@ -36,6 +36,11 @@ struct ff_obj_member_t {
     ff_obj_member_t* next;
 };
 
+struct ff_tuple_t {
+    int64_t size;
+    ff_obj_t payloads[];
+};
+
 ff_obj_t ff_make_int(int64_t val);
 
 ff_obj_t ff_make_str(const char* val);

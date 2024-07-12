@@ -1,6 +1,7 @@
 #include "fun_rt.hpp"
 #include <algorithm>
 #include <assert.h>
+#include <cstdint>
 #include <cstdio>
 #include <stddef.h>
 #include <stdint.h>
@@ -34,6 +35,14 @@ ff_closure_t* GC_alloc_empty_closure() {
     return closure_ptr;
 }
 
+ff_tuple_t* GC_alloc_tuple(int64_t size) {
+    assert(size > 0);
+    auto tu_ptr = reinterpret_cast<ff_tuple_t*>(
+        malloc(sizeof(int64_t) + size * sizeof(ff_obj_t)));
+    tu_ptr->size = size;
+    return tu_ptr;
+}
+
 ff_closure_t* GC_alloc_closure(int64_t fvs_n) {
     ff_closure_t* closure_ptr = GC_alloc_empty_closure();
     closure_ptr->fvs = GC_alloc_n_objs(fvs_n);
@@ -60,11 +69,11 @@ ff_obj_t ff_make_str(const char* val) {
 ff_obj_t ff_make_tuple(std::vector<ff_obj_t> objs, int64_t size) {
     assert(objs.size() == size);
     ff_obj_t ret = {.tag = FF_TUPLE_TAG};
-    ff_obj_t* arr = GC_alloc_n_objs(size);
+    ff_tuple_t* tu = GC_alloc_tuple(size);
     for (size_t i = 0; i < size; i++) {
-        arr[i] = objs[i];
+        tu->payloads[i] = objs[i];
     }
-    ret.data = arr;
+    ret.data = tu;
     return ret;
 }
 
@@ -237,8 +246,9 @@ bool ff_match_tuple(ff_obj_t cond, std::vector<ff_obj_t*> payloads) {
     if (cond.tag != FF_TUPLE_TAG) {
         return false;
     }
+    auto tu_ptr = reinterpret_cast<const ff_tuple_t*>(cond.data);
     for (size_t i = 0; i < payloads.size(); i++) {
-        *payloads[i] = reinterpret_cast<const ff_obj_t*>(cond.data)[i];
+        *payloads[i] = tu_ptr->payloads[i];
     }
     return true;
 }
