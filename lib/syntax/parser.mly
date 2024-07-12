@@ -18,9 +18,6 @@ let mk_type_ref fon t_args =
 %token LET
 %token MODULE
 
-%nonassoc LET TYPE
-%nonassoc over_TOP
-
 %token IF
 %token THEN
 %token ELSE
@@ -55,9 +52,14 @@ let mk_type_ref fon t_args =
 %token RBRACE
 %token SEMI
 
+%nonassoc LET TYPE
+%nonassoc over_TOP
+
 %nonassoc below_COMMA
 %left     COMMA                        /* (e , e , e) */
 %left     STAR                         /* (e * e * e) */
+
+%nonassoc IDENT
 
 %left below_APP
 %nonassoc LPAREN
@@ -169,23 +171,23 @@ path:
     | m = path DOT n = MIDENT { MEField (m, n) }
 
 expr:
-    | c=constant { EConst c }
+    | c=constant { EConst c } %prec over_TOP
     | func=expr arg=expr { EApp (func, arg) }  %prec below_APP
     | LPAREN e=expr RPAREN { e }
     | c=MIDENT { ECons c }
     | p=path DOT v=IDENT { EField (p, v) }
     | p=path DOT v=MIDENT { EFieldCons (p, v) }
-    | v=IDENT { EVar v } 
+    | v=IDENT { EVar v } %prec over_TOP
     | LET x=IDENT EQ e1=expr IN e2=expr { ELet (x, e1, e2) }
     | LET REC binds=separated_nonempty_list(AND, function_bind) IN body=expr { ELetrec (binds, body) }
     | IF e0=expr THEN e1=expr ELSE e2=expr { EIf (e0, e1, e2) }
     | tu=tuple_expr { tu }
-    | FUN para=parameter ARROW body=expr { ELam (para, body) }
-    | MATCH e=expr WITH OR? branches=separated_nonempty_list(OR, branch)
+    | FUN para=parameter ARROW body=expr %prec over_TOP { ELam (para, body) }
+    | MATCH e=expr WITH OR? branches=separated_nonempty_list(OR, branch) %prec over_TOP
            { ECase (e, branches) }
     ;
 
-branch: p=pattern ARROW e=expr { ( p, e ) }
+branch: p=pattern ARROW e=expr %prec over_TOP { ( p, e ) }
 
 tuple_expr:
     | es = separated_nontrivial_llist(COMMA, expr) %prec below_COMMA
