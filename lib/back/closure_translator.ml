@@ -350,6 +350,10 @@ and trans_expr ctx e =
             make_assign (VARIABLE is_eq_v)
               (CALL (eq_fn, [ VARIABLE e0_v; VARIABLE e1_v ]));
           ] )
+  | ESeq (e0, e1) ->
+      let _e0_v, e0_stmts = trans_expr ctx e0 in
+      let e1_v, e1_stmts = trans_expr ctx e1 in
+      (e1_v, e0_stmts @ e1_stmts)
   | EStruct _ -> ("todo", [])
 
 and trans_switch res cond p e ctx =
