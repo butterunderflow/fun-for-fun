@@ -143,6 +143,13 @@ and trans_expr ctx e =
       let e1_v, e1_stmts = trans_expr ctx e1 in
       let result_stmt = result_stmt @ e1_stmts in
       (e1_v, result_stmt)
+  | EConst CUnit ->
+      let ret_v = create_decl "temp" ctx in
+      ( ret_v,
+        [
+          make_assign (VARIABLE ret_v)
+            (CALL (ff_make_int, [ CONSTANT (CONST_INT (string_of_int 0)) ]));
+        ] )
   | EConst (S.CInt i) ->
       let ret_v = create_decl "temp" ctx in
       ( ret_v,

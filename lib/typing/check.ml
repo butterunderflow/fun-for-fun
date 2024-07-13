@@ -136,6 +136,7 @@ and tc_const c =
   | T.CBool _ -> EConst (c, I.bool_ty)
   | T.CInt _ -> EConst (c, I.int_ty)
   | T.CString _ -> EConst (c, I.string_ty)
+  | T.CUnit -> EConst (c, I.unit_ty)
 
 and tc_var x env =
   let bind = Env.get_value_type x env in

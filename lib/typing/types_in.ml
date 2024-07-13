@@ -85,6 +85,8 @@ let string_ty = TConsI (mk_root_tid "string", [])
 
 let bool_ty = TConsI (mk_root_tid "bool", [])
 
+let unit_ty = TConsI (mk_root_tid "unit", [])
+
 let same_def td0 td1 = td0 = td1
 
 let get_def_name (td : ty_def) =

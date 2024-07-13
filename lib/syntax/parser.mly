@@ -227,7 +227,8 @@ sig_comp:
 constant:
     | i = INT { CInt i }
     | b = BOOL { CBool b }
-    | s = STRING { CString s } ;
+    | s = STRING { CString s } 
+    | UNIT { CUnit } ;
 
 (* debug rules: which are normal rules append with an eof *)
 type_expr_dbg:

@@ -4,6 +4,7 @@ type constant =
   | CBool of bool
   | CInt of int
   | CString of string
+  | CUnit
 [@@deriving sexp]
 
 type program = top_level list
