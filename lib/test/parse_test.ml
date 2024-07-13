@@ -91,7 +91,12 @@ let%expect_test "Test: expression parsing" =
   [%expect {| (ECmp Neq (EVar x) (EVar y)) |}];
   print_parsed {|
    f 1 ; f 2 ; f 2 = 3
- |}
+ |};
+  [%expect {|
+    (ESeq (EApp (EVar f) (EConst (CInt 1)))
+      (ESeq (EApp (EVar f) (EConst (CInt 2)))
+        (ECmp Eq (EApp (EVar f) (EConst (CInt 2))) (EConst (CInt 3)))))
+    |}]
 
 let%expect_test "Test: pattern parsing" =
   let print_parsed str =

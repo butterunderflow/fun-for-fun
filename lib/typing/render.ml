@@ -143,6 +143,12 @@ module MakePP (Config : PPConfig) = struct
             | T.Neq -> Fmt.fprintf fmt " <> ");
             pp_expr fmt e1)
           te
+    | ESeq (e0, e1, _te) ->
+        Fmt.fprintf fmt "@[<v>";
+        pp_expr fmt e0;
+        Fmt.fprintf fmt " ;@\n";
+        pp_expr fmt e1;
+        Fmt.fprintf fmt "@]"
 
   and pp_lam fmt (x, e, _te) =
     Fmt.fprintf fmt "@[<v 2>fun %s -> @\n" x;

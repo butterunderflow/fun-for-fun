@@ -726,4 +726,12 @@ module MMM = (M(F).K : I)
 
                 end)
 
-        type y = () 1.x |}]
+        type y = () 1.x |}];
+
+  print_typed {| let x = ();();();1 |};
+  [%expect {|
+    let x = (() is () 0.unit) ;
+            (() is () 0.unit) ;
+            (() is () 0.unit) ;
+            (1 is () 0.int)
+    |}]

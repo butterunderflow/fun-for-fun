@@ -295,8 +295,8 @@ and tc_seq e0 e1 env =
   let e0_typed = tc_expr e0 env in
   U.unify (get_ty e0_typed) I.unit_ty;
   let e1_typed = tc_expr e1 env in
-  let _e1_ty = get_ty e1_typed in
-  failwith "todo"
+  let e1_ty = get_ty e1_typed in
+  ESeq (e0_typed, e1_typed, e1_ty)
 
 and tc_cases e bs env =
   let e_typed = tc_expr e env in

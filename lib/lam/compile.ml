@@ -22,6 +22,7 @@ let rec compile_expr (e : T.expr) =
   | T.ECons (_, id, _) -> L.ECons id
   | T.EFieldCons (_, _, id, _) -> L.ECons id
   | T.ECmp (op, e1, e2, _) -> L.ECmp (op, compile_expr e1, compile_expr e2)
+  | T.ESeq (_, _, _) -> failwith "todo"
 
 and compile_lam (x, e, _) = ([ x ], compile_expr e, ref [])
 
