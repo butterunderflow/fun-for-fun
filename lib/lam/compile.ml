@@ -130,7 +130,7 @@ let rec fva_expr e vars =
       fva_expr e0 vars @ fva_expr e1 vars @ fva_expr e2 vars
   | L.ELam (para, e, fvs) ->
       let fvs' = fva_lambda para e vars in
-      fvs := fvs';
+      fvs := List_utils.remove_from_left fvs';
       fvs'
   | L.ELetRec (binds, e) ->
       let xs, _ = List.split binds in
@@ -140,7 +140,7 @@ let rec fva_expr e vars =
 
 and fva_lambda x e vars =
   let vars = x @ vars in
-  capture (fva_expr e vars) x |> List_utils.remove_from_left
+  capture (fva_expr e vars) x
 
 and fva_letrec binds vars =
   let xs, _ = List.split binds in
@@ -149,7 +149,7 @@ and fva_letrec binds vars =
     binds
     |> List.map (fun (_x, (para, e, fvs)) ->
            let fvs' = capture (fva_lambda para e vars) xs in
-           fvs := fvs';
+           fvs := List_utils.remove_from_left fvs';
            fvs')
     |> List.flatten
   in
