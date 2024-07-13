@@ -235,13 +235,38 @@ let y = 2
       (TopLet y (EConst (CInt 2))))
     |}];
 
-  print_parsed_program
-    {|
+  print_parsed_program {|
 let x = fun x -> y
 
 let y = 2
 |};
-  [%expect {| ((TopLet x (ELam ((PBare x) (EVar y)))) (TopLet y (EConst (CInt 2)))) |}]
+  [%expect
+    {| ((TopLet x (ELam ((PBare x) (EVar y)))) (TopLet y (EConst (CInt 2)))) |}];
+
+  print_parsed_program
+    {|
+     let x = (1,2)
+
+     let y = (1, 2)
+
+     let z = match y with 
+             | (x, y) -> x
+
+     let n = fun y -> match y with 
+       | (x, y) -> y
+
+     let w = 1
+     |};
+  [%expect
+    {|
+    ((TopLet x (ETuple ((EConst (CInt 1)) (EConst (CInt 2)))))
+      (TopLet y (ETuple ((EConst (CInt 1)) (EConst (CInt 2)))))
+      (TopLet z (ECase (EVar y) (((PTuple ((PVar x) (PVar y))) (EVar x)))))
+      (TopLet n
+        (ELam
+          ((PBare y) (ECase (EVar y) (((PTuple ((PVar x) (PVar y))) (EVar y)))))))
+      (TopLet w (EConst (CInt 1))))
+    |}]
 
 let%expect_test "Test: path parsing" =
   print_parsed_mod_expr {|X|};
