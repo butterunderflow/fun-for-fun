@@ -164,7 +164,14 @@ and trans_expr ctx e =
       ( ret_v,
         [
           make_assign (VARIABLE ret_v)
-            (CALL (ff_make_str, [ CONSTANT (CONST_STRING s) ]));
+            (CALL
+               ( ff_make_str,
+                 [
+                   CONSTANT
+                     (CONST_STRING
+                        (Scanf.unescaped
+                           (String.sub s 1 (String.length s - 2))));
+                 ] ));
         ] )
   | ETuple es ->
       let es_v, stmts_list = List.split (List.map (trans_expr ctx) es) in

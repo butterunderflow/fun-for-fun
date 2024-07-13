@@ -13,7 +13,7 @@ let string_quote = '"'
 let line_comment = '%' [^ '\n'] *
 let open_comment = "/*"
 let close_comment = "*/"
-let escape = '\\'
+let escape = '\\' ('t'|'n'|'\"'|'\''|'\\')
 let sign = ['+' '-']
 
 let alphanumerical = upper_case | underline | lower_case | digit
@@ -25,7 +25,7 @@ let mod_ident = (underline | upper_case) alphanumerical *
 let ident = (underline | lower_case) alphanumerical *
 
 (* Type Variables *)
-let type_var = '\'' (upper_case | underline | lower_case) alphanumerical*
+let type_var = '\'' (underline | lower_case) alphanumerical*
 
 (* Numbers *)
 let digits = digit +
@@ -33,7 +33,7 @@ let integers = (sign?) digits
 
 let boolean = "true" | "false"
 
-let strings = '\"' alphanumerical* '\"' 
+let strings = '\"' (alphanumerical|escape|' ')* '\"' 
 (* todo: support full featured string literal *)
 
 rule token = parse

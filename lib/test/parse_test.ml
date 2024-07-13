@@ -21,6 +21,9 @@ let%expect_test "Test: expression parsing" =
   [%expect {| (EVar x) |}];
   print_parsed "1";
   [%expect {| (EConst (CInt 1)) |}];
+
+  print_parsed {| "x \n \t"|};
+  [%expect {| (EConst (CString "\"x \\n \\t\"")) |}];
   print_parsed {|a b c d|};
   print_parsed "true";
   [%expect
