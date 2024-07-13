@@ -21,8 +21,11 @@ type () int_tu
 
 let n = Tu (10, 22)
 
-let m = (match n with
-         | Tu (a, b) -> print_int a)
+let m = match n with
+         | Tu (a, b) -> print_int a
 
-let m = (match n with
-         | Tu (a, b) -> print_int b)
+let tu = match n with
+         | Tu tu -> tu
+
+let m = match tu with
+        | (a, b) -> print_int b

@@ -12,13 +12,16 @@
   
   ff_obj_t _ff_main_1()
   {
-  	ff_obj_t mod_37;
-  	ff_obj_t m_36;
-  	ff_obj_t app_res_35;
-  	ff_obj_t b_34;
-  	ff_obj_t a_33;
-  	ff_obj_t tu_1th_32;
-  	ff_obj_t tu_0th_31;
+  	ff_obj_t mod_40;
+  	ff_obj_t m_39;
+  	ff_obj_t app_res_38;
+  	ff_obj_t b_37;
+  	ff_obj_t a_36;
+  	ff_obj_t tu_1th_35;
+  	ff_obj_t tu_0th_34;
+  	ff_obj_t match_res_33;
+  	ff_obj_t tu_32;
+  	ff_obj_t tu_31;
   	ff_obj_t pat_var_30;
   	ff_obj_t match_res_29;
   	ff_obj_t m_28;
@@ -88,22 +91,30 @@
   	{
   		if(ff_match_constr(0, n_20, &pat_var_30))
   		{
-  			if(ff_match_tuple(pat_var_30, {&tu_0th_31, &tu_1th_32}))
-  			{
-  				a_33 = tu_0th_31;
-  				b_34 = tu_1th_32;
-  				app_res_35 = ff_apply_generic(print_int_2,
-  					b_34);
-  				match_res_29 = app_res_35;
-  				break;
-  			}
+  			tu_31 = pat_var_30;
+  			match_res_29 = tu_31;
+  			break;
   		}
   	}
   	while(0);
-  	m_36 = match_res_29;
-  	mod_37 = ff_make_mod_obj(8, {"print_int", "x", "f", "n", "n", "n", "m",
-  		"m"}, {print_int_2, x_4, f_6, n_9, n_14, n_20, m_28, m_36});
-  	return mod_37;
+  	tu_32 = match_res_29;
+  	do
+  	{
+  		if(ff_match_tuple(tu_32, {&tu_0th_34, &tu_1th_35}))
+  		{
+  			a_36 = tu_0th_34;
+  			b_37 = tu_1th_35;
+  			app_res_38 = ff_apply_generic(print_int_2, b_37);
+  			match_res_33 = app_res_38;
+  			break;
+  		}
+  	}
+  	while(0);
+  	m_39 = match_res_33;
+  	mod_40 = ff_make_mod_obj(9, {"print_int", "x", "f", "n", "n", "n", "m",
+  		"tu", "m"}, {print_int_2, x_4, f_6, n_9, n_14, n_20, m_28,
+  		tu_32, m_39});
+  	return mod_40;
   }
   
   ff_obj_t f_1(ff_fvs_t fvs_3, ff_obj_t x_2)
