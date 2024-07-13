@@ -64,6 +64,7 @@ rule token = parse
     | "<>"              { NEQ }
     | "*"               { STAR }
     | "|"               { OR }
+    | "()"              { UNIT }
     | '('               { LPAREN }
     | ')'               { RPAREN }
     | '['               { LBRACKET }

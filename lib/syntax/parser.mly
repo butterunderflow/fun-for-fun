@@ -47,6 +47,7 @@ let mk_type_ref fon t_args =
 %token DOT
 %token OF
 %token COLON
+%token UNIT
 %token LPAREN
 %token RPAREN
 %token LBRACE
@@ -123,6 +124,9 @@ type_def:
     | TYPE LPAREN tvs=separated_list(COMMA, TYPEVAR) RPAREN n=IDENT
         EQ OR? vs=separated_list(OR, variant) %prec over_TOP
                 { TDAdt (n, (List.map Ident.from tvs), vs) }
+    | TYPE UNIT n=IDENT
+        EQ OR? vs=separated_list(OR, variant) %prec over_TOP
+                { TDAdt (n, [], vs) }
     | TYPE n=IDENT
         EQ te=type_expr %prec over_TOP
                 { TDAlias (n, te) }
@@ -158,6 +162,8 @@ field_or_name:
 type_expr:
     | LPAREN t_args = separated_list(COMMA, type_expr) RPAREN fon=field_or_name
         { mk_type_ref fon t_args }
+    | UNIT fon=field_or_name
+        { mk_type_ref fon [] }
     | LPAREN te=type_expr RPAREN { te }
     | ts=separated_nontrivial_llist(STAR, type_expr) { TTuple ts }
     | t_arg = type_expr fon=field_or_name { mk_type_ref fon [t_arg] }
@@ -212,6 +218,8 @@ sig_comp:
     | VAL v=IDENT COLON ty=type_expr { TValueSpec (v, ty) }
     | TYPE LPAREN tvs=separated_list(COMMA, TYPEVAR) RPAREN t=IDENT
         { TAbstTySpec (t, (List.map Ident.from tvs)) }
+    | TYPE UNIT t=IDENT
+        { TAbstTySpec (t, []) }
     | def=type_def                   { TManiTySpec def }
     | MODULE m_name=MIDENT EQ mt=mod_type { TModSpec (m_name, mt) }
 ;
