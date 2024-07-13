@@ -25,7 +25,7 @@ let mod_ident = (underline | upper_case) alphanumerical *
 let ident = (underline | lower_case) alphanumerical *
 
 (* Type Variables *)
-let type_var = '\'' (upper_case | underline | lower_case) alphanumerical*
+let type_var = '\'' (underline | lower_case) alphanumerical*
 
 (* Numbers *)
 let digits = digit +
