@@ -21,7 +21,8 @@ let%expect_test "Test: expression parsing" =
   [%expect {| (EVar x) |}];
   print_parsed "1";
   [%expect {| (EConst (CInt 1)) |}];
-
+  print_parsed {| () |};
+  [%expect {| (EConst CUnit) |}];
   print_parsed {| "x \n \t"|};
   [%expect {| (EConst (CString "\"x \\n \\t\"")) |}];
   print_parsed {|a b c d|};
@@ -87,7 +88,15 @@ let%expect_test "Test: expression parsing" =
   print_parsed {| x = y |};
   [%expect {| (ECmp Eq (EVar x) (EVar y)) |}];
   print_parsed {| x <> y |};
-  [%expect {| (ECmp Neq (EVar x) (EVar y)) |}]
+  [%expect {| (ECmp Neq (EVar x) (EVar y)) |}];
+  print_parsed {|
+   f 1 ; f 2 ; f 2 = 3
+ |};
+  [%expect {|
+    (ESeq (EApp (EVar f) (EConst (CInt 1)))
+      (ESeq (EApp (EVar f) (EConst (CInt 2)))
+        (ECmp Eq (EApp (EVar f) (EConst (CInt 2))) (EConst (CInt 3)))))
+    |}]
 
 let%expect_test "Test: pattern parsing" =
   let print_parsed str =

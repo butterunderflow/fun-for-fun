@@ -143,6 +143,13 @@ and trans_expr ctx e =
       let e1_v, e1_stmts = trans_expr ctx e1 in
       let result_stmt = result_stmt @ e1_stmts in
       (e1_v, result_stmt)
+  | EConst CUnit ->
+      let ret_v = create_decl "temp" ctx in
+      ( ret_v,
+        [
+          make_assign (VARIABLE ret_v)
+            (CALL (ff_make_int, [ CONSTANT (CONST_INT (string_of_int 0)) ]));
+        ] )
   | EConst (S.CInt i) ->
       let ret_v = create_decl "temp" ctx in
       ( ret_v,
@@ -343,6 +350,10 @@ and trans_expr ctx e =
             make_assign (VARIABLE is_eq_v)
               (CALL (eq_fn, [ VARIABLE e0_v; VARIABLE e1_v ]));
           ] )
+  | ESeq (e0, e1) ->
+      let _e0_v, e0_stmts = trans_expr ctx e0 in
+      let e1_v, e1_stmts = trans_expr ctx e1 in
+      (e1_v, e0_stmts @ e1_stmts)
   | EStruct _ -> ("todo", [])
 
 and trans_switch res cond p e ctx =

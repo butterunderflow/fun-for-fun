@@ -4,6 +4,7 @@ type constant =
   | CBool of bool
   | CInt of int
   | CString of string
+  | CUnit
 [@@deriving sexp]
 
 type program = top_level list
@@ -41,6 +42,7 @@ and expr =
   | EField of mod_expr * string
   | EFieldCons of mod_expr * string
   | ECmp of cmp_op * expr * expr
+  | ESeq of expr * expr
 
 and pattern =
   | PVal of constant

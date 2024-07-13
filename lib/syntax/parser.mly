@@ -47,6 +47,7 @@ let mk_type_ref fon t_args =
 %token DOT
 %token OF
 %token COLON
+%token UNIT
 %token LPAREN
 %token RPAREN
 %token LBRACE
@@ -61,6 +62,10 @@ let mk_type_ref fon t_args =
 %left     STAR                         /* (e * e * e) */
 
 %nonassoc IDENT
+
+
+%right SEMI
+%left EQ
 
 %left below_APP
 %nonassoc LPAREN
@@ -123,6 +128,9 @@ type_def:
     | TYPE LPAREN tvs=separated_list(COMMA, TYPEVAR) RPAREN n=IDENT
         EQ OR? vs=separated_list(OR, variant) %prec over_TOP
                 { TDAdt (n, (List.map Ident.from tvs), vs) }
+    | TYPE UNIT n=IDENT
+        EQ OR? vs=separated_list(OR, variant) %prec over_TOP
+                { TDAdt (n, [], vs) }
     | TYPE n=IDENT
         EQ te=type_expr %prec over_TOP
                 { TDAlias (n, te) }
@@ -158,6 +166,8 @@ field_or_name:
 type_expr:
     | LPAREN t_args = separated_list(COMMA, type_expr) RPAREN fon=field_or_name
         { mk_type_ref fon t_args }
+    | UNIT fon=field_or_name
+        { mk_type_ref fon [] }
     | LPAREN te=type_expr RPAREN { te }
     | ts=separated_nontrivial_llist(STAR, type_expr) { TTuple ts }
     | t_arg = type_expr fon=field_or_name { mk_type_ref fon [t_arg] }
@@ -192,6 +202,7 @@ expr:
 bin_expr:
     | e0=expr EQ e1=expr { ECmp (Eq, e0, e1) }
     | e0=expr NEQ e1=expr { ECmp (Neq, e0, e1) }
+    | e0=expr SEMI e1=expr { ESeq (e0, e1) }
 
 branch: p=pattern ARROW e=expr %prec over_TOP { ( p, e ) }
 
@@ -212,6 +223,8 @@ sig_comp:
     | VAL v=IDENT COLON ty=type_expr { TValueSpec (v, ty) }
     | TYPE LPAREN tvs=separated_list(COMMA, TYPEVAR) RPAREN t=IDENT
         { TAbstTySpec (t, (List.map Ident.from tvs)) }
+    | TYPE UNIT t=IDENT
+        { TAbstTySpec (t, []) }
     | def=type_def                   { TManiTySpec def }
     | MODULE m_name=MIDENT EQ mt=mod_type { TModSpec (m_name, mt) }
 ;
@@ -219,7 +232,8 @@ sig_comp:
 constant:
     | i = INT { CInt i }
     | b = BOOL { CBool b }
-    | s = STRING { CString s } ;
+    | s = STRING { CString s } 
+    | UNIT { CUnit } ;
 
 (* debug rules: which are normal rules append with an eof *)
 type_expr_dbg:

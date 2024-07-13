@@ -25,6 +25,10 @@ module MakePP (Config : PPConfig) = struct
         pp_is_ty fmt Config.show_const_ty
           (fun _ -> Fmt.pp_print_string fmt (Printf.sprintf "\"%s\"" s))
           ty
+    | EConst (CUnit, ty) ->
+        pp_is_ty fmt Config.show_const_ty
+          (fun _ -> Fmt.pp_print_string fmt "()")
+          ty
     | EVar (x, ty) ->
         pp_is_ty fmt Config.show_bind_ty
           (fun _ -> Fmt.pp_print_string fmt x)
@@ -139,6 +143,12 @@ module MakePP (Config : PPConfig) = struct
             | T.Neq -> Fmt.fprintf fmt " <> ");
             pp_expr fmt e1)
           te
+    | ESeq (e0, e1, _te) ->
+        Fmt.fprintf fmt "@[<v>";
+        pp_expr fmt e0;
+        Fmt.fprintf fmt " ;@\n";
+        pp_expr fmt e1;
+        Fmt.fprintf fmt "@]"
 
   and pp_lam fmt (x, e, _te) =
     Fmt.fprintf fmt "@[<v 2>fun %s -> @\n" x;
@@ -333,6 +343,7 @@ module MakePP (Config : PPConfig) = struct
     | PVal (CBool b) -> Fmt.pp_print_bool fmt b
     | PVal (CInt i) -> Fmt.pp_print_int fmt i
     | PVal (CString s) -> Fmt.fprintf fmt "\"%s\"" s
+    | PVal CUnit -> Fmt.fprintf fmt "()"
     | PCons (cname, id, p) -> (
         match p with
         | None -> Fmt.fprintf fmt "%s" cname

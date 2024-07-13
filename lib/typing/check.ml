@@ -130,12 +130,14 @@ let rec tc_expr (e : T.expr) (env : Env.t) : expr =
   | T.ECons c -> tc_cons c env
   | T.EFieldCons (p, c) -> tc_field_cons p c env
   | T.ECmp (op, e0, e1) -> tc_cmp op e0 e1 env
+  | T.ESeq (e0, e1) -> tc_seq e0 e1 env
 
 and tc_const c =
   match c with
   | T.CBool _ -> EConst (c, I.bool_ty)
   | T.CInt _ -> EConst (c, I.int_ty)
   | T.CString _ -> EConst (c, I.string_ty)
+  | T.CUnit -> EConst (c, I.unit_ty)
 
 and tc_var x env =
   let bind = Env.get_value_type x env in
@@ -288,6 +290,13 @@ and tc_cmp op e0 e1 env =
   let e1_typed = tc_expr e1 env in
   U.unify (get_ty e0_typed) (get_ty e1_typed);
   ECmp (op, e0_typed, e1_typed, I.bool_ty)
+
+and tc_seq e0 e1 env =
+  let e0_typed = tc_expr e0 env in
+  U.unify (get_ty e0_typed) I.unit_ty;
+  let e1_typed = tc_expr e1 env in
+  let e1_ty = get_ty e1_typed in
+  ESeq (e0_typed, e1_typed, e1_ty)
 
 and tc_cases e bs env =
   let e_typed = tc_expr e env in

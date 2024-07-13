@@ -50,6 +50,10 @@ let rec lift ?(hint = "temp") (e : L.expr) (vars : string list) :
       let e0, fns0 = lift e0 vars in
       let e1, fns1 = lift e1 vars in
       (C.ECmp (op, e0, e1), fns0 @ fns1)
+  | L.ESeq (e0, e1) ->
+      let e0, fns0 = lift e0 vars in
+      let e1, fns1 = lift e1 vars in
+      (C.ESeq (e0, e1), fns0 @ fns1)
   | L.ESwitch (e0, bs) ->
       let e0, fns0 = lift e0 vars in
       let es, fns1 =

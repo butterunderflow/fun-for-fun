@@ -20,6 +20,7 @@ type expr =
   | ELetRec of (string * lambda) list * expr
   | EField of expr * string
   | ECmp of T.cmp_op * expr * expr
+  | ESeq of expr * expr
 
 and pattern =
   | PVar of string
