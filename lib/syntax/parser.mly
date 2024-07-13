@@ -63,6 +63,10 @@ let mk_type_ref fon t_args =
 
 %nonassoc IDENT
 
+
+%right SEMI
+%left EQ
+
 %left below_APP
 %nonassoc LPAREN
 
@@ -198,6 +202,7 @@ expr:
 bin_expr:
     | e0=expr EQ e1=expr { ECmp (Eq, e0, e1) }
     | e0=expr NEQ e1=expr { ECmp (Neq, e0, e1) }
+    | e0=expr SEMI e1=expr { ESeq (e0, e1) }
 
 branch: p=pattern ARROW e=expr %prec over_TOP { ( p, e ) }
 
