@@ -10,6 +10,7 @@ depends: [
   "visitors"
   "FrontC"
   "qcheck"
+  "qcheck-alcotest"
   "odoc" {with-doc}
 ]
 build: [

@@ -3,7 +3,7 @@
 
 (test
  (name test_entry)
- (libraries unix qcheck)
+ (libraries unix qcheck qcheck-alcotest)
  (deps
    %{bin:ff}
    %{bin:ff_wrapper}
