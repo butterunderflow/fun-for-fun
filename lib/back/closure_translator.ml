@@ -43,6 +43,8 @@ let ff_apply = C.VARIABLE "ff_apply_generic"
 
 let ff_is_equal = C.VARIABLE "ff_is_equal"
 
+let ff_is_zero = C.VARIABLE "ff_is_zero"
+
 let ff_is_not_equal = C.VARIABLE "ff_is_not_equal"
 
 let ff_get_mem = C.VARIABLE "ff_get_member"
@@ -212,7 +214,7 @@ and trans_expr ctx e =
         @ [
             C.(
               IF
-                ( VARIABLE e0_v,
+                ( C.CALL (ff_is_zero, [ VARIABLE e0_v ]),
                   make_stmt_seq
                     (e1_stmts
                     @ [ make_assign (VARIABLE ifel_v) (VARIABLE e1_v) ]),
@@ -452,7 +454,10 @@ and trans_letrec fvs binds ctx =
                CONSTANT (CONST_INT (string_of_int (List.length fvs)));
                make_compound
                  (List.map
-                    (fun (_, cfunc) -> C.VARIABLE (to_c_ident cfunc))
+                    (fun (_, cfunc) ->
+                      C.CAST
+                        ( ff_erased_fptr_typename,
+                          C.VARIABLE (to_c_ident cfunc) ))
                     binds);
                CONSTANT (CONST_INT (string_of_int (List.length binds)));
                make_compound

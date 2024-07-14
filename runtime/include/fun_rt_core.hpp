@@ -63,6 +63,12 @@ ff_obj_t ff_make_closure(std::initializer_list<ff_obj_t>&& fvs,
 
 ff_obj_t ff_make_placeholder();
 
+void ff_fill_letrec_closure(std::vector<ff_obj_t> fvs,
+                            int64_t fvs_n,
+                            std::vector<ff_erased_fptr> cfns,
+                            int64_t self_n,
+                            std::vector<ff_obj_t*> binds);
+
 int64_t ff_get_int(ff_obj_t obj);
 
 const char* ff_get_str(ff_obj_t obj);
@@ -93,5 +99,11 @@ bool ff_match_constr(int64_t id, ff_obj_t cond);
 bool ff_match_constr(int64_t id, ff_obj_t cond, ff_obj_t* payload);
 
 bool ff_match_tuple(ff_obj_t cond, std::vector<ff_obj_t*> payloads);
+
+ff_obj_t ff_is_equal(ff_obj_t x, ff_obj_t y);
+
+ff_obj_t ff_is_not_equal(ff_obj_t x, ff_obj_t y);
+
+bool ff_is_zero(ff_obj_t x);
 
 #endif

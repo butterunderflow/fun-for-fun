@@ -115,11 +115,11 @@ ff_make_closure(const ff_obj_t* fvs, int64_t fvs_n, ff_erased_fptr cfn) {
     return ret;
 }
 
-void ff_fill_letrec_closure(std::initializer_list<ff_obj_t>&& fvs,
+void ff_fill_letrec_closure(std::vector<ff_obj_t> fvs,
                             int64_t fvs_n,
-                            ff_erased_fptr* cfns,
+                            std::vector<ff_erased_fptr> cfns,
                             int64_t self_n,
-                            ff_obj_t** binds) {
+                            std::vector<ff_obj_t*> binds) {
 
     ff_fvs_t fvs_all = GC_alloc_n_objs(fvs_n + self_n);
 
@@ -253,4 +253,9 @@ ff_obj_t ff_is_equal(ff_obj_t x, ff_obj_t y) {
 
 ff_obj_t ff_is_not_equal(ff_obj_t x, ff_obj_t y) {
     return ff_make_int(!ff_is_equal_aux(x, y));
+}
+
+bool ff_is_zero(ff_obj_t x) {
+    auto val = ff_get_int(x);
+    return val;
 }
