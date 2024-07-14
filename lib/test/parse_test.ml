@@ -275,7 +275,25 @@ let y = 2
         (ELam
           ((PBare y) (ECase (EVar y) (((PTuple ((PVar x) (PVar y))) (EVar y)))))))
       (TopLet w (EConst (CInt 1))))
+    |}];
+
+print_parsed_program {|
+let rec sum = fun x ->
+    (if x = 0
+    then 0
+    else 1)
+
+let result = print_int (sum 4)
+|};
+  [%expect {|
+    ((TopLetRec
+       ((sum
+          ((PBare x)
+            (EIf (ECmp Eq (EVar x) (EConst (CInt 0))) (EConst (CInt 0))
+              (EConst (CInt 1)))))))
+      (TopLet result (EApp (EVar print_int) (EApp (EVar sum) (EConst (CInt 4))))))
     |}]
+
 
 let%expect_test "Test: path parsing" =
   print_parsed_mod_expr {|X|};

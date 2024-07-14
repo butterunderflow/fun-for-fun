@@ -149,7 +149,7 @@ parameter:
     | LPAREN n=IDENT COLON t=type_expr RPAREN { PAnn (n, t) }
 
 function_bind:
-    | name=IDENT EQ FUN para=parameter ARROW b=expr
+    | name=IDENT EQ FUN para=parameter ARROW b=expr %prec over_TOP
        { (name, (para, b)) }
 
 variant:
