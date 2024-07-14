@@ -145,43 +145,9 @@ and trans_expr ctx e =
       let e1_v, e1_stmts = trans_expr ctx e1 in
       let result_stmt = result_stmt @ e1_stmts in
       (e1_v, result_stmt)
-  | EConst CUnit ->
+  | EConst c ->
       let ret_v = create_decl "temp" ctx in
-      ( ret_v,
-        [
-          make_assign (VARIABLE ret_v)
-            (CALL (ff_make_int, [ CONSTANT (CONST_INT (string_of_int 0)) ]));
-        ] )
-  | EConst (S.CInt i) ->
-      let ret_v = create_decl "temp" ctx in
-      ( ret_v,
-        [
-          make_assign (VARIABLE ret_v)
-            (CALL (ff_make_int, [ CONSTANT (CONST_INT (string_of_int i)) ]));
-        ] )
-  | EConst (S.CBool b) ->
-      let ret_v = create_decl "temp" ctx in
-      ( ret_v,
-        [
-          make_assign (VARIABLE ret_v)
-            (CALL
-               ( ff_make_bool,
-                 [ CONSTANT (CONST_INT (if b then "1" else "0")) ] ));
-        ] )
-  | EConst (S.CString s) ->
-      let ret_v = create_decl "temp" ctx in
-      ( ret_v,
-        [
-          make_assign (VARIABLE ret_v)
-            (CALL
-               ( ff_make_str,
-                 [
-                   CONSTANT
-                     (CONST_STRING
-                        (Scanf.unescaped
-                           (String.sub s 1 (String.length s - 2))));
-                 ] ));
-        ] )
+      (ret_v, [ make_assign (VARIABLE ret_v) (trans_const c) ])
   | ETuple es ->
       let es_v, stmts_list = List.split (List.map (trans_expr ctx) es) in
       let stmts = List.flatten stmts_list in
@@ -357,6 +323,21 @@ and trans_expr ctx e =
       let e1_v, e1_stmts = trans_expr ctx e1 in
       (e1_v, e0_stmts @ e1_stmts)
   | EStruct _ -> ("todo", [])
+
+and trans_const (c : S.constant) =
+  match c with
+  | CBool b ->
+      C.CALL (ff_make_bool, [ CONSTANT (CONST_INT (if b then "1" else "0")) ])
+  | CInt i -> C.CALL (ff_make_int, [ CONSTANT (CONST_INT (string_of_int i)) ])
+  | CString s ->
+      C.CALL
+        ( ff_make_str,
+          [
+            CONSTANT
+              (CONST_STRING
+                 (Scanf.unescaped (String.sub s 1 (String.length s - 2))));
+          ] )
+  | CUnit -> C.CALL (ff_make_int, [ CONSTANT (CONST_INT (string_of_int 0)) ])
 
 and trans_switch res cond p e ctx =
   let match_seq, ctx = analyze_match_sequence cond p ctx in
