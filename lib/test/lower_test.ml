@@ -123,7 +123,7 @@ module MMM = (M(F).K : I)
         (FSimple MMM (EField (EApp (EVar M) ((EVar F))) K))
         (FLetRec
           ((f ((x) (EVar x) ()))
-            (g ((x) (EApp (EVar f) ((EConst (CInt 1)))) ()))))))
+            (g ((x) (EApp (EVar f) ((EConst (CInt 1)))) (f)))))))
     |}];
 
   print_lowered
@@ -138,7 +138,8 @@ module MMM = (M(F).K : I)
     {|
     (EModObject
       ((FLetRec
-         ((f ((x) (EVar x) ())) (g ((x) (EApp (EVar f) ((EConst (CInt 1)))) ()))))))
+         ((f ((x) (EVar x) ()))
+           (g ((x) (EApp (EVar f) ((EConst (CInt 1)))) (f)))))))
     |}];
   print_lowered
     {|

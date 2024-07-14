@@ -67,11 +67,11 @@ let%expect_test "Test: full program lowering" =
   [%expect
     {|
     Lifted main expression:
-    (EModObject ((FLetRec ((f g) ((f f/1) (g g/2))))))
+    (EModObject ((FLetRec (() ((f f/1) (g g/2))))))
 
     Global C functions:
-    (f/1 (f g) (x) (EVar x))
-    (g/2 (f g) (x) (EApp (EVar f) ((EConst (CInt 1)))))
+    (f/1 () (x) (EVar x))
+    (g/2 () (x) (EApp (EVar f) ((EConst (CInt 1)))))
     |}];
 
   print_lifted {|
@@ -109,10 +109,10 @@ print_lifted {|
 |};
   [%expect {|
     Lifted main expression:
-    (EModObject ((FLetRec ((sum) ((sum sum/1))))))
+    (EModObject ((FLetRec (() ((sum sum/1))))))
 
     Global C functions:
-    (sum/1 (sum) (x)
+    (sum/1 () (x)
       (EIf (ECmp Eq (EVar x) (EConst (CInt 0))) (EConst (CInt 1))
         (EConst (CInt 2))))
     |}]
