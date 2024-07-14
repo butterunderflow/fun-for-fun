@@ -43,6 +43,8 @@ let ff_apply = C.VARIABLE "ff_apply_generic"
 
 let ff_is_equal = C.VARIABLE "ff_is_equal"
 
+let ff_is_equal_aux = C.VARIABLE "ff_is_equal_aux"
+
 let ff_is_zero = C.VARIABLE "ff_is_zero"
 
 let ff_is_not_equal = C.VARIABLE "ff_is_not_equal"
@@ -106,7 +108,7 @@ let make_addrof e = C.(UNARY (ADDROF, e))
 
 type match_operation =
   | Bind of C.expression
-  | CheckTag of C.expression
+  | CheckPat of C.expression
 
 let get_all_member_names (mems : object_field list) =
   mems
@@ -350,7 +352,7 @@ and trans_switch res cond p e ctx =
     (fun match_expr stmt_acc ->
       match match_expr with
       | Bind bind_expr -> C.SEQUENCE (C.COMPUTATION bind_expr, stmt_acc)
-      | CheckTag check_expr -> C.IF (check_expr, stmt_acc, C.NOP))
+      | CheckPat check_expr -> C.IF (check_expr, stmt_acc, C.NOP))
     match_seq stmt
 
 and analyze_match_sequence (cond_var : string) (p : pattern) ctx :
@@ -359,10 +361,11 @@ and analyze_match_sequence (cond_var : string) (p : pattern) ctx :
   | PVar x ->
       let x, ctx = create_var ~need_decl:true x ctx in
       ([ Bind C.(BINARY (ASSIGN, VARIABLE x, VARIABLE cond_var)) ], ctx)
-  | PVal _ -> failwith "todo"
+  | PVal c ->
+      ([ CheckPat (C.CALL (ff_is_equal_aux, [VARIABLE cond_var; trans_const c])) ], ctx)
   | PCons (id, None) ->
       ( [
-          CheckTag
+          CheckPat
             (C.CALL
                ( ff_match_constr,
                  [
@@ -373,7 +376,7 @@ and analyze_match_sequence (cond_var : string) (p : pattern) ctx :
   | PCons (id, Some p) ->
       let pat_var = create_decl "pat_var" ctx in
       let check =
-        CheckTag
+        CheckPat
           (C.CALL
              ( ff_match_constr,
                [
@@ -392,7 +395,7 @@ and analyze_match_sequence (cond_var : string) (p : pattern) ctx :
       in
       (* First, check if it's a tuple *)
       let check =
-        CheckTag
+        CheckPat
           (C.CALL
              ( ff_match_tuple,
                [
