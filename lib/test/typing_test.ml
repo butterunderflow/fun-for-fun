@@ -1091,12 +1091,12 @@ external print_int : int ->  int = "ff_builtin_print_int"
         ff_builtin_print_int))
     |}];
 
-  print_typed
-    {|
+  print_typed {|
      let x = 1
      let n = x = 1
 |};
-  [%expect {|
+  [%expect
+    {|
     ((TopLet x (EConst (CInt 1) (TConsI (0 int) ())))
       (TopLet n
         (ECmp Eq (EVar x (TConsI (0 int) ()))

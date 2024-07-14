@@ -91,6 +91,7 @@ let rec lift ?(hint = "temp") (e : L.expr) (vars : string list) :
 and lift_letrec binds vars =
   let xs = List.map fst binds in
   let vars = xs @ vars in
+  (* collect free variables *)
   let fvs =
     binds
     |> List.map snd
@@ -98,7 +99,7 @@ and lift_letrec binds vars =
     |> List.flatten
     |> List_utils.remove_from_left
   in
-  let captures = xs @ fvs in
+  let captures = List.filter (fun fv -> not (List.mem fv xs)) fvs in
   let cls, fns =
     binds
     |> List.map (fun (x, (paras, e, _fvs)) ->

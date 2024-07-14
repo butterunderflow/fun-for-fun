@@ -150,7 +150,7 @@ and fva_letrec binds vars =
   let fv_binds =
     binds
     |> List.map (fun (_x, (para, e, fvs)) ->
-           let fvs' = capture (fva_lambda para e vars) xs in
+           let fvs' = fva_lambda para e vars in
            fvs := List_utils.remove_from_left fvs';
            fvs')
     |> List.flatten
