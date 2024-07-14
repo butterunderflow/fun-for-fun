@@ -15,4 +15,10 @@ let fib_test =
   QCheck.Test.make ~count:5 ~name:"fib.exe propety" (QCheck.int_bound 30)
     (fun i -> U.call_ff_int_to_int ~case:"fib.fun" i = fib i)
 
-let () = ignore (QCheck_runner.run_tests ~verbose:true [ sum_test; fib_test ])
+let () =
+  let suite =
+    List.map
+      (QCheck_alcotest.to_alcotest ~verbose:true)
+      [ sum_test; fib_test ]
+  in
+  Alcotest.run "Test compiled program property" [ ("calculation", suite) ]
