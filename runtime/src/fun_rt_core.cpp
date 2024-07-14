@@ -131,7 +131,7 @@ void ff_fill_letrec_closure(std::vector<ff_obj_t> fvs,
         fvs_all[i].data = self_i;
         *binds[i] = fvs_all[i];
     }
-    std::copy(fvs.begin(), fvs.end(), fvs_all);
+    std::copy(fvs.begin(), fvs.end(), fvs_all + self_n);
 }
 
 ff_obj_t ff_make_mod_obj(const int64_t size,
