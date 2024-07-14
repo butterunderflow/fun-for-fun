@@ -99,5 +99,21 @@ let z = fun z -> x = y
 
     Global C functions:
     (z/1 (x y) (z) (ECmp Eq (EVar x) (EVar y)))
+    |}];
+
+print_lifted {|
+               let rec sum = fun x ->
+               if x = 0
+               then 1
+               else 2
+|};
+  [%expect {|
+    Lifted main expression:
+    (EModObject ((FLetRec ((sum) ((sum sum/1))))))
+
+    Global C functions:
+    (sum/1 (sum) (x)
+      (EIf (ECmp Eq (EVar x) (EConst (CInt 0))) (EConst (CInt 1))
+        (EConst (CInt 2))))
     |}]
 
