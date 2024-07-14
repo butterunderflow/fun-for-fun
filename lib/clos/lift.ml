@@ -105,7 +105,14 @@ and lift_letrec binds vars =
     |> List.map (fun (x, (paras, e, _fvs)) ->
            let e', fns = lift e (paras @ vars) ~hint:x in
            let fn_id = Ident.create ~hint:x in
-           let new_fn = (fn_id, captures, paras, e') in
+           let new_fn =
+             ( fn_id,
+               xs @ captures
+               (* todo: make every let rec lambda share same free variable
+                  list *),
+               paras,
+               e' )
+           in
            (fn_id, new_fn :: fns))
     |> List.split
     |> fun (fn_id, fns_l) -> (fn_id, List.flatten fns_l)
