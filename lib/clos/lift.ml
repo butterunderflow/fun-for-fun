@@ -92,32 +92,26 @@ and lift_letrec binds vars =
   let xs = List.map fst binds in
   let vars = xs @ vars in
   (* collect free variables *)
-  let fvs =
+  let lambda_fvs =
     binds
     |> List.map snd
     |> List.map (fun (_x, _e, fvs) -> !fvs)
     |> List.flatten
     |> List_utils.remove_from_left
   in
-  let captures = List.filter (fun fv -> not (List.mem fv xs)) fvs in
+  let letrec_fvs = List.filter (fun fv -> not (List.mem fv xs)) lambda_fvs in
+  let letrec_clos_fvs = xs @ letrec_fvs in
   let cls, fns =
     binds
     |> List.map (fun (x, (paras, e, _fvs)) ->
            let e', fns = lift e (paras @ vars) ~hint:x in
            let fn_id = Ident.create ~hint:x in
-           let new_fn =
-             ( fn_id,
-               xs @ captures
-               (* todo: make every let rec lambda share same free variable
-                  list *),
-               paras,
-               e' )
-           in
+           let new_fn = (fn_id, letrec_clos_fvs, paras, e') in
            (fn_id, new_fn :: fns))
     |> List.split
     |> fun (fn_id, fns_l) -> (fn_id, List.flatten fns_l)
   in
-  ((captures, List.combine xs cls), fns)
+  ((letrec_fvs, List.combine xs cls), fns)
 
 let lift e =
   Ident.refresh ();
