@@ -6,7 +6,7 @@
 
 (package
  (name fun4fun)
- (depends sexplib menhirLib ppx_sexp_conv ppx_inline_test ppx_jane visitors FrontC))
+ (depends sexplib menhirLib ppx_sexp_conv ppx_inline_test ppx_jane visitors FrontC qcheck))
 
 (generate_opam_files)
 

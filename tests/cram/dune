@@ -7,7 +7,5 @@
  (applies_to :whole_subtree)
  (deps
    %{bin:ff}
-   %{bin:ff_wrapper}
-   %{lib-private:runtime:fun_rt.hpp}
-   %{lib-private:runtime:libfun_rt.a}))
+   %{bin:ff_wrapper}))
 

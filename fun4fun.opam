@@ -9,6 +9,7 @@ depends: [
   "ppx_jane"
   "visitors"
   "FrontC"
+  "qcheck"
   "odoc" {with-doc}
 ]
 build: [

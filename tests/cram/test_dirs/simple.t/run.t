@@ -84,6 +84,7 @@
 
   $ ls
   a.out
+  fib.fun
   simple.fun
   simple1.out
   simple1.out.c_dbg
@@ -134,4 +135,10 @@
             ->() 0.int)) (1 is () 0.int)
 
   $ $FF simple.fun
+
+  $ $FF fib.fun
+
+  $ ./fib.fun.out
+  Hello Runtime
+  89
 
