@@ -1,5 +1,5 @@
-#include "fun_rt_core.hpp"
 #include "fun_rt_lib.hpp"
+#include "fun_rt_core.hpp"
 #include <cstdio>
 
 void test_rt() {
@@ -25,6 +25,26 @@ ff_obj_t ff_make_adder_cfn(ff_fvs_t fvs, ff_obj_t x) {
 
 const ff_obj_t ff_builtin_add =
     ff_make_closure({}, 0, (ff_erased_fptr)ff_make_adder_cfn);
+
+ff_obj_t ff_int_minus(ff_obj_t x, ff_obj_t y) {
+    assert(x.tag == FF_INT_TAG);
+    assert(y.tag == FF_INT_TAG);
+    return ff_make_int(ff_get_int(x) - ff_get_int(y));
+}
+
+ff_obj_t ff_minuor_cfn(ff_fvs_t fvs, ff_obj_t y) {
+    auto x = fvs[0];
+    auto result = ff_int_minus(x, y);
+    return result;
+}
+
+ff_obj_t ff_make_minuor_cfn(ff_fvs_t fvs, ff_obj_t x) {
+    auto adder = ff_make_closure({x}, 1, (ff_erased_fptr)ff_minuor_cfn);
+    return adder;
+}
+
+const ff_obj_t ff_builtin_minus =
+    ff_make_closure({}, 0, (ff_erased_fptr)ff_make_minuor_cfn);
 
 ff_obj_t ff_print_int_cfn(ff_fvs_t fvs, ff_obj_t x) {
     assert(x.tag == FF_INT_TAG);
