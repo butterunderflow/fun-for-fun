@@ -7,6 +7,7 @@ type scope = {
   modules : (string * I.mod_ty) list; (* module bindings *)
   module_sigs : (string * I.mod_ty) list; (* module bindings *)
   module_dict : (int * I.mod_ty) list;
+      (* UNUSED FIELD: designed for caching module id to their definition *)
   curr : int;
   history : int list ref;
 }
