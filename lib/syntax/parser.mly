@@ -61,14 +61,17 @@ let mk_type_ref fon t_args =
 %left     COMMA                        /* (e , e , e) */
 %left     STAR                         /* (e * e * e) */
 
-%nonassoc IDENT
-
-
+%nonassoc below_SEMI
 %right SEMI
+
+%nonassoc IDENT, INT, STRING, BOOL
+
+
 %left EQ
 
-%left below_APP
 %nonassoc LPAREN
+%left below_APP
+
 
 
 %type <Parsetree.program> program
@@ -200,9 +203,9 @@ expr:
     ;
 
 bin_expr:
-    | e0=expr EQ e1=expr { ECmp (Eq, e0, e1) }
-    | e0=expr NEQ e1=expr { ECmp (Neq, e0, e1) }
-    | e0=expr SEMI e1=expr { ESeq (e0, e1) }
+    | e0=expr EQ e1=expr %prec EQ { ECmp (Eq, e0, e1) }
+    | e0=expr NEQ e1=expr %prec EQ { ECmp (Neq, e0, e1) }
+    | e0=expr SEMI e1=expr %prec below_SEMI { ESeq (e0, e1) }
 
 branch: p=pattern ARROW e=expr %prec over_TOP { ( p, e ) }
 
