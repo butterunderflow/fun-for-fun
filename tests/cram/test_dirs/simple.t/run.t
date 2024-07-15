@@ -15,69 +15,69 @@
   #include"fun_rt.hpp"
   #include<stdio.h>
   
-  ff_obj_t _ff_main_1();
-  ff_obj_t m_3(ff_fvs_t fvs_3, ff_obj_t x_2);
-  ff_obj_t w_2(ff_fvs_t fvs_2, ff_obj_t x_1);
-  ff_obj_t z_1(ff_fvs_t fvs_3, ff_obj_t x_2);
+  ff_obj_t _ff_main_1__fn();
+  ff_obj_t m_3__fn(ff_fvs_t fvs_3__l, ff_obj_t x_2__l);
+  ff_obj_t w_2__fn(ff_fvs_t fvs_2__l, ff_obj_t x_1__l);
+  ff_obj_t z_1__fn(ff_fvs_t fvs_3__l, ff_obj_t x_2__l);
   
-  ff_obj_t _ff_main_1()
+  ff_obj_t _ff_main_1__fn()
   {
-  	ff_obj_t mod_12;
-  	ff_obj_t m_11;
-  	ff_obj_t clos_10;
-  	ff_obj_t w_9;
-  	ff_obj_t clos_8;
-  	ff_obj_t z_7;
-  	ff_obj_t clos_6;
-  	ff_obj_t y_5;
-  	ff_obj_t temp_4;
-  	ff_obj_t x_3;
-  	ff_obj_t temp_2;
-  	temp_2 = ff_make_int(1);
-  	x_3 = temp_2;
-  	temp_4 = ff_make_int(1);
-  	y_5 = temp_4;
-  	clos_6 = ff_make_closure({y_5}, 1, (ff_erased_fptr)z_1);
-  	z_7 = clos_6;
-  	clos_8 = ff_make_closure({}, 0, (ff_erased_fptr)w_2);
-  	w_9 = clos_8;
-  	clos_10 = ff_make_closure({w_9}, 1, (ff_erased_fptr)m_3);
-  	m_11 = clos_10;
-  	mod_12 = ff_make_mod_obj(5, {"x", "y", "z", "w", "m"}, {x_3, y_5, z_7,
-  		w_9, m_11});
-  	return mod_12;
+  	ff_obj_t mod_12__l;
+  	ff_obj_t m_11__l;
+  	ff_obj_t clos_10__l;
+  	ff_obj_t w_9__l;
+  	ff_obj_t clos_8__l;
+  	ff_obj_t z_7__l;
+  	ff_obj_t clos_6__l;
+  	ff_obj_t y_5__l;
+  	ff_obj_t temp_4__l;
+  	ff_obj_t x_3__l;
+  	ff_obj_t temp_2__l;
+  	temp_2__l = ff_make_int(1);
+  	x_3__l = temp_2__l;
+  	temp_4__l = ff_make_int(1);
+  	y_5__l = temp_4__l;
+  	clos_6__l = ff_make_closure({y_5__l}, 1, (ff_erased_fptr)z_1__fn);
+  	z_7__l = clos_6__l;
+  	clos_8__l = ff_make_closure({}, 0, (ff_erased_fptr)w_2__fn);
+  	w_9__l = clos_8__l;
+  	clos_10__l = ff_make_closure({w_9__l}, 1, (ff_erased_fptr)m_3__fn);
+  	m_11__l = clos_10__l;
+  	mod_12__l = ff_make_mod_obj(5, {"x", "y", "z", "w", "m"}, {x_3__l,
+  		y_5__l, z_7__l, w_9__l, m_11__l});
+  	return mod_12__l;
   }
   
-  ff_obj_t m_3(ff_fvs_t fvs_3, ff_obj_t x_2)
+  ff_obj_t m_3__fn(ff_fvs_t fvs_3__l, ff_obj_t x_2__l)
   {
-  	ff_obj_t temp_5;
-  	ff_obj_t app_res_4;
-  	ff_obj_t w_1;
-  	w_1 = fvs_3[0];
-  	temp_5 = ff_make_int(1);
-  	app_res_4 = ff_apply_generic(w_1, temp_5);
-  	return app_res_4;
+  	ff_obj_t temp_5__l;
+  	ff_obj_t app_res_4__l;
+  	ff_obj_t w_1__l;
+  	w_1__l = fvs_3__l[0];
+  	temp_5__l = ff_make_int(1);
+  	app_res_4__l = ff_apply_generic(w_1__l, temp_5__l);
+  	return app_res_4__l;
   }
   
-  ff_obj_t w_2(ff_fvs_t fvs_2, ff_obj_t x_1)
+  ff_obj_t w_2__fn(ff_fvs_t fvs_2__l, ff_obj_t x_1__l)
   {
-  	ff_obj_t temp_3;
-  	temp_3 = ff_make_int(0);
-  	return temp_3;
+  	ff_obj_t temp_3__l;
+  	temp_3__l = ff_make_int(0);
+  	return temp_3__l;
   }
   
-  ff_obj_t z_1(ff_fvs_t fvs_3, ff_obj_t x_2)
+  ff_obj_t z_1__fn(ff_fvs_t fvs_3__l, ff_obj_t x_2__l)
   {
-  	ff_obj_t y_1;
-  	y_1 = fvs_3[0];
-  	return y_1;
+  	ff_obj_t y_1__l;
+  	y_1__l = fvs_3__l[0];
+  	return y_1__l;
   }
   
   
   int main()
   {
     test_rt();
-    _ff_main_1();
+    _ff_main_1__fn();
   }
 
   $ ff simple.fun -o simple1.out --debug
