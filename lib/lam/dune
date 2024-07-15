@@ -2,4 +2,5 @@
  (name lam)
  (libraries sexplib common typing)
  (preprocess
-  (pps ppx_sexp_conv)))
+  (pps ppx_sexp_conv))
+ (instrumentation (backend bisect_ppx)))

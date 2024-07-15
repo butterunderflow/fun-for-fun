@@ -56,3 +56,12 @@ jobs:
 
       - name: Run tests
         run: opam exec -- dune runtest
+
+      - name: Get test with coverage instrumentation
+        run: |
+             mkdir $BISECT_DIR
+             opam exec -- dune runtest --instrument-with bisect_ppx --force
+             opam exec -- bisect-ppx-report summary --per-file --coverage-path=$BISECT_DIR >> $GITHUB_STEP_SUMMARY
+        env:
+          BISECT_DIR: ${{ runner.temp }}/_coverage
+          BISECT_FILE: ${{ runner.temp }}/_coverage/bisect_data

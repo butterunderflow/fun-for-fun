@@ -1,4 +1,6 @@
 # Fun for Fun
+![GitHub CI](https://github.com/butterunderflow/fun-for-fun/actions/workflows/ci.yml/badge.svg)
+
 A functional programming language compiler build for fun.
 
 
