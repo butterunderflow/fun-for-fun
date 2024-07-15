@@ -7,156 +7,152 @@
   #include"fun_rt.hpp"
   #include<stdio.h>
   
-  ff_obj_t _ff_main_1__fn();
-  ff_obj_t f_1__fn(ff_fvs_t fvs_3__l, ff_obj_t x_2__l);
+  ff_obj_t main_1__fn(ff_fvs_t fvs_1);
+  ff_obj_t f_2__fn(ff_fvs_t fvs_3, ff_obj_t x_2);
   
-  ff_obj_t _ff_main_1__fn()
+  ff_obj_t main_1__fn(ff_fvs_t fvs_1)
   {
-  	ff_obj_t mod_40__l;
-  	ff_obj_t m_39__l;
-  	ff_obj_t app_res_38__l;
-  	ff_obj_t b_37__l;
-  	ff_obj_t a_36__l;
-  	ff_obj_t tu_1th_35__l;
-  	ff_obj_t tu_0th_34__l;
-  	ff_obj_t match_res_33__l;
-  	ff_obj_t tu_32__l;
-  	ff_obj_t tu_31__l;
-  	ff_obj_t pat_var_30__l;
-  	ff_obj_t match_res_29__l;
-  	ff_obj_t m_28__l;
-  	ff_obj_t app_res_27__l;
-  	ff_obj_t b_26__l;
-  	ff_obj_t a_25__l;
-  	ff_obj_t tu_1th_24__l;
-  	ff_obj_t tu_0th_23__l;
-  	ff_obj_t pat_var_22__l;
-  	ff_obj_t match_res_21__l;
-  	ff_obj_t n_20__l;
-  	ff_obj_t tu_19__l;
-  	ff_obj_t temp_18__l;
-  	ff_obj_t temp_17__l;
-  	ff_obj_t constr0_16__l;
-  	ff_obj_t app_res_15__l;
-  	ff_obj_t n_14__l;
-  	ff_obj_t temp_13__l;
-  	ff_obj_t constr0_12__l;
-  	ff_obj_t app_res_11__l;
-  	ff_obj_t app_res_10__l;
-  	ff_obj_t n_9__l;
-  	ff_obj_t constr1_8__l;
-  	ff_obj_t app_res_7__l;
-  	ff_obj_t f_6__l;
-  	ff_obj_t clos_5__l;
-  	ff_obj_t x_4__l;
-  	ff_obj_t constr1_3__l;
-  	ff_obj_t print_int_2__l;
-  	print_int_2__l = ff_builtin_print_int;
-  	constr1_3__l = ff_make_constr_no_payload(1);
-  	x_4__l = constr1_3__l;
-  	clos_5__l = ff_make_closure({print_int_2__l}, 1,
-  		(ff_erased_fptr)f_1__fn);
-  	f_6__l = clos_5__l;
-  	constr1_8__l = ff_make_constr_no_payload(1);
-  	app_res_7__l = ff_apply_generic(f_6__l, constr1_8__l);
-  	n_9__l = app_res_7__l;
-  	constr0_12__l = ff_make_constr_payload(0);
-  	temp_13__l = ff_make_int(998);
-  	app_res_11__l = ff_apply_generic(constr0_12__l, temp_13__l);
-  	app_res_10__l = ff_apply_generic(f_6__l, app_res_11__l);
-  	n_14__l = app_res_10__l;
-  	constr0_16__l = ff_make_constr_payload(0);
-  	temp_17__l = ff_make_int(10);
-  	temp_18__l = ff_make_int(22);
-  	tu_19__l = ff_make_tuple({temp_17__l, temp_18__l}, 2);
-  	app_res_15__l = ff_apply_generic(constr0_16__l, tu_19__l);
-  	n_20__l = app_res_15__l;
+  	ff_obj_t mod_40;
+  	ff_obj_t m_39;
+  	ff_obj_t app_res_38;
+  	ff_obj_t b_37;
+  	ff_obj_t a_36;
+  	ff_obj_t tu_1th_35;
+  	ff_obj_t tu_0th_34;
+  	ff_obj_t match_res_33;
+  	ff_obj_t tu_32;
+  	ff_obj_t tu_31;
+  	ff_obj_t pat_var_30;
+  	ff_obj_t match_res_29;
+  	ff_obj_t m_28;
+  	ff_obj_t app_res_27;
+  	ff_obj_t b_26;
+  	ff_obj_t a_25;
+  	ff_obj_t tu_1th_24;
+  	ff_obj_t tu_0th_23;
+  	ff_obj_t pat_var_22;
+  	ff_obj_t match_res_21;
+  	ff_obj_t n_20;
+  	ff_obj_t tu_19;
+  	ff_obj_t temp_18;
+  	ff_obj_t temp_17;
+  	ff_obj_t constr0_16;
+  	ff_obj_t app_res_15;
+  	ff_obj_t n_14;
+  	ff_obj_t temp_13;
+  	ff_obj_t constr0_12;
+  	ff_obj_t app_res_11;
+  	ff_obj_t app_res_10;
+  	ff_obj_t n_9;
+  	ff_obj_t constr1_8;
+  	ff_obj_t app_res_7;
+  	ff_obj_t f_6;
+  	ff_obj_t clos_5;
+  	ff_obj_t x_4;
+  	ff_obj_t constr1_3;
+  	ff_obj_t print_int_2;
+  	print_int_2 = ff_builtin_print_int;
+  	constr1_3 = ff_make_constr_no_payload(1);
+  	x_4 = constr1_3;
+  	clos_5 = ff_make_closure({print_int_2}, 1, (ff_erased_fptr)f_2__fn);
+  	f_6 = clos_5;
+  	constr1_8 = ff_make_constr_no_payload(1);
+  	app_res_7 = ff_apply_generic(f_6, constr1_8);
+  	n_9 = app_res_7;
+  	constr0_12 = ff_make_constr_payload(0);
+  	temp_13 = ff_make_int(998);
+  	app_res_11 = ff_apply_generic(constr0_12, temp_13);
+  	app_res_10 = ff_apply_generic(f_6, app_res_11);
+  	n_14 = app_res_10;
+  	constr0_16 = ff_make_constr_payload(0);
+  	temp_17 = ff_make_int(10);
+  	temp_18 = ff_make_int(22);
+  	tu_19 = ff_make_tuple({temp_17, temp_18}, 2);
+  	app_res_15 = ff_apply_generic(constr0_16, tu_19);
+  	n_20 = app_res_15;
   	do
   	{
-  		if(ff_match_constr(0, n_20__l, &pat_var_22__l))
+  		if(ff_match_constr(0, n_20, &pat_var_22))
   		{
-  			if(ff_match_tuple(pat_var_22__l, {&tu_0th_23__l,
-  				&tu_1th_24__l}))
+  			if(ff_match_tuple(pat_var_22, {&tu_0th_23, &tu_1th_24}))
   			{
-  				a_25__l = tu_0th_23__l;
-  				b_26__l = tu_1th_24__l;
-  				app_res_27__l = ff_apply_generic(print_int_2__l,
-  					a_25__l);
-  				match_res_21__l = app_res_27__l;
+  				a_25 = tu_0th_23;
+  				b_26 = tu_1th_24;
+  				app_res_27 = ff_apply_generic(print_int_2,
+  					a_25);
+  				match_res_21 = app_res_27;
   				break;
   			}
   		}
   	}
   	while(0);
-  	m_28__l = match_res_21__l;
+  	m_28 = match_res_21;
   	do
   	{
-  		if(ff_match_constr(0, n_20__l, &pat_var_30__l))
+  		if(ff_match_constr(0, n_20, &pat_var_30))
   		{
-  			tu_31__l = pat_var_30__l;
-  			match_res_29__l = tu_31__l;
+  			tu_31 = pat_var_30;
+  			match_res_29 = tu_31;
   			break;
   		}
   	}
   	while(0);
-  	tu_32__l = match_res_29__l;
+  	tu_32 = match_res_29;
   	do
   	{
-  		if(ff_match_tuple(tu_32__l, {&tu_0th_34__l, &tu_1th_35__l}))
+  		if(ff_match_tuple(tu_32, {&tu_0th_34, &tu_1th_35}))
   		{
-  			a_36__l = tu_0th_34__l;
-  			b_37__l = tu_1th_35__l;
-  			app_res_38__l = ff_apply_generic(print_int_2__l,
-  				b_37__l);
-  			match_res_33__l = app_res_38__l;
+  			a_36 = tu_0th_34;
+  			b_37 = tu_1th_35;
+  			app_res_38 = ff_apply_generic(print_int_2, b_37);
+  			match_res_33 = app_res_38;
   			break;
   		}
   	}
   	while(0);
-  	m_39__l = match_res_33__l;
-  	mod_40__l = ff_make_mod_obj(9, {"print_int", "x", "f", "n", "n", "n",
-  		"m", "tu", "m"}, {print_int_2__l, x_4__l, f_6__l, n_9__l,
-  		n_14__l, n_20__l, m_28__l, tu_32__l, m_39__l});
-  	return mod_40__l;
+  	m_39 = match_res_33;
+  	mod_40 = ff_make_mod_obj(9, {"print_int", "x", "f", "n", "n", "n", "m",
+  		"tu", "m"}, {print_int_2, x_4, f_6, n_9, n_14, n_20, m_28,
+  		tu_32, m_39});
+  	return mod_40;
   }
   
-  ff_obj_t f_1__fn(ff_fvs_t fvs_3__l, ff_obj_t x_2__l)
+  ff_obj_t f_2__fn(ff_fvs_t fvs_3, ff_obj_t x_2)
   {
-  	ff_obj_t temp_9__l;
-  	ff_obj_t app_res_8__l;
-  	ff_obj_t app_res_7__l;
-  	ff_obj_t x_6__l;
-  	ff_obj_t pat_var_5__l;
-  	ff_obj_t match_res_4__l;
-  	ff_obj_t print_int_1__l;
-  	print_int_1__l = fvs_3__l[0];
+  	ff_obj_t temp_9;
+  	ff_obj_t app_res_8;
+  	ff_obj_t app_res_7;
+  	ff_obj_t x_6;
+  	ff_obj_t pat_var_5;
+  	ff_obj_t match_res_4;
+  	ff_obj_t print_int_1;
+  	print_int_1 = fvs_3[0];
   	do
   	{
-  		if(ff_match_constr(0, x_2__l, &pat_var_5__l))
+  		if(ff_match_constr(0, x_2, &pat_var_5))
   		{
-  			x_6__l = pat_var_5__l;
-  			app_res_7__l = ff_apply_generic(print_int_1__l, x_6__l);
-  			match_res_4__l = app_res_7__l;
+  			x_6 = pat_var_5;
+  			app_res_7 = ff_apply_generic(print_int_1, x_6);
+  			match_res_4 = app_res_7;
   			break;
   		}
-  		if(ff_match_constr(1, x_2__l))
+  		if(ff_match_constr(1, x_2))
   		{
-  			temp_9__l = ff_make_int(1);
-  			app_res_8__l = ff_apply_generic(print_int_1__l,
-  				temp_9__l);
-  			match_res_4__l = app_res_8__l;
+  			temp_9 = ff_make_int(1);
+  			app_res_8 = ff_apply_generic(print_int_1, temp_9);
+  			match_res_4 = app_res_8;
   			break;
   		}
   	}
   	while(0);
-  	return match_res_4__l;
+  	return match_res_4;
   }
   
   
   int main()
   {
     test_rt();
-    _ff_main_1__fn();
+    main_1__fn(nullptr);
   }
 
   $ ./test_match.fun.out

@@ -1,1 +1,1 @@
-val lift : Lam.Tree.expr -> Closure.expr * Closure.func list
+val lift : Lam.Tree.expr -> Ident.t * Closure.func list

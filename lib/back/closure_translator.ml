@@ -18,19 +18,8 @@ let to_c_ident_local (id : Ident.ident) =
           '_'
       | _ -> c)
     str
-  ^ "__l"
 
-let to_c_ident_fn (id : Ident.ident) =
-  let str = Ident.to_string id in
-  String.map
-    (fun c ->
-      match c with
-      | '\\'
-      | '/' ->
-          '_'
-      | _ -> c)
-    str
-  ^ "__fn"
+let to_c_ident_fn (id : Ident.ident) = to_c_ident_local id ^ "__fn"
 
 let ff_obj_typename = C.NAMED_TYPE "ff_obj_t"
 
@@ -87,8 +76,6 @@ let header = {|
 |}
 
 let make_c_ident_local x = to_c_ident_local (Ident.create ~hint:x)
-
-let make_c_ident_fn x = to_c_ident_fn (Ident.create ~hint:x)
 
 let make_context fvs =
   let dict = List.map (fun x -> (x, make_c_ident_local x)) fvs in
@@ -514,30 +501,9 @@ and trans_fn (cfunc, fvs, paras, e) =
             cfn_body ) ),
     C.DECDEF (NO_STORAGE, (cfn_name, proto)) )
 
-let create_main e =
-  (* main doesn't have parameter, so we add a special function to handle
-     this *)
-  Ident.refresh ();
-  let ctx, _ = make_context [] in
-  let cfn_name = make_c_ident_fn "_ff_main" in
-  let var, body = trans_expr ctx e in
-  let var_decls = get_var_decls ctx in
-  let cfn_body = List.append body [ C.RETURN (C.VARIABLE var) ] in
-  let proto = C.PROTO (ff_obj_typename, []) in
-  ( cfn_name,
-    C.FUNDEF
-      ( (cfn_name, proto),
-        ( var_decls,
-          List_utils.fold_left_first
-            (fun s0 s1 -> C.SEQUENCE (s0, s1))
-            cfn_body ) ),
-    C.DECDEF (NO_STORAGE, (cfn_name, proto)) )
-
-let translate (e, (fns : func list)) =
-  let main_name, main_def, main_decl = create_main e in
+let translate (main, (fns : func list)) =
   let fn_defs, fn_decls = List.split (List.map trans_fn fns) in
-  let fn_defs = main_def :: fn_defs in
-  let fn_decls = main_decl :: fn_decls in
+  let main_name = to_c_ident_fn main in
   let buf = Buffer.create 50 in
   Cprint1.print buf fn_decls;
   Cprint1.print buf fn_defs;
@@ -547,7 +513,7 @@ let translate (e, (fns : func list)) =
 int main()
 {
   test_rt();
-  %s();
+  %s(nullptr);
 }
 |} main_name
   in
