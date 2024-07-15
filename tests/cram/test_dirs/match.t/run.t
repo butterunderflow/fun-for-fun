@@ -7,10 +7,10 @@
   #include"fun_rt.hpp"
   #include<stdio.h>
   
-  ff_obj_t _ff_main_1();
-  ff_obj_t f_1(ff_fvs_t fvs_3, ff_obj_t x_2);
+  ff_obj_t main_1__fn(ff_fvs_t fvs_1);
+  ff_obj_t f_2__fn(ff_fvs_t fvs_3, ff_obj_t x_2);
   
-  ff_obj_t _ff_main_1()
+  ff_obj_t main_1__fn(ff_fvs_t fvs_1)
   {
   	ff_obj_t mod_40;
   	ff_obj_t m_39;
@@ -54,7 +54,7 @@
   	print_int_2 = ff_builtin_print_int;
   	constr1_3 = ff_make_constr_no_payload(1);
   	x_4 = constr1_3;
-  	clos_5 = ff_make_closure({print_int_2}, 1, (ff_erased_fptr)f_1);
+  	clos_5 = ff_make_closure({print_int_2}, 1, (ff_erased_fptr)f_2__fn);
   	f_6 = clos_5;
   	constr1_8 = ff_make_constr_no_payload(1);
   	app_res_7 = ff_apply_generic(f_6, constr1_8);
@@ -117,7 +117,7 @@
   	return mod_40;
   }
   
-  ff_obj_t f_1(ff_fvs_t fvs_3, ff_obj_t x_2)
+  ff_obj_t f_2__fn(ff_fvs_t fvs_3, ff_obj_t x_2)
   {
   	ff_obj_t temp_9;
   	ff_obj_t app_res_8;
@@ -152,7 +152,7 @@
   int main()
   {
     test_rt();
-    _ff_main_1();
+    main_1__fn(nullptr);
   }
 
   $ ./test_match.fun.out

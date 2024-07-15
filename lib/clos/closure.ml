@@ -44,11 +44,10 @@ and func =
   * expr
 [@@deriving sexp]
 
-let dbg (e, fns) =
+let dbg (main, fns) =
   let buf = Buffer.create 50 in
-  Printf.bprintf buf "Lifted main expression: \n";
-  Printf.bprintf buf "%s\n"
-    (Sexplib.Sexp.to_string_hum ~indent:2 (sexp_of_expr e));
+  Printf.bprintf buf "Main function: \n";
+  Printf.bprintf buf "%s" (Ident.to_string main);
   Printf.bprintf buf "\nGlobal C functions: \n";
   List.iter
     (fun fn ->

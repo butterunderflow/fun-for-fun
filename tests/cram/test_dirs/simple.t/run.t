@@ -15,12 +15,12 @@
   #include"fun_rt.hpp"
   #include<stdio.h>
   
-  ff_obj_t _ff_main_1();
-  ff_obj_t m_3(ff_fvs_t fvs_3, ff_obj_t x_2);
-  ff_obj_t w_2(ff_fvs_t fvs_2, ff_obj_t x_1);
-  ff_obj_t z_1(ff_fvs_t fvs_3, ff_obj_t x_2);
+  ff_obj_t main_1__fn(ff_fvs_t fvs_1);
+  ff_obj_t m_4__fn(ff_fvs_t fvs_3, ff_obj_t x_2);
+  ff_obj_t w_3__fn(ff_fvs_t fvs_2, ff_obj_t x_1);
+  ff_obj_t z_2__fn(ff_fvs_t fvs_3, ff_obj_t x_2);
   
-  ff_obj_t _ff_main_1()
+  ff_obj_t main_1__fn(ff_fvs_t fvs_1)
   {
   	ff_obj_t mod_12;
   	ff_obj_t m_11;
@@ -37,18 +37,18 @@
   	x_3 = temp_2;
   	temp_4 = ff_make_int(1);
   	y_5 = temp_4;
-  	clos_6 = ff_make_closure({y_5}, 1, (ff_erased_fptr)z_1);
+  	clos_6 = ff_make_closure({y_5}, 1, (ff_erased_fptr)z_2__fn);
   	z_7 = clos_6;
-  	clos_8 = ff_make_closure({}, 0, (ff_erased_fptr)w_2);
+  	clos_8 = ff_make_closure({}, 0, (ff_erased_fptr)w_3__fn);
   	w_9 = clos_8;
-  	clos_10 = ff_make_closure({w_9}, 1, (ff_erased_fptr)m_3);
+  	clos_10 = ff_make_closure({w_9}, 1, (ff_erased_fptr)m_4__fn);
   	m_11 = clos_10;
   	mod_12 = ff_make_mod_obj(5, {"x", "y", "z", "w", "m"}, {x_3, y_5, z_7,
   		w_9, m_11});
   	return mod_12;
   }
   
-  ff_obj_t m_3(ff_fvs_t fvs_3, ff_obj_t x_2)
+  ff_obj_t m_4__fn(ff_fvs_t fvs_3, ff_obj_t x_2)
   {
   	ff_obj_t temp_5;
   	ff_obj_t app_res_4;
@@ -59,14 +59,14 @@
   	return app_res_4;
   }
   
-  ff_obj_t w_2(ff_fvs_t fvs_2, ff_obj_t x_1)
+  ff_obj_t w_3__fn(ff_fvs_t fvs_2, ff_obj_t x_1)
   {
   	ff_obj_t temp_3;
   	temp_3 = ff_make_int(0);
   	return temp_3;
   }
   
-  ff_obj_t z_1(ff_fvs_t fvs_3, ff_obj_t x_2)
+  ff_obj_t z_2__fn(ff_fvs_t fvs_3, ff_obj_t x_2)
   {
   	ff_obj_t y_1;
   	y_1 = fvs_3[0];
@@ -77,7 +77,7 @@
   int main()
   {
     test_rt();
-    _ff_main_1();
+    main_1__fn(nullptr);
   }
 
   $ ff simple.fun -o simple1.out --debug
@@ -95,14 +95,14 @@
 
 
   $ cat simple1.out.closure
-  Lifted main expression: 
-  (EModObject
-    ((FSimple x (EConst (CInt 1))) (FSimple y (EConst (CInt 1)))
-      (FSimple z (EClosure ((y) z/1))) (FSimple w (EClosure (() w/2)))
-      (FSimple m (EClosure ((w) m/3)))))
-  
+  Main function: 
+  main/1
   Global C functions: 
-  (m/3 (w) (x) (EApp (EVar w) ((EConst (CInt 1)))))(w/2 () (x) (EConst (CInt 0)))(z/1 (y) (x) (EVar y))
+  (main/1 () ()
+    (EModObject
+      ((FSimple x (EConst (CInt 1))) (FSimple y (EConst (CInt 1)))
+        (FSimple z (EClosure ((y) z/2))) (FSimple w (EClosure (() w/3)))
+        (FSimple m (EClosure ((w) m/4))))))(m/4 (w) (x) (EApp (EVar w) ((EConst (CInt 1)))))(w/3 () (x) (EConst (CInt 0)))(z/2 (y) (x) (EVar y))
 
   $ cat simple1.out.lambda
   (EModObject

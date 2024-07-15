@@ -8,7 +8,7 @@ type context = {
   vars : string list ref;
 }
 
-let to_c_ident (id : Ident.ident) =
+let to_c_ident_local (id : Ident.ident) =
   let str = Ident.to_string id in
   String.map
     (fun c ->
@@ -18,6 +18,8 @@ let to_c_ident (id : Ident.ident) =
           '_'
       | _ -> c)
     str
+
+let to_c_ident_fn (id : Ident.ident) = to_c_ident_local id ^ "__fn"
 
 let ff_obj_typename = C.NAMED_TYPE "ff_obj_t"
 
@@ -73,20 +75,20 @@ let header = {|
 
 |}
 
-let make_c_ident x = to_c_ident (Ident.create ~hint:x)
+let make_c_ident_local x = to_c_ident_local (Ident.create ~hint:x)
 
 let make_context fvs =
-  let dict = List.map (fun x -> (x, make_c_ident x)) fvs in
+  let dict = List.map (fun x -> (x, make_c_ident_local x)) fvs in
   let c_vars = List.map (fun (_, c_ident) -> c_ident) dict in
   ({ dict; vars = ref c_vars }, c_vars)
 
 let create_var ~need_decl x ctx =
-  let c_var = make_c_ident x in
+  let c_var = make_c_ident_local x in
   if need_decl then ctx.vars := c_var :: ctx.vars.contents;
   (c_var, { ctx with dict = (x, c_var) :: ctx.dict })
 
 let create_decl x ctx =
-  let c_var = make_c_ident x in
+  let c_var = make_c_ident_local x in
   ctx.vars := c_var :: !(ctx.vars);
   c_var
 
@@ -230,7 +232,7 @@ and trans_expr ctx e =
   | EClosure (fvs, cfunc) ->
       let clos_v = create_decl "clos" ctx in
       let fvs_c = List.map (fun fv -> List.assoc fv ctx.dict) fvs in
-      let cfn_name = to_c_ident cfunc in
+      let cfn_name = to_c_ident_fn cfunc in
       ( clos_v,
         [
           make_assign (VARIABLE clos_v)
@@ -362,7 +364,11 @@ and analyze_match_sequence (cond_var : string) (p : pattern) ctx :
       let x, ctx = create_var ~need_decl:true x ctx in
       ([ Bind C.(BINARY (ASSIGN, VARIABLE x, VARIABLE cond_var)) ], ctx)
   | PVal c ->
-      ([ CheckPat (C.CALL (ff_is_equal_aux, [VARIABLE cond_var; trans_const c])) ], ctx)
+      ( [
+          CheckPat
+            (C.CALL (ff_is_equal_aux, [ VARIABLE cond_var; trans_const c ]));
+        ],
+        ctx )
   | PCons (id, None) ->
       ( [
           CheckPat
@@ -441,7 +447,7 @@ and trans_letrec fvs binds ctx =
                     (fun (_, cfunc) ->
                       C.CAST
                         ( ff_erased_fptr_typename,
-                          C.VARIABLE (to_c_ident cfunc) ))
+                          C.VARIABLE (to_c_ident_fn cfunc) ))
                     binds);
                CONSTANT (CONST_INT (string_of_int (List.length binds)));
                make_compound
@@ -454,7 +460,7 @@ and trans_letrec fvs binds ctx =
 and trans_fn (cfunc, fvs, paras, e) =
   Ident.refresh ();
   let ctx, c_fvs = make_context fvs in
-  let cfn_name = to_c_ident cfunc in
+  let cfn_name = to_c_ident_fn cfunc in
   let c_paras, ctx =
     List.(
       fold_left
@@ -495,33 +501,9 @@ and trans_fn (cfunc, fvs, paras, e) =
             cfn_body ) ),
     C.DECDEF (NO_STORAGE, (cfn_name, proto)) )
 
-let create_main e =
-  (* main doesn't have parameter, so we add a special function to handle
-     this *)
-  Ident.refresh ();
-  let ctx, _ = make_context [] in
-  let cfn_name =
-    make_c_ident
-      "_ff_main" (* fixme: this name may clash with existing name *)
-  in
-  let var, body = trans_expr ctx e in
-  let var_decls = get_var_decls ctx in
-  let cfn_body = List.append body [ C.RETURN (C.VARIABLE var) ] in
-  let proto = C.PROTO (ff_obj_typename, []) in
-  ( cfn_name,
-    C.FUNDEF
-      ( (cfn_name, proto),
-        ( var_decls,
-          List_utils.fold_left_first
-            (fun s0 s1 -> C.SEQUENCE (s0, s1))
-            cfn_body ) ),
-    C.DECDEF (NO_STORAGE, (cfn_name, proto)) )
-
-let translate (e, (fns : func list)) =
-  let main_name, main_def, main_decl = create_main e in
+let translate (main, (fns : func list)) =
   let fn_defs, fn_decls = List.split (List.map trans_fn fns) in
-  let fn_defs = main_def :: fn_defs in
-  let fn_decls = main_decl :: fn_decls in
+  let main_name = to_c_ident_fn main in
   let buf = Buffer.create 50 in
   Cprint1.print buf fn_decls;
   Cprint1.print buf fn_defs;
@@ -531,7 +513,7 @@ let translate (e, (fns : func list)) =
 int main()
 {
   test_rt();
-  %s();
+  %s(nullptr);
 }
 |} main_name
   in

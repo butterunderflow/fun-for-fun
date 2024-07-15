@@ -11,9 +11,9 @@
   #include"fun_rt.hpp"
   #include<stdio.h>
   
-  ff_obj_t _ff_main_1();
+  ff_obj_t main_1__fn(ff_fvs_t fvs_1);
   
-  ff_obj_t _ff_main_1()
+  ff_obj_t main_1__fn(ff_fvs_t fvs_1)
   {
   	ff_obj_t mod_7;
   	ff_obj_t y_6;
@@ -35,5 +35,5 @@
   int main()
   {
     test_rt();
-    _ff_main_1();
+    main_1__fn(nullptr);
   }

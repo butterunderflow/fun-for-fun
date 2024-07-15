@@ -115,4 +115,6 @@ and lift_letrec binds vars =
 
 let lift e =
   Ident.refresh ();
-  lift e []
+  let main = Ident.create ~hint:"main" in
+  let main_body, fns = lift e [] in
+  (main, (main, [], [], main_body) :: fns)

@@ -5,9 +5,9 @@
   #include"fun_rt.hpp"
   #include<stdio.h>
   
-  ff_obj_t _ff_main_1();
+  ff_obj_t main_1__fn(ff_fvs_t fvs_1);
   
-  ff_obj_t _ff_main_1()
+  ff_obj_t main_1__fn(ff_fvs_t fvs_1)
   {
   	ff_obj_t mod_35;
   	ff_obj_t z_34;
@@ -85,7 +85,7 @@
   int main()
   {
     test_rt();
-    _ff_main_1();
+    main_1__fn(nullptr);
   }
 
   $ ./test_equality.fun.out

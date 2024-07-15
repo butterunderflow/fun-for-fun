@@ -16,9 +16,9 @@ let%expect_test "Test: full program lowering" =
     typed
     |> C1.compile_program
     |> L.lift
-    |> fun (e, fns) ->
-    Printf.printf "Lifted main expression: \n";
-    print_sexp (C.sexp_of_expr e);
+    |> fun (main, fns) ->
+    Printf.printf "Main function name: \n";
+    Printf.printf "%s" (Ident.to_string main);
     Printf.printf "\nGlobal C functions: \n";
     List.iter (fun fn -> print_sexp (C.sexp_of_func fn)) fns
   in
@@ -26,10 +26,11 @@ let%expect_test "Test: full program lowering" =
   print_lifted {| let x = 1 |};
   [%expect
     {|
-    Lifted main expression:
-    (EModObject ((FSimple x (EConst (CInt 1)))))
-
-    Global C functions: |}];
+    Main function name:
+    main/1
+    Global C functions:
+    (main/1 () () (EModObject ((FSimple x (EConst (CInt 1))))))
+    |}];
 
   print_lifted
     {| 
@@ -48,13 +49,15 @@ let%expect_test "Test: full program lowering" =
                  |};
   [%expect
     {|
-    Lifted main expression:
-    (EModObject
-      ((FSimple M
-         (EModObject ((FSimple x (ECons 0)) (FSimple y (EConst (CInt 1))))))
-        (FSimple c (EField (EVar M) x)) (FSimple d (EField (EVar M) y))))
-
-    Global C functions: |}];
+    Main function name:
+    main/1
+    Global C functions:
+    (main/1 () ()
+      (EModObject
+        ((FSimple M
+           (EModObject ((FSimple x (ECons 0)) (FSimple y (EConst (CInt 1))))))
+          (FSimple c (EField (EVar M) x)) (FSimple d (EField (EVar M) y)))))
+    |}];
 
   print_lifted
     {|
@@ -66,12 +69,12 @@ let%expect_test "Test: full program lowering" =
      |};
   [%expect
     {|
-    Lifted main expression:
-    (EModObject ((FLetRec (() ((f f/1) (g g/2))))))
-
+    Main function name:
+    main/1
     Global C functions:
-    (f/1 (f g) (x) (EVar x))
-    (g/2 (f g) (x) (EApp (EVar f) ((EConst (CInt 1)))))
+    (main/1 () () (EModObject ((FLetRec (() ((f f/2) (g g/3)))))))
+    (f/2 (f g) (x) (EVar x))
+    (g/3 (f g) (x) (EApp (EVar f) ((EConst (CInt 1)))))
     |}];
 
   print_lifted {|
@@ -79,10 +82,10 @@ external add : int -> int -> int = "ff_add"
 |};
   [%expect
     {|
-    Lifted main expression:
-    (EModObject ((FSimple add (EExt ff_add))))
-
+    Main function name:
+    main/1
     Global C functions:
+    (main/1 () () (EModObject ((FSimple add (EExt ff_add)))))
     |}];
   print_lifted {|
 let x = 1
@@ -92,13 +95,14 @@ let y = 2
 let z = fun z -> x = y
 |};
   [%expect {|
-    Lifted main expression:
-    (EModObject
-      ((FSimple x (EConst (CInt 1))) (FSimple y (EConst (CInt 2)))
-        (FSimple z (EClosure ((x y) z/1)))))
-
+    Main function name:
+    main/1
     Global C functions:
-    (z/1 (x y) (z) (ECmp Eq (EVar x) (EVar y)))
+    (main/1 () ()
+      (EModObject
+        ((FSimple x (EConst (CInt 1))) (FSimple y (EConst (CInt 2)))
+          (FSimple z (EClosure ((x y) z/2))))))
+    (z/2 (x y) (z) (ECmp Eq (EVar x) (EVar y)))
     |}];
 
 print_lifted {|
@@ -108,11 +112,11 @@ print_lifted {|
                else 2
 |};
   [%expect {|
-    Lifted main expression:
-    (EModObject ((FLetRec (() ((sum sum/1))))))
-
+    Main function name:
+    main/1
     Global C functions:
-    (sum/1 (sum) (x)
+    (main/1 () () (EModObject ((FLetRec (() ((sum sum/2)))))))
+    (sum/2 (sum) (x)
       (EIf (ECmp Eq (EVar x) (EConst (CInt 0))) (EConst (CInt 1))
         (EConst (CInt 2))))
     |}]
