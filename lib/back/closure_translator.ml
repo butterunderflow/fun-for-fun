@@ -43,6 +43,8 @@ let ff_apply = C.VARIABLE "ff_apply_generic"
 
 let ff_is_equal = C.VARIABLE "ff_is_equal"
 
+let ff_is_equal_aux = C.VARIABLE "ff_is_equal_aux"
+
 let ff_is_zero = C.VARIABLE "ff_is_zero"
 
 let ff_is_not_equal = C.VARIABLE "ff_is_not_equal"
@@ -106,7 +108,7 @@ let make_addrof e = C.(UNARY (ADDROF, e))
 
 type match_operation =
   | Bind of C.expression
-  | CheckTag of C.expression
+  | CheckPat of C.expression
 
 let get_all_member_names (mems : object_field list) =
   mems
@@ -145,43 +147,9 @@ and trans_expr ctx e =
       let e1_v, e1_stmts = trans_expr ctx e1 in
       let result_stmt = result_stmt @ e1_stmts in
       (e1_v, result_stmt)
-  | EConst CUnit ->
+  | EConst c ->
       let ret_v = create_decl "temp" ctx in
-      ( ret_v,
-        [
-          make_assign (VARIABLE ret_v)
-            (CALL (ff_make_int, [ CONSTANT (CONST_INT (string_of_int 0)) ]));
-        ] )
-  | EConst (S.CInt i) ->
-      let ret_v = create_decl "temp" ctx in
-      ( ret_v,
-        [
-          make_assign (VARIABLE ret_v)
-            (CALL (ff_make_int, [ CONSTANT (CONST_INT (string_of_int i)) ]));
-        ] )
-  | EConst (S.CBool b) ->
-      let ret_v = create_decl "temp" ctx in
-      ( ret_v,
-        [
-          make_assign (VARIABLE ret_v)
-            (CALL
-               ( ff_make_bool,
-                 [ CONSTANT (CONST_INT (if b then "1" else "0")) ] ));
-        ] )
-  | EConst (S.CString s) ->
-      let ret_v = create_decl "temp" ctx in
-      ( ret_v,
-        [
-          make_assign (VARIABLE ret_v)
-            (CALL
-               ( ff_make_str,
-                 [
-                   CONSTANT
-                     (CONST_STRING
-                        (Scanf.unescaped
-                           (String.sub s 1 (String.length s - 2))));
-                 ] ));
-        ] )
+      (ret_v, [ make_assign (VARIABLE ret_v) (trans_const c) ])
   | ETuple es ->
       let es_v, stmts_list = List.split (List.map (trans_expr ctx) es) in
       let stmts = List.flatten stmts_list in
@@ -358,6 +326,21 @@ and trans_expr ctx e =
       (e1_v, e0_stmts @ e1_stmts)
   | EStruct _ -> ("todo", [])
 
+and trans_const (c : S.constant) =
+  match c with
+  | CBool b ->
+      C.CALL (ff_make_bool, [ CONSTANT (CONST_INT (if b then "1" else "0")) ])
+  | CInt i -> C.CALL (ff_make_int, [ CONSTANT (CONST_INT (string_of_int i)) ])
+  | CString s ->
+      C.CALL
+        ( ff_make_str,
+          [
+            CONSTANT
+              (CONST_STRING
+                 (Scanf.unescaped (String.sub s 1 (String.length s - 2))));
+          ] )
+  | CUnit -> C.CALL (ff_make_int, [ CONSTANT (CONST_INT (string_of_int 0)) ])
+
 and trans_switch res cond p e ctx =
   let match_seq, ctx = analyze_match_sequence cond p ctx in
   let res', stmt = trans_expr ctx e in
@@ -369,7 +352,7 @@ and trans_switch res cond p e ctx =
     (fun match_expr stmt_acc ->
       match match_expr with
       | Bind bind_expr -> C.SEQUENCE (C.COMPUTATION bind_expr, stmt_acc)
-      | CheckTag check_expr -> C.IF (check_expr, stmt_acc, C.NOP))
+      | CheckPat check_expr -> C.IF (check_expr, stmt_acc, C.NOP))
     match_seq stmt
 
 and analyze_match_sequence (cond_var : string) (p : pattern) ctx :
@@ -378,10 +361,11 @@ and analyze_match_sequence (cond_var : string) (p : pattern) ctx :
   | PVar x ->
       let x, ctx = create_var ~need_decl:true x ctx in
       ([ Bind C.(BINARY (ASSIGN, VARIABLE x, VARIABLE cond_var)) ], ctx)
-  | PVal _ -> failwith "todo"
+  | PVal c ->
+      ([ CheckPat (C.CALL (ff_is_equal_aux, [VARIABLE cond_var; trans_const c])) ], ctx)
   | PCons (id, None) ->
       ( [
-          CheckTag
+          CheckPat
             (C.CALL
                ( ff_match_constr,
                  [
@@ -392,7 +376,7 @@ and analyze_match_sequence (cond_var : string) (p : pattern) ctx :
   | PCons (id, Some p) ->
       let pat_var = create_decl "pat_var" ctx in
       let check =
-        CheckTag
+        CheckPat
           (C.CALL
              ( ff_match_constr,
                [
@@ -411,7 +395,7 @@ and analyze_match_sequence (cond_var : string) (p : pattern) ctx :
       in
       (* First, check if it's a tuple *)
       let check =
-        CheckTag
+        CheckPat
           (C.CALL
              ( ff_match_tuple,
                [

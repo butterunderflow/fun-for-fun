@@ -102,6 +102,8 @@ bool ff_match_tuple(ff_obj_t cond, std::vector<ff_obj_t*> payloads);
 
 ff_obj_t ff_is_equal(ff_obj_t x, ff_obj_t y);
 
+bool ff_is_equal_aux(const ff_obj_t& x, const ff_obj_t& y);
+
 ff_obj_t ff_is_not_equal(ff_obj_t x, ff_obj_t y);
 
 bool ff_is_zero(ff_obj_t x);
