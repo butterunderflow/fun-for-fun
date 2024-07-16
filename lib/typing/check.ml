@@ -115,7 +115,7 @@ type norm_ctx =
 (* typing expression *)
 let rec tc_expr (e : T.expr) (env : Env.t) : expr =
   (* look a binding won't unify anything *)
-  match e with
+  match e.node with
   | T.EConst c -> tc_const c
   | T.EVar x -> tc_var x env
   | T.ELet (x, e0, e1) -> tc_let x e0 e1 env
@@ -455,7 +455,7 @@ and make_scope_mt
     }
 
 and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
-  match me with
+  match me.node with
   | T.MEName name -> MEName (name, Env.get_module_def name env)
   | T.MEStruct body ->
       let body_typed, env' = tc_tops body (enter_env env) in
