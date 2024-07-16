@@ -143,6 +143,21 @@ let init_scope () =
 
 let init () = [ init_scope () ]
 
+let env_id = ref 0
+
+let refresh_id () = env_id := 0
+
+let enter_env env =
+  env_id := 1 + !env_id;
+  record_history !env_id env;
+  let new_scope = { (init_scope ()) with curr = !env_id } in
+  new_scope :: env
+
+let env_newid env =
+  env_id := 1 + !env_id;
+  record_history !env_id env;
+  !env_id
+
 let mk_tid tn env =
   match env with
   | s :: _ -> (s.curr, tn)

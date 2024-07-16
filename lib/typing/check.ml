@@ -78,19 +78,6 @@ let generalize (t : I.ty) (env : Env.t) : I.bind_ty =
   in
   (!qvs, gen t)
 
-let env_id = ref 0
-
-let enter_env env =
-  env_id := 1 + !env_id;
-  Env.record_history !env_id env;
-  let new_scope = { (Env.init_scope ()) with curr = !env_id } in
-  new_scope :: env
-
-let env_newid env =
-  env_id := 1 + !env_id;
-  Env.record_history !env_id env;
-  !env_id
-
 let tv_pool = ref IdMap.empty
 
 let reset_pool () = tv_pool := IdMap.empty
@@ -424,12 +411,12 @@ and analyze_constructors (tid : I.ty_id) para_names (bs : I.variant list) :
     bs
 
 (* typing program (content of module) *)
-and tc_tops (prog : T.top_level list) env : program * Env.t =
+and tc_top_levels (prog : T.top_level list) env : program * Env.t =
   match prog with
   | [] -> ([], env)
   | top :: rest ->
       let top_typed0, env = tc_toplevel top env in
-      let rest_typed1, env = tc_tops rest env in
+      let rest_typed1, env = tc_top_levels rest env in
       (top_typed0 :: rest_typed1, env)
 
 and make_scope_mt
@@ -458,7 +445,7 @@ and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
   match me.node with
   | T.MEName name -> MEName (name, Env.get_module_def name env)
   | T.MEStruct body ->
-      let body_typed, env' = tc_tops body (enter_env env) in
+      let body_typed, env' = tc_top_levels body (Env.enter_env env) in
       let scope = absorb_history env' env in
       let mt = make_scope_mt scope in
       MEStruct (body_typed, mt)
@@ -514,7 +501,8 @@ and shift_mt (mt : I.mod_ty) env : I.mod_ty =
           List.iter
             (fun id ->
               if not (IntMap.mem id !result) then
-                result := IntMap.add id (env_newid env) !result)
+                (* if not a mapped id, map it to a new id *)
+                result := IntMap.add id (Env.env_newid env) !result)
             (id :: owned_mods);
           List.iter (fun (_, mt) -> go mt) mod_defs;
           List.iter (fun (_, mt) -> go mt) mod_sigs
@@ -753,7 +741,7 @@ and normalize_mt (me : T.emod_ty) env : I.mod_ty =
       | I.MTMod mt -> List.assoc name mt.mod_sigs
       | I.MTFun (_mt0, _mt1) -> failwith "try get field from functor")
   | T.MTSig comps ->
-      let env' = normalize_msig comps (enter_env env) in
+      let env' = normalize_msig comps (Env.enter_env env) in
       let scope = absorb_history env' env in
       make_scope_mt scope
   | T.MTFunctor (m0, emt0, m1) ->
@@ -778,13 +766,3 @@ and normalize_msig comps env =
             Env.add_module name mt env
       in
       normalize_msig comps env
-
-let tc_program (prog : T.program) env : program * Env.t =
-  env_id := 0;
-  (* reset module type id *)
-  match prog with
-  | [] -> ([], env)
-  | top :: rest ->
-      let top_typed0, env = tc_toplevel top env in
-      let rest_typed1, env = tc_tops rest env in
-      (top_typed0 :: rest_typed1, env)
