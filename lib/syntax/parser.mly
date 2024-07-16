@@ -89,35 +89,55 @@ let mk_type_ref fon t_args =
 %start program type_expr_dbg mod_expr_dbg mod_type_dbg expr_dbg pattern_dbg
 %%
 
-
 program:
     | tops=top_levels EOF { tops } ;
 
 top_levels:
     | (* empty *) { [] }
     | td=type_def rest=top_levels
-        { TopTypeDef td :: rest }
+        { 
+          TopTypeDef td :: rest }
     | LET x=IDENT EQ e=expr rest=top_levels
-        { TopLet (x, e) :: rest }
+        { 
+          TopLet (x, e)
+          :: rest }
     | LET REC funcs=separated_list(AND, function_bind) rest=top_levels
-        { TopLetRec funcs :: rest }
+        { 
+          TopLetRec funcs
+          :: rest }
     | EXTERNAL x=IDENT COLON te=type_expr EQ s=STRING  rest=top_levels
-        { TopExternal (x, te, String.(sub s 1 (length s - 2))) :: rest }
+        { 
+          TopExternal (x, te, String.(sub s 1 (length s - 2)))
+          :: rest
+        }
     | MODULE m_name=MIDENT
         EQ m_body=mod_expr rest=top_levels
-        { TopMod (m_name, m_body) :: rest }
+        { 
+          TopMod (m_name, m_body)
+          :: rest 
+        }
     | MODULE TYPE m_name=MIDENT EQ mt=mod_type rest=top_levels
-        { TopModSig (m_name, mt) :: rest }
+        { 
+          TopModSig (m_name, mt)
+          :: rest 
+        }
 ;
 
 mod_expr:
-    | LPAREN me=mod_expr RPAREN { me }
-    | m_name=MIDENT { MEName m_name }
-    | STRUCT m_body=top_levels END { MEStruct m_body }
-    | FUNCTOR LPAREN mp=mod_para RPAREN ARROW f_body=mod_expr { MEFunctor (mp, f_body) }
-    | m = mod_expr DOT n = MIDENT { MEField (m, n) }
-    | m1 = mod_expr LPAREN m2 = mod_expr RPAREN { MEApply (m1, m2) } 
-    | m1 = mod_expr COLON mt1 = mod_type { MERestrict (m1, mt1) }
+    | LPAREN me=mod_expr RPAREN 
+       { me }
+    | m_name=MIDENT 
+       { make_node (MEName m_name) $startpos $endpos }
+    | STRUCT m_body=top_levels END
+       { make_node (MEStruct m_body) $startpos $endpos }
+    | FUNCTOR LPAREN mp=mod_para RPAREN ARROW f_body=mod_expr
+       { make_node (MEFunctor (mp, f_body)) $startpos $endpos }
+    | m = mod_expr DOT n = MIDENT 
+       { make_node (MEField (m, n)) $startpos $endpos }
+    | m1 = mod_expr LPAREN m2 = mod_expr RPAREN 
+       { make_node (MEApply (m1, m2)) $startpos $endpos } 
+    | m1 = mod_expr COLON mt1 = mod_type 
+       { make_node (MERestrict (m1, mt1)) $startpos $endpos }
 ;
 
 mod_para :
@@ -181,37 +201,62 @@ type_expr:
     | LBRACE fields=separated_nontrivial_llist(SEMI, field_def) RBRACE { TRecord fields }
 
 path:
-    | m_name=MIDENT { MEName m_name }
-    | m = path DOT n = MIDENT { MEField (m, n) }
+    | m_name=MIDENT { make_node (MEName m_name) $startpos $endpos }
+    | m = path DOT n = MIDENT { make_node (MEField (m, n)) $startpos $endpos }
 
 expr:
-    | c=constant { EConst c } %prec over_TOP
-    | func=expr arg=expr { EApp (func, arg) }  %prec below_APP
+    | c=constant %prec over_TOP
+       { make_node (EConst c) $startpos $endpos } 
+    | func=expr arg=expr  %prec below_APP
+       { make_node (EApp (func, arg)) $startpos $endpos } 
     | LPAREN e=expr RPAREN { e }
-    | c=MIDENT { ECons c }
-    | p=path DOT v=IDENT { EField (p, v) }
-    | p=path DOT v=MIDENT { EFieldCons (p, v) }
-    | v=IDENT { EVar v } %prec over_TOP
-    | LET x=IDENT EQ e1=expr IN e2=expr { ELet (x, e1, e2) }
-    | LET REC binds=separated_nonempty_list(AND, function_bind) IN body=expr { ELetrec (binds, body) }
-    | IF e0=expr THEN e1=expr ELSE e2=expr { EIf (e0, e1, e2) }
-    | tu=tuple_expr { tu }
-    | FUN para=parameter ARROW body=expr %prec over_TOP { ELam (para, body) }
+    | c=MIDENT 
+       { make_node (ECons c) $startpos $endpos  }
+    | p=path DOT v=IDENT 
+       { make_node (EField (p, v)) $startpos $endpos  }
+    | p=path DOT v=MIDENT 
+       { make_node (EFieldCons (p, v)) $startpos $endpos  }
+    | v=IDENT %prec over_TOP
+       { make_node (EVar v) $startpos $endpos } 
+    | LET x=IDENT EQ e1=expr IN e2=expr
+       { make_node (ELet (x, e1, e2)) $startpos $endpos }
+    | LET REC binds=separated_nonempty_list(AND, function_bind) IN body=expr 
+       { make_node (ELetrec (binds, body)) $startpos $endpos }
+    | IF e0=expr THEN e1=expr ELSE e2=expr
+       { make_node (EIf (e0, e1, e2)) $startpos $endpos }
+    | tu=tuple_expr 
+       { tu }
+    | FUN para=parameter ARROW body=expr %prec over_TOP 
+       { 
+         make_node (ELam (para, body)) $startpos $endpos
+       }
     | MATCH e=expr WITH OR? branches=separated_nonempty_list(OR, branch) %prec over_TOP
-           { ECase (e, branches) }
+       { 
+         make_node (ECase (e, branches)) $startpos $endpos
+       }
     | e=bin_expr { e }
     ;
 
 bin_expr:
-    | e0=expr EQ e1=expr %prec EQ { ECmp (Eq, e0, e1) }
-    | e0=expr NEQ e1=expr %prec EQ { ECmp (Neq, e0, e1) }
-    | e0=expr SEMI e1=expr %prec below_SEMI { ESeq (e0, e1) }
+    | e0=expr EQ e1=expr %prec EQ
+      { 
+        make_node (ECmp (Eq, e0, e1)) $startpos $endpos
+      }
+    | e0=expr NEQ e1=expr %prec EQ 
+      { 
+        make_node (ECmp (Neq, e0, e1)) $startpos $endpos
+      }
+    | e0=expr SEMI e1=expr %prec below_SEMI 
+      { 
+        make_node (ESeq (e0, e1)) $startpos $endpos
+      }
+;
 
 branch: p=pattern ARROW e=expr %prec over_TOP { ( p, e ) }
 
 tuple_expr:
     | es = separated_nontrivial_llist(COMMA, expr) %prec below_COMMA
-        { ETuple es }
+        { make_node (ETuple es) $startpos $endpos }
 
 mod_type:
     | m=MIDENT                      { MTName m }

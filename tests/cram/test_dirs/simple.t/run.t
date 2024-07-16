@@ -112,10 +112,68 @@
       (FSimple m (ELam ((x) (EApp (EVar w) ((EConst (CInt 1)))) (w))))))
 
   $ cat simple1.out.parsing
-  ((TopLet x (EConst (CInt 1))) (TopLet y (EConst (CInt 1)))
-    (TopLet z (ELam ((PBare x) (EVar y))))
-    (TopLet w (ELam ((PBare x) (EConst (CInt 0)))))
-    (TopLet m (ELam ((PBare x) (EApp (EVar w) (EConst (CInt 1)))))))
+  ((TopLet x
+     ((node (EConst (CInt 1)))
+       (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 8)))
+       (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 9)))
+       (attrs ())))
+    (TopLet y
+      ((node (EConst (CInt 1)))
+        (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 19)))
+        (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 20)))
+        (attrs ())))
+    (TopLet z
+      ((node
+         (ELam
+           ((PBare x)
+             ((node (EVar y))
+               (start_loc
+                 ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 40)))
+               (end_loc
+                 ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 41)))
+               (attrs ())))))
+        (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 31)))
+        (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 41)))
+        (attrs ())))
+    (TopLet w
+      ((node
+         (ELam
+           ((PBare x)
+             ((node (EConst (CInt 0)))
+               (start_loc
+                 ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 62)))
+               (end_loc
+                 ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 63)))
+               (attrs ())))))
+        (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 53)))
+        (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 63)))
+        (attrs ())))
+    (TopLet m
+      ((node
+         (ELam
+           ((PBare x)
+             ((node
+                (EApp
+                  ((node (EVar w))
+                    (start_loc
+                      ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 84)))
+                    (end_loc
+                      ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 85)))
+                    (attrs ()))
+                  ((node (EConst (CInt 1)))
+                    (start_loc
+                      ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 86)))
+                    (end_loc
+                      ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 87)))
+                    (attrs ()))))
+               (start_loc
+                 ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 84)))
+               (end_loc
+                 ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 87)))
+               (attrs ())))))
+        (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 75)))
+        (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 87)))
+        (attrs ()))))
 
   $ cat simple1.out.typed
   
