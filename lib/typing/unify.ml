@@ -3,7 +3,7 @@ module E = Types_ext
 module SMap = Map.Make (Ident)
 module Tree = Syntax.Parsetree
 
-exception UnificationError of (string * string)
+exception UnificationError of (ty * ty)
 
 exception OccurError of (tv ref * ty)
 
@@ -56,14 +56,7 @@ let rec unify (t0 : ty) (t1 : ty) : unit =
         unify_lst [ op0; arg0 ] [ op1; arg1 ]
     | TTupleI tes0, TTupleI tes1 -> unify_lst tes0 tes1
     (* by default raise an exception *)
-    | _ ->
-        let t0_str =
-          sexp_of_ty t0 |> Sexplib.Sexp.to_string_hum ?indent:(Some 2)
-        in
-        let t1_str =
-          sexp_of_ty t1 |> Sexplib.Sexp.to_string_hum ?indent:(Some 2)
-        in
-        raise (UnificationError (t0_str, t1_str))
+    | _ -> raise (UnificationError (t0, t1))
 
 and unify_lst t0 t1 =
   match (t0, t1) with

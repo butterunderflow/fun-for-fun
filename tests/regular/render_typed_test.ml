@@ -60,7 +60,7 @@ let%expect_test "Test: pretty print typed program" =
   let print_typed str =
     Ident.refresh ();
     let prog = parse_string_program str in
-    let typed, _env = Check.tc_program prog (Env.init ()) in
+    let typed, _env = Typing.Tools.type_check_program prog in
     let fmt = Format.std_formatter in
     DefaultPP.pp_prog fmt typed;
     Format.pp_print_flush fmt ()
@@ -729,7 +729,8 @@ module MMM = (M(F).K : I)
         type y = () 1.x |}];
 
   print_typed {| let x = ();();();1 |};
-  [%expect {|
+  [%expect
+    {|
     let x = (() is () 0.unit) ;
             (() is () 0.unit) ;
             (() is () 0.unit) ;

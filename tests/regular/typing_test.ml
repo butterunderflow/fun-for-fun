@@ -168,17 +168,13 @@ let%expect_test "Test: program toplevel typing" =
   let print_typed str =
     Ident.refresh ();
     let prog = parse_string_program str in
-    try
-      let typed, _env = Typing.Check.tc_program prog (Typing.Env.init ()) in
-      typed |> T.sexp_of_program |> print_sexp
-    with
-    | Unify.UnificationError (t0, t1) ->
-        Printf.printf "Can't unify %s with %s" t0 t1
+    let typed, _env = Typing.Tools.type_check_program prog in
+    typed |> T.sexp_of_program |> print_sexp
   in
   let print_effect str =
     Ident.refresh ();
     let prog = parse_string_program str in
-    let _typed, env = Typing.Check.tc_program prog (Typing.Env.init ()) in
+    let _typed, env = Typing.Tools.type_check_program prog in
     Printf.printf "%s\n" (Env.dbg env)
   in
   print_typed {|
@@ -374,17 +370,13 @@ let%expect_test "Test: full program typing" =
   let print_typed str =
     Ident.refresh ();
     let prog = parse_string_program str in
-    try
-      let typed, _env = Typing.Check.tc_program prog (Typing.Env.init ()) in
-      typed |> T.sexp_of_program |> print_sexp
-    with
-    | Unify.UnificationError (t0, t1) ->
-        Printf.printf "Can't unify %s with %s" t0 t1
+    let typed, _env = Typing.Tools.type_check_program prog in
+    typed |> T.sexp_of_program |> print_sexp
   in
   let print_effect str =
     Ident.refresh ();
     let prog = parse_string_program str in
-    let _typed, env = Typing.Check.tc_program prog (Typing.Env.init ()) in
+    let _typed, env = Typing.Tools.type_check_program prog in
     Printf.printf "%s\n" (Env.dbg env)
   in
 
