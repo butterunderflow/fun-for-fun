@@ -101,7 +101,6 @@ type norm_ctx =
 
 (* typing expression *)
 let rec tc_expr (e : T.expr) (env : Env.t) : expr =
-  (* look a binding won't unify anything *)
   match e.node with
   | T.EConst c -> tc_const c
   | T.EVar x -> tc_var x env
@@ -127,6 +126,7 @@ and tc_const c =
   | T.CUnit -> EConst (c, I.unit_ty)
 
 and tc_var x env =
+  (* lookup a binding won't unify anything *)
   let bind = Env.get_value_type x env in
   let t = inst bind in
   EVar (x, t)
