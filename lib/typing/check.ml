@@ -101,23 +101,28 @@ type norm_ctx =
 
 (* typing expression *)
 let rec tc_expr (e : T.expr) (env : Env.t) : expr =
-  (* look a binding won't unify anything *)
-  match e.node with
-  | T.EConst c -> tc_const c
-  | T.EVar x -> tc_var x env
-  | T.ELet (x, e0, e1) -> tc_let x e0 e1 env
-  | T.ELetrec (binds, body) -> tc_letrec binds body env
-  | T.ELam (para, body) -> tc_lambda para body env
-  | T.EIf (c, e0, e1) -> tc_if_else c e0 e1 env
-  | T.ECase (e, bs) -> tc_cases e bs env
-  | T.EApp (e0, e1) -> tc_app e0 e1 env
-  | T.EAnn (e, te) -> tc_ann e te env
-  | T.ETuple es -> tc_tuple es env
-  | T.EField (p, x) -> tc_field p x env
-  | T.ECons c -> tc_cons c env
-  | T.EFieldCons (p, c) -> tc_field_cons p c env
-  | T.ECmp (op, e0, e1) -> tc_cmp op e0 e1 env
-  | T.ESeq (e0, e1) -> tc_seq e0 e1 env
+  try
+    match e.node with
+    | T.EConst c -> tc_const c
+    | T.EVar x -> tc_var x env
+    | T.ELet (x, e0, e1) -> tc_let x e0 e1 env
+    | T.ELetrec (binds, body) -> tc_letrec binds body env
+    | T.ELam (para, body) -> tc_lambda para body env
+    | T.EIf (c, e0, e1) -> tc_if_else c e0 e1 env
+    | T.ECase (e, bs) -> tc_cases e bs env
+    | T.EApp (e0, e1) -> tc_app e0 e1 env
+    | T.EAnn (e, te) -> tc_ann e te env
+    | T.ETuple es -> tc_tuple es env
+    | T.EField (p, x) -> tc_field p x env
+    | T.ECons c -> tc_cons c env
+    | T.EFieldCons (p, c) -> tc_field_cons p c env
+    | T.ECmp (op, e0, e1) -> tc_cmp op e0 e1 env
+    | T.ESeq (e0, e1) -> tc_seq e0 e1 env
+  with
+  | U.UnificationError (t0, t1) ->
+      Report.unification_error t0 t1 e.start_loc e.end_loc
+  | U.OccurError (tv, te) -> Report.occur_error tv te e.start_loc e.end_loc
+  | e -> raise e
 
 and tc_const c =
   match c with
@@ -127,6 +132,7 @@ and tc_const c =
   | T.CUnit -> EConst (c, I.unit_ty)
 
 and tc_var x env =
+  (* lookup a binding won't unify anything *)
   let bind = Env.get_value_type x env in
   let t = inst bind in
   EVar (x, t)
@@ -350,7 +356,7 @@ and tc_ann e te env =
   e_typed
 
 (* typing top levels *)
-and tc_toplevel (top : T.top_level) env : top_level * Env.t =
+and tc_top_level (top : T.top_level) env : top_level * Env.t =
   let old_pool = !tv_pool in
   reset_pool ();
   let top_typed =
@@ -415,7 +421,7 @@ and tc_top_levels (prog : T.top_level list) env : program * Env.t =
   match prog with
   | [] -> ([], env)
   | top :: rest ->
-      let top_typed0, env = tc_toplevel top env in
+      let top_typed0, env = tc_top_level top env in
       let rest_typed1, env = tc_top_levels rest env in
       (top_typed0 :: rest_typed1, env)
 

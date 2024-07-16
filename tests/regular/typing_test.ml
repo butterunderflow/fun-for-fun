@@ -1094,3 +1094,21 @@ external print_int : int ->  int = "ff_builtin_print_int"
         (ECmp Eq (EVar x (TConsI (0 int) ()))
           (EConst (CInt 1) (TConsI (0 int) ())) (TConsI (0 bool) ()))))
     |}]
+
+let%expect_test "Error reporting test" =
+  let print_typed str =
+    Ident.refresh ();
+    let prog = parse_string_program str in
+    let result =
+      Report.wrap_with_error_report (fun () ->
+          Typing.Tools.type_check_program prog)
+    in
+    match result with
+    | Some (typed, _env) -> typed |> T.sexp_of_program |> print_sexp
+    | None -> ()
+  in
+  print_typed {|
+     let x = 1
+     let y = true
+     let z = x = y
+     |}
