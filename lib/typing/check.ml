@@ -614,9 +614,7 @@ and check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) :
                 (fun (name, vd1) ->
                   let vd0 = List.assoc name vds0 in
                   if vd0 <> vd1 then
-                    failwith
-                      (Printf.sprintf
-                         "a value binding component `%s` not compatible" name)
+                    Report.in_compatible_error name vd0 vd1
                   else (name, vd0))
                 vds1;
             constr_defs =

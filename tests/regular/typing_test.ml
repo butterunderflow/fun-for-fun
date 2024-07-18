@@ -1111,4 +1111,34 @@ let%expect_test "Error reporting test" =
      let x = 1
      let y = true
      let z = x = y
-     |}
+     |};
+  [%expect {| 1:47-1:52 Can't unify `() 0.int` with `() 0.bool` |}];
+
+print_typed {|
+             module type I = sig
+               val x : int
+             end
+             
+             module F = functor (X:I) -> (struct
+               type t = int
+
+               let y = X.x
+             end : sig
+               type () t
+
+               val y : () t
+             end)
+
+             module X = struct
+               let x = 1
+             end
+
+             module Y1 = F (X)
+
+             module Y2 = F (X)
+
+             let z = Y1.y = Y2.y
+
+     |};
+  [%expect {| At some unknown location: Value component y has type `() 0.int`, which is not compatible with `() 2.t` |}]
+
