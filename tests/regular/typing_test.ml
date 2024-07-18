@@ -1193,9 +1193,80 @@ print_typed {|
               (constr_defs ()) (ty_defs ((TDOpaqueI t ()))) (mod_sigs ())
               (mod_defs ()) (owned_mods ()))))))
     |}]
+;
+
+print_typed {|
+             module type I = sig
+               val x : int
+             end
+             
+             module F = functor (X:I) -> (struct
+               type t = int
+
+               let y = X.x
+             end : sig
+               type () t
+
+               val y : () t
+             end)
 
 
+             module X = struct
+               let x = 1
+             end
 
+             module Y1 = F (X)
 
+             module Y2 = F (X)
 
+             let z = Y1.y = Y2.y
+     |};
+  [%expect {| 1:453-1:464 Can't unify `() 5.t` with `() 6.t` |}];
+print_typed {|
+             module type I = sig
+               val x : int
+             end
+             
+             module F = functor (X:I) -> (struct
+               type t = int
+
+               type n = t
+
+               let y = 3
+             end : sig
+               type () n 
+
+               type () t
+
+               val y : () t
+             end)
+     |};
+  [%expect {|
+    ((TopModSig I
+       (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ()))))) (constr_defs ())
+         (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))
+      (TopMod F
+        (MEFunctor
+          (X
+            (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ())))))
+              (constr_defs ()) (ty_defs ()) (mod_sigs ()) (mod_defs ())
+              (owned_mods ())))
+          (MERestrict
+            (MEStruct
+              ((TopTypeDef (TDAliasI t (TConsI (0 int) ())))
+                (TopTypeDef (TDAliasI n (TConsI (0 int) ())))
+                (TopLet y (EConst (CInt 3) (TConsI (0 int) ()))))
+              (MTMod (id 2) (val_defs ((y (() (TConsI (0 int) ())))))
+                (constr_defs ())
+                (ty_defs
+                  ((TDAliasI n (TConsI (0 int) ()))
+                    (TDAliasI t (TConsI (0 int) ()))))
+                (mod_sigs ()) (mod_defs ()) (owned_mods ())))
+            (MTMod (id 3) (val_defs ((y (() (TConsI (3 t) ())))))
+              (constr_defs ()) (ty_defs ((TDOpaqueI t ()) (TDOpaqueI n ())))
+              (mod_sigs ()) (mod_defs ()) (owned_mods ()))
+            (MTMod (id 2) (val_defs ((y (() (TConsI (2 t) ())))))
+              (constr_defs ()) (ty_defs ((TDOpaqueI t ()) (TDOpaqueI n ())))
+              (mod_sigs ()) (mod_defs ()) (owned_mods ()))))))
+    |}]
 
