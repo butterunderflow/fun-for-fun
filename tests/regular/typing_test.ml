@@ -1119,6 +1119,22 @@ print_typed {|
                val x : int
              end
              
+             module F =  (struct
+               type t = int
+
+               let y = 1
+             end : sig
+               type () t
+
+               val y : () t
+             end)
+     |};
+
+print_typed {|
+             module type I = sig
+               val x : int
+             end
+             
              module F = functor (X:I) -> (struct
                type t = int
 
@@ -1129,16 +1145,57 @@ print_typed {|
                val y : () t
              end)
 
-             module X = struct
-               let x = 1
-             end
-
-             module Y1 = F (X)
-
-             module Y2 = F (X)
-
-             let z = Y1.y = Y2.y
-
      |};
-  [%expect {| At some unknown location: Value component y has type `() 0.int`, which is not compatible with `() 2.t` |}]
+  [%expect {|
+    ((TopModSig I
+       (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ()))))) (constr_defs ())
+         (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))
+      (TopMod F
+        (MERestrict
+          (MEStruct
+            ((TopTypeDef (TDAliasI t (TConsI (0 int) ())))
+              (TopLet y (EConst (CInt 1) (TConsI (0 int) ()))))
+            (MTMod (id 2) (val_defs ((y (() (TConsI (0 int) ())))))
+              (constr_defs ()) (ty_defs ((TDAliasI t (TConsI (0 int) ()))))
+              (mod_sigs ()) (mod_defs ()) (owned_mods ())))
+          (MTMod (id 3) (val_defs ((y (() (TConsI (3 t) ()))))) (constr_defs ())
+            (ty_defs ((TDOpaqueI t ()))) (mod_sigs ()) (mod_defs ())
+            (owned_mods ()))
+          (MTMod (id 2) (val_defs ((y (() (TConsI (2 t) ()))))) (constr_defs ())
+            (ty_defs ((TDOpaqueI t ()))) (mod_sigs ()) (mod_defs ())
+            (owned_mods ())))))
+    ((TopModSig I
+       (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ()))))) (constr_defs ())
+         (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))
+      (TopMod F
+        (MEFunctor
+          (X
+            (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ())))))
+              (constr_defs ()) (ty_defs ()) (mod_sigs ()) (mod_defs ())
+              (owned_mods ())))
+          (MERestrict
+            (MEStruct
+              ((TopTypeDef (TDAliasI t (TConsI (0 int) ())))
+                (TopLet y
+                  (EField
+                    (MEName X
+                      (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ())))))
+                        (constr_defs ()) (ty_defs ()) (mod_sigs ()) (mod_defs ())
+                        (owned_mods ())))
+                    x (TConsI (0 int) ()))))
+              (MTMod (id 2) (val_defs ((y (() (TConsI (0 int) ())))))
+                (constr_defs ()) (ty_defs ((TDAliasI t (TConsI (0 int) ()))))
+                (mod_sigs ()) (mod_defs ()) (owned_mods ())))
+            (MTMod (id 3) (val_defs ((y (() (TConsI (3 t) ())))))
+              (constr_defs ()) (ty_defs ((TDOpaqueI t ()))) (mod_sigs ())
+              (mod_defs ()) (owned_mods ()))
+            (MTMod (id 2) (val_defs ((y (() (TConsI (2 t) ())))))
+              (constr_defs ()) (ty_defs ((TDOpaqueI t ()))) (mod_sigs ())
+              (mod_defs ()) (owned_mods ()))))))
+    |}]
+
+
+
+
+
 

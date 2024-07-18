@@ -36,6 +36,15 @@ let inst (t : I.bind_ty) : I.ty =
   in
   inst_with t new_tvs
 
+let align_inst (t : I.bind_ty) : I.ty =
+  (* We can gaurantee that captured type variables will never duplicated with
+     free type variables *)
+  let qvs, _ = t in
+  let new_tvs =
+    List.mapi (fun i _id -> I.TQVarI (Ident.mk_ident i "_stable")) qvs
+  in
+  inst_with t new_tvs
+
 let get_all_tvs (te : I.ty) : I.tv ref list =
   let tvs = ref [] in
   let rec go te =
@@ -586,6 +595,7 @@ and check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) :
   in
   let mt1 = subst mt1 in
 
+  let alias_map : (I.ty_id * I.ty) list ref = ref [] in
   let rec compatible mt0 mt1 : I.mod_ty =
     match (mt0, mt1) with
     | ( I.MTMod
@@ -609,66 +619,70 @@ and check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) :
           } ) ->
         I.MTMod
           {
-            val_defs =
-              List.map
-                (fun (name, vd1) ->
-                  let vd0 = List.assoc name vds0 in
-                  if vd0 <> vd1 then
-                    Report.in_compatible_error name vd0 vd1
-                  else (name, vd0))
-                vds1;
-            constr_defs =
-              List.map
-                (fun (name, cd1) ->
-                  let cd0 = List.assoc name cds0 in
-                  if cd0 <> cd1 then
-                    failwith
-                      (Printf.sprintf
-                         "a constructor component `%s` not compatible" name)
-                  else (name, cd0))
-                cds1;
             ty_defs =
-              List.map
-                (fun td ->
-                  match td with
-                  | I.TDOpaqueI (name, paras) -> (
-                      let td0 = I.get_def name tds0 in
-                      match td0 with
-                      | I.TDOpaqueI (_, paras0)
-                      | I.TDAdtI (_, paras0, _)
-                      | I.TDRecordI (_, paras0, _) ->
-                          if List.length paras0 <> List.length paras then
-                            failwith
-                              "number of type parameter not compatible in \
-                               opaque type"
-                          else I.TDOpaqueI (name, paras)
-                      | I.TDAliasI (_, _) ->
-                          (match paras with
-                          | [] -> ()
-                          | _ :: _ -> failwith "type alias has parameter");
-                          I.TDOpaqueI (name, paras))
-                  | _ ->
-                      let td0 = I.get_def (I.get_def_name td) tds0 in
-                      if td <> td0 then
-                        failwith "a type def component not compatible"
-                      else td0)
-                tds1;
+              (List.iter
+                 (fun td1 ->
+                   match td1 with
+                   | I.TDOpaqueI (name, paras) -> (
+                       let td0 = I.get_def name tds0 in
+                       match td0 with
+                       | I.TDOpaqueI (_, paras0)
+                       | I.TDAdtI (_, paras0, _)
+                       | I.TDRecordI (_, paras0, _) ->
+                           if List.length paras0 <> List.length paras then
+                             failwith
+                               "number of type parameter not compatible in \
+                                opaque type"
+                       | I.TDAliasI (_, ty0) -> (
+                           match paras with
+                           | [] ->
+                               alias_map := ((id0, name), ty0) :: !alias_map
+                           | _ :: _ -> failwith "type alias has parameter"))
+                   | _ ->
+                       let td0 = I.get_def (I.get_def_name td1) tds0 in
+                       if td0 <> Alias.dealias_td td1 !alias_map then
+                         failwith "a type def component not compatible")
+                 tds1;
+               tds1);
+            val_defs =
+              (List.iter
+                 (fun (name, vt1) ->
+                   let vt0 = List.assoc name vds0 in
+                   if
+                     align_inst vt0
+                     <> align_inst (Alias.dealias vt1 !alias_map)
+                   then Report.in_compatible_error name vt0 vt1)
+                 vds1;
+               vds1);
+            constr_defs =
+              (List.iter
+                 (fun (name, (cd1, cid1)) ->
+                   let cd0, cid0 = List.assoc name cds0 in
+                   if
+                     cid1 <> cid0
+                     || align_inst cd0
+                        <> align_inst (Alias.dealias cd1 !alias_map)
+                   then
+                     failwith
+                       (Printf.sprintf
+                          "a constructor component `%s` not compatible" name))
+                 cds1;
+               cds1);
             mod_defs =
               List.map
                 (fun (name, md1) ->
-                  (name, compatible md1 (List.assoc name mds0)))
+                  (name, compatible (List.assoc name mds0) md1))
                 mds1;
             mod_sigs =
               List.map
                 (fun (name, ms1) ->
-                  (name, compatible ms1 (List.assoc name mds0)))
+                  (name, compatible (List.assoc name mds0) ms1))
                 ms1;
             id = id0;
             owned_mods = [];
           }
     | I.MTFun (argt0, mt0), I.MTFun (argt1, mt1) ->
         let arg_t = compatible argt1 argt0 in
-        (* don't just use argt0 here *)
         let ret_t = compatible mt0 mt1 in
         I.MTFun (arg_t, ret_t)
     | _ -> failwith "subtype check error"
