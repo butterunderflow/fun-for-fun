@@ -538,10 +538,32 @@ module MMM = (M(F).K : I)
                       (struct
 
                          module K =
-                           MI(Simple)
+                           (MI(Simple) is sig
+
+                                            id = 6
+
+                                            val y : () 0.int
+
+                                            val x : () 0.int
+
+                                            Owned Modules = {
+                                            }
+
+                                          end)
 
                          module K2 =
-                           MI(MJ)
+                           (MI(MJ) is sig
+
+                                        id = 7
+
+                                        val y : () 0.int
+
+                                        val x : () 0.int
+
+                                        Owned Modules = {
+                                        }
+
+                                      end)
 
                        end is sig
 
@@ -648,29 +670,64 @@ module MMM = (M(F).K : I)
                                    end)
 
       module MMM =
-        ((M(F).K : sig
+        (((M(F) is sig
 
-                     id = 1
+                     id = 9
 
-                     val y : () 0.int
+                     module K2 : sig
 
-                     val x : () 0.int
+                                   id = 10
+
+                                   val y : () 0.int
+
+                                   val x : () 0.int
+
+                                   Owned Modules = {
+                                   }
+
+                                 end
+
+                     module K : sig
+
+                                  id = 11
+
+                                  val y : () 0.int
+
+                                  val x : () 0.int
+
+                                  Owned Modules = {
+                                  }
+
+                                end
 
                      Owned Modules = {
+                       10 ;
+                       11 ;
                      }
 
-                   end) is sig
+                   end).K : sig
 
-                             id = 11
+                              id = 1
 
-                             val y : () 0.int
+                              val y : () 0.int
 
-                             val x : () 0.int
+                              val x : () 0.int
 
-                             Owned Modules = {
-                             }
+                              Owned Modules = {
+                              }
 
-                           end)
+                            end) is sig
+
+                                      id = 11
+
+                                      val y : () 0.int
+
+                                      val x : () 0.int
+
+                                      Owned Modules = {
+                                      }
+
+                                    end)
     |}];
 
   print_typed
@@ -833,7 +890,8 @@ module MMM = (M(F).K : I)
                              * (b is {() 0.string}))) -> (b is () 0.string)
     |}];
 
-  print_typed {|
+  print_typed
+    {|
                module type I0 =
                sig
                  type () t
@@ -860,7 +918,8 @@ module MMM = (M(F).K : I)
 
                module M = F(N)
                |};
-  [%expect {|
+  [%expect
+    {|
     module type I0 =
       sig
 
@@ -969,5 +1028,12 @@ module MMM = (M(F).K : I)
                   end)
 
       module M =
-        F(N)
+        (F(N) is sig
+
+                   id = 5
+
+                   Owned Modules = {
+                   }
+
+                 end)
     |}]
