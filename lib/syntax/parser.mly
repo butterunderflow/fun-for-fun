@@ -235,6 +235,7 @@ expr:
          make_node (ECase (e, branches)) $startpos $endpos
        }
     | e=bin_expr { e }
+    | e=expr COLON te=type_expr { make_node (EAnn (e, te)) $startpos $endpos }
     ;
 
 bin_expr:

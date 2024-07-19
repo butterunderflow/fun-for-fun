@@ -1273,4 +1273,36 @@ let%expect_test "Error reporting test" =
             (MTMod (id 2) (val_defs ((y (() (TConsI (2 t) ())))))
               (constr_defs ()) (ty_defs ((TDOpaqueI t ()) (TDOpaqueI n ())))
               (mod_sigs ()) (mod_defs ()) (owned_mods ()))))))
+    |}];
+
+print_typed {|
+             let x = 
+                let y  = (1: 'a , 1) in
+                let z = (2, 1: 'a) in
+                (y, z)
+             |};
+  [%expect {|
+    ((TopLet x
+       (ELet y
+         (ETuple
+           ((EConst (CInt 1) (TConsI (0 int) ()))
+             (EConst (CInt 1) (TConsI (0 int) ())))
+           (TTupleI ((TConsI (0 int) ()) (TConsI (0 int) ()))))
+         (ELet z
+           (ETuple
+             ((EConst (CInt 2) (TConsI (0 int) ()))
+               (EConst (CInt 1) (TConsI (0 int) ())))
+             (TTupleI ((TConsI (0 int) ()) (TConsI (0 int) ()))))
+           (ETuple
+             ((EVar y (TTupleI ((TConsI (0 int) ()) (TConsI (0 int) ()))))
+               (EVar z (TTupleI ((TConsI (0 int) ()) (TConsI (0 int) ())))))
+             (TTupleI
+               ((TTupleI ((TConsI (0 int) ()) (TConsI (0 int) ())))
+                 (TTupleI ((TConsI (0 int) ()) (TConsI (0 int) ()))))))
+           (TTupleI
+             ((TTupleI ((TConsI (0 int) ()) (TConsI (0 int) ())))
+               (TTupleI ((TConsI (0 int) ()) (TConsI (0 int) ()))))))
+         (TTupleI
+           ((TTupleI ((TConsI (0 int) ()) (TConsI (0 int) ())))
+             (TTupleI ((TConsI (0 int) ()) (TConsI (0 int) ()))))))))
     |}]
