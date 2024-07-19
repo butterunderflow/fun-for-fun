@@ -753,7 +753,8 @@ module MMM = (M(F).K : I)
                             | C.Nil -> ()
                             | C.Integer i -> ()
                |};
-  [%expect {|
+  [%expect
+    {|
     module C =
       (struct
 
@@ -784,4 +785,45 @@ module MMM = (M(F).K : I)
       let result = match (c is () 1.t) with
                    | Nil -> (() is () 0.unit)
                    | (i is () 0.int) -> (() is () 0.unit)
+    |}];
+
+  print_typed
+    {|
+               type () list =
+               | Nil
+               | Cons of int * int list
+
+               type ('a, 'b) tu =
+               | Tu of ('b * 'a)
+
+               let x = Tu (1, "c")
+
+               let result1 = match x with
+                            | Tu (a, b) -> a
+
+               let result2 = match x with
+                            | Tu (a, b) -> b
+               |};
+  [%expect {|
+    type () list =
+    | Nil
+    | Cons of (() 0.int
+                * (() 0.int) 0.list)
+
+    type ('a/0, 'b/0) tu =
+    | Tu of (['b/0]
+              * ['a/0])
+
+    let x = (Tu[0] is (({() 0.int}
+                         * {() 0.string})
+                        ->({() 0.string}, {() 0.int}) 0.tu)) ((1 is () 0.int), (
+    ""c"" is () 0.string))
+
+    let result1 = match (x is (() 0.string, () 0.int) 0.tu) with
+                  | (Tu[0] ((a is {() 0.int})
+                             * (b is {() 0.string}))) -> (a is () 0.int)
+
+    let result2 = match (x is (() 0.string, () 0.int) 0.tu) with
+                  | (Tu[0] ((a is {() 0.int})
+                             * (b is {() 0.string}))) -> (b is () 0.string)
     |}]
