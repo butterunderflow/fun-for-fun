@@ -1305,4 +1305,90 @@ print_typed {|
          (TTupleI
            ((TTupleI ((TConsI (0 int) ()) (TConsI (0 int) ())))
              (TTupleI ((TConsI (0 int) ()) (TConsI (0 int) ()))))))))
+    |}];
+
+print_typed {|
+module type M = sig
+
+             module N : sig
+
+               type () t 
+
+               type () s
+
+             end
+             
+end
+
+
+module K = struct
+
+             module N = struct 
+
+               type t = int
+
+               type s = int
+             end
+end
+
+module L = (K: M)
+
+             |};
+  [%expect {|
+    ((TopModSig M
+       (MTMod (id 1) (val_defs ()) (constr_defs ()) (ty_defs ()) (mod_sigs ())
+         (mod_defs
+           ((N
+              (MTMod (id 2) (val_defs ()) (constr_defs ())
+                (ty_defs ((TDOpaqueI s ()) (TDOpaqueI t ()))) (mod_sigs ())
+                (mod_defs ()) (owned_mods ())))))
+         (owned_mods (2))))
+      (TopMod K
+        (MEStruct
+          ((TopMod N
+             (MEStruct
+               ((TopTypeDef (TDAliasI t (TConsI (0 int) ())))
+                 (TopTypeDef (TDAliasI s (TConsI (0 int) ()))))
+               (MTMod (id 4) (val_defs ()) (constr_defs ())
+                 (ty_defs
+                   ((TDAliasI s (TConsI (0 int) ()))
+                     (TDAliasI t (TConsI (0 int) ()))))
+                 (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
+          (MTMod (id 3) (val_defs ()) (constr_defs ()) (ty_defs ()) (mod_sigs ())
+            (mod_defs
+              ((N
+                 (MTMod (id 4) (val_defs ()) (constr_defs ())
+                   (ty_defs
+                     ((TDAliasI s (TConsI (0 int) ()))
+                       (TDAliasI t (TConsI (0 int) ()))))
+                   (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
+            (owned_mods (4)))))
+      (TopMod L
+        (MERestrict
+          (MEName K
+            (MTMod (id 3) (val_defs ()) (constr_defs ()) (ty_defs ())
+              (mod_sigs ())
+              (mod_defs
+                ((N
+                   (MTMod (id 4) (val_defs ()) (constr_defs ())
+                     (ty_defs
+                       ((TDAliasI s (TConsI (0 int) ()))
+                         (TDAliasI t (TConsI (0 int) ()))))
+                     (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
+              (owned_mods (4))))
+          (MTMod (id 1) (val_defs ()) (constr_defs ()) (ty_defs ()) (mod_sigs ())
+            (mod_defs
+              ((N
+                 (MTMod (id 2) (val_defs ()) (constr_defs ())
+                   (ty_defs ((TDOpaqueI s ()) (TDOpaqueI t ()))) (mod_sigs ())
+                   (mod_defs ()) (owned_mods ())))))
+            (owned_mods (2)))
+          (MTMod (id 3) (val_defs ()) (constr_defs ()) (ty_defs ()) (mod_sigs ())
+            (mod_defs
+              ((N
+                 (MTMod (id 4) (val_defs ()) (constr_defs ())
+                   (ty_defs ((TDOpaqueI s ()) (TDOpaqueI t ()))) (mod_sigs ())
+                   (mod_defs ()) (owned_mods ())))))
+            (owned_mods ())))))
     |}]
+

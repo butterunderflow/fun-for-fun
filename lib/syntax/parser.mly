@@ -275,7 +275,7 @@ sig_comp:
     | TYPE UNIT t=IDENT
         { TAbstTySpec (t, []) }
     | def=type_def                   { TManiTySpec def }
-    | MODULE m_name=MIDENT EQ mt=mod_type { TModSpec (m_name, mt) }
+    | MODULE m_name=MIDENT COLON mt=mod_type { TModSpec (m_name, mt) }
 ;
 
 constant:
