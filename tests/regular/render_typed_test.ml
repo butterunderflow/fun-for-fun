@@ -735,4 +735,53 @@ module MMM = (M(F).K : I)
             (() is () 0.unit) ;
             (() is () 0.unit) ;
             (1 is () 0.int)
+    |}];
+
+  (* constructor accessed by path *)
+  print_typed
+    {|
+               module C = struct
+                 type () t =
+                 | Nil
+                 | Integer of int
+
+               end
+
+               let c = C.Nil
+               
+               let result = match c with
+                            | C.Nil -> ()
+                            | C.Integer i -> ()
+               |};
+  [%expect {|
+    module C =
+      (struct
+
+         type () t =
+         | Nil
+         | Integer of () 0.int
+
+       end is sig
+
+                id = 1
+
+                constr Nil[0] : () 1.t
+
+                constr Integer[1] : (() 0.int
+                                      ->() 1.t)
+
+                type () t =
+                | Nil
+                | Integer of () 0.int
+
+                Owned Modules = {
+                }
+
+              end)
+
+      let c = (C.Nil[0] is () 1.t)
+
+      let result = match (c is () 1.t) with
+                   | Nil -> (() is () 0.unit)
+                   | (i is () 0.int) -> (() is () 0.unit)
     |}]

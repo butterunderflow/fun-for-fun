@@ -1114,7 +1114,8 @@ let%expect_test "Error reporting test" =
      |};
   [%expect {| 1:47-1:52 Can't unify `() 0.int` with `() 0.bool` |}];
 
-print_typed {|
+  print_typed
+    {|
              module type I = sig
                val x : int
              end
@@ -1130,7 +1131,8 @@ print_typed {|
              end)
      |};
 
-print_typed {|
+  print_typed
+    {|
              module type I = sig
                val x : int
              end
@@ -1146,7 +1148,8 @@ print_typed {|
              end)
 
      |};
-  [%expect {|
+  [%expect
+    {|
     ((TopModSig I
        (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ()))))) (constr_defs ())
          (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))
@@ -1192,10 +1195,10 @@ print_typed {|
             (MTMod (id 2) (val_defs ((y (() (TConsI (2 t) ())))))
               (constr_defs ()) (ty_defs ((TDOpaqueI t ()))) (mod_sigs ())
               (mod_defs ()) (owned_mods ()))))))
-    |}]
-;
+    |}];
 
-print_typed {|
+  print_typed
+    {|
              module type I = sig
                val x : int
              end
@@ -1222,7 +1225,8 @@ print_typed {|
              let z = Y1.y = Y2.y
      |};
   [%expect {| 1:453-1:464 Can't unify `() 5.t` with `() 6.t` |}];
-print_typed {|
+  print_typed
+    {|
              module type I = sig
                val x : int
              end
@@ -1241,7 +1245,8 @@ print_typed {|
                val y : () t
              end)
      |};
-  [%expect {|
+  [%expect
+    {|
     ((TopModSig I
        (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ()))))) (constr_defs ())
          (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))
@@ -1269,4 +1274,3 @@ print_typed {|
               (constr_defs ()) (ty_defs ((TDOpaqueI t ()) (TDOpaqueI n ())))
               (mod_sigs ()) (mod_defs ()) (owned_mods ()))))))
     |}]
-
