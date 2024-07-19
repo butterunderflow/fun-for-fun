@@ -168,17 +168,13 @@ let%expect_test "Test: program toplevel typing" =
   let print_typed str =
     Ident.refresh ();
     let prog = parse_string_program str in
-    try
-      let typed, _env = Typing.Check.tc_program prog (Typing.Env.init ()) in
-      typed |> T.sexp_of_program |> print_sexp
-    with
-    | Unify.UnificationError (t0, t1) ->
-        Printf.printf "Can't unify %s with %s" t0 t1
+    let typed, _env = Typing.Tools.type_check_program prog in
+    typed |> T.sexp_of_program |> print_sexp
   in
   let print_effect str =
     Ident.refresh ();
     let prog = parse_string_program str in
-    let _typed, env = Typing.Check.tc_program prog (Typing.Env.init ()) in
+    let _typed, env = Typing.Tools.type_check_program prog in
     Printf.printf "%s\n" (Env.dbg env)
   in
   print_typed {|
@@ -374,17 +370,13 @@ let%expect_test "Test: full program typing" =
   let print_typed str =
     Ident.refresh ();
     let prog = parse_string_program str in
-    try
-      let typed, _env = Typing.Check.tc_program prog (Typing.Env.init ()) in
-      typed |> T.sexp_of_program |> print_sexp
-    with
-    | Unify.UnificationError (t0, t1) ->
-        Printf.printf "Can't unify %s with %s" t0 t1
+    let typed, _env = Typing.Tools.type_check_program prog in
+    typed |> T.sexp_of_program |> print_sexp
   in
   let print_effect str =
     Ident.refresh ();
     let prog = parse_string_program str in
-    let _typed, env = Typing.Check.tc_program prog (Typing.Env.init ()) in
+    let _typed, env = Typing.Tools.type_check_program prog in
     Printf.printf "%s\n" (Env.dbg env)
   in
 
@@ -1102,3 +1094,179 @@ external print_int : int ->  int = "ff_builtin_print_int"
         (ECmp Eq (EVar x (TConsI (0 int) ()))
           (EConst (CInt 1) (TConsI (0 int) ())) (TConsI (0 bool) ()))))
     |}]
+
+let%expect_test "Error reporting test" =
+  let print_typed str =
+    Ident.refresh ();
+    let prog = parse_string_program str in
+    let result =
+      Report.wrap_with_error_report (fun () ->
+          Typing.Tools.type_check_program prog)
+    in
+    match result with
+    | Some (typed, _env) -> typed |> T.sexp_of_program |> print_sexp
+    | None -> ()
+  in
+  print_typed {|
+     let x = 1
+     let y = true
+     let z = x = y
+     |};
+  [%expect {| 1:47-1:52 Can't unify `() 0.int` with `() 0.bool` |}];
+
+print_typed {|
+             module type I = sig
+               val x : int
+             end
+             
+             module F =  (struct
+               type t = int
+
+               let y = 1
+             end : sig
+               type () t
+
+               val y : () t
+             end)
+     |};
+
+print_typed {|
+             module type I = sig
+               val x : int
+             end
+             
+             module F = functor (X:I) -> (struct
+               type t = int
+
+               let y = X.x
+             end : sig
+               type () t
+
+               val y : () t
+             end)
+
+     |};
+  [%expect {|
+    ((TopModSig I
+       (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ()))))) (constr_defs ())
+         (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))
+      (TopMod F
+        (MERestrict
+          (MEStruct
+            ((TopTypeDef (TDAliasI t (TConsI (0 int) ())))
+              (TopLet y (EConst (CInt 1) (TConsI (0 int) ()))))
+            (MTMod (id 2) (val_defs ((y (() (TConsI (0 int) ())))))
+              (constr_defs ()) (ty_defs ((TDAliasI t (TConsI (0 int) ()))))
+              (mod_sigs ()) (mod_defs ()) (owned_mods ())))
+          (MTMod (id 3) (val_defs ((y (() (TConsI (3 t) ()))))) (constr_defs ())
+            (ty_defs ((TDOpaqueI t ()))) (mod_sigs ()) (mod_defs ())
+            (owned_mods ()))
+          (MTMod (id 2) (val_defs ((y (() (TConsI (2 t) ()))))) (constr_defs ())
+            (ty_defs ((TDOpaqueI t ()))) (mod_sigs ()) (mod_defs ())
+            (owned_mods ())))))
+    ((TopModSig I
+       (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ()))))) (constr_defs ())
+         (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))
+      (TopMod F
+        (MEFunctor
+          (X
+            (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ())))))
+              (constr_defs ()) (ty_defs ()) (mod_sigs ()) (mod_defs ())
+              (owned_mods ())))
+          (MERestrict
+            (MEStruct
+              ((TopTypeDef (TDAliasI t (TConsI (0 int) ())))
+                (TopLet y
+                  (EField
+                    (MEName X
+                      (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ())))))
+                        (constr_defs ()) (ty_defs ()) (mod_sigs ()) (mod_defs ())
+                        (owned_mods ())))
+                    x (TConsI (0 int) ()))))
+              (MTMod (id 2) (val_defs ((y (() (TConsI (0 int) ())))))
+                (constr_defs ()) (ty_defs ((TDAliasI t (TConsI (0 int) ()))))
+                (mod_sigs ()) (mod_defs ()) (owned_mods ())))
+            (MTMod (id 3) (val_defs ((y (() (TConsI (3 t) ())))))
+              (constr_defs ()) (ty_defs ((TDOpaqueI t ()))) (mod_sigs ())
+              (mod_defs ()) (owned_mods ()))
+            (MTMod (id 2) (val_defs ((y (() (TConsI (2 t) ())))))
+              (constr_defs ()) (ty_defs ((TDOpaqueI t ()))) (mod_sigs ())
+              (mod_defs ()) (owned_mods ()))))))
+    |}]
+;
+
+print_typed {|
+             module type I = sig
+               val x : int
+             end
+             
+             module F = functor (X:I) -> (struct
+               type t = int
+
+               let y = X.x
+             end : sig
+               type () t
+
+               val y : () t
+             end)
+
+
+             module X = struct
+               let x = 1
+             end
+
+             module Y1 = F (X)
+
+             module Y2 = F (X)
+
+             let z = Y1.y = Y2.y
+     |};
+  [%expect {| 1:453-1:464 Can't unify `() 5.t` with `() 6.t` |}];
+print_typed {|
+             module type I = sig
+               val x : int
+             end
+             
+             module F = functor (X:I) -> (struct
+               type t = int
+
+               type n = t
+
+               let y = 3
+             end : sig
+               type () n 
+
+               type () t
+
+               val y : () t
+             end)
+     |};
+  [%expect {|
+    ((TopModSig I
+       (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ()))))) (constr_defs ())
+         (ty_defs ()) (mod_sigs ()) (mod_defs ()) (owned_mods ())))
+      (TopMod F
+        (MEFunctor
+          (X
+            (MTMod (id 1) (val_defs ((x (() (TConsI (0 int) ())))))
+              (constr_defs ()) (ty_defs ()) (mod_sigs ()) (mod_defs ())
+              (owned_mods ())))
+          (MERestrict
+            (MEStruct
+              ((TopTypeDef (TDAliasI t (TConsI (0 int) ())))
+                (TopTypeDef (TDAliasI n (TConsI (0 int) ())))
+                (TopLet y (EConst (CInt 3) (TConsI (0 int) ()))))
+              (MTMod (id 2) (val_defs ((y (() (TConsI (0 int) ())))))
+                (constr_defs ())
+                (ty_defs
+                  ((TDAliasI n (TConsI (0 int) ()))
+                    (TDAliasI t (TConsI (0 int) ()))))
+                (mod_sigs ()) (mod_defs ()) (owned_mods ())))
+            (MTMod (id 3) (val_defs ((y (() (TConsI (3 t) ())))))
+              (constr_defs ()) (ty_defs ((TDOpaqueI t ()) (TDOpaqueI n ())))
+              (mod_sigs ()) (mod_defs ()) (owned_mods ()))
+            (MTMod (id 2) (val_defs ((y (() (TConsI (2 t) ())))))
+              (constr_defs ()) (ty_defs ((TDOpaqueI t ()) (TDOpaqueI n ())))
+              (mod_sigs ()) (mod_defs ()) (owned_mods ()))))))
+    |}]
+

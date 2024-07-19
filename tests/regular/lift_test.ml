@@ -12,7 +12,7 @@ let%expect_test "Test: full program lowering" =
   let print_lifted str =
     Ident.refresh ();
     let prog = parse_string_program str in
-    let typed, _env = Typing.Check.tc_program prog (Typing.Env.init ()) in
+    let typed, _env = Typing.Tools.type_check_program prog in
     typed
     |> C1.compile_program
     |> L.lift
