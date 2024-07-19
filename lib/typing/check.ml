@@ -379,7 +379,13 @@ and tc_top_level (top : T.top_level) env : top_level * Env.t =
         (TopLetRec binds, env)
     | T.TopTypeDef (TDAdt (name, ty_para_names, _) as def_ext) ->
         let tid = Env.mk_tid name env in
-        let def = normalize_def def_ext env in
+
+        let normalize_env =
+          (* special environment for normalizing type definition, with typed
+             definition pushed as an opaque type *)
+          Env.add_type_def (I.TDOpaqueI (name, ty_para_names)) env
+        in
+        let def = normalize_def def_ext normalize_env in
         let[@warning "-8"] (I.TDAdtI (_, _, bs)) = def in
         let env = Env.add_type_def def env in
         let constructors = analyze_constructors tid ty_para_names bs in
