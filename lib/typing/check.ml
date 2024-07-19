@@ -594,7 +594,8 @@ and check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) :
     fun mt -> mapper#visit_mod_ty () mt
   in
   let mt1 = subst mt1 in
-
+  (* When need a map to keep alias between opaque type to it's coreesponding
+     transparent type alias *)
   let alias_map : (I.ty_id * I.ty) list ref = ref [] in
   let rec compatible mt0 mt1 : I.mod_ty =
     match (mt0, mt1) with

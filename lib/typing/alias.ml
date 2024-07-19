@@ -1,3 +1,5 @@
+(** Dealias during module compatible checking *)
+
 module I = Types_in
 
 let dealias_te (te : I.ty) alias_map =
