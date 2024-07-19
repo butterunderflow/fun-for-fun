@@ -171,7 +171,7 @@ module MakePP (Config : PPConfig) = struct
       Fmt.pp_print_string fmt " is ";
       Fmt.fprintf fmt "@[";
       pp_mod_ty fmt ty;
-      Fmt.fprintf fmt "@])")
+      Fmt.fprintf fmt "@]@])")
     else content_printer ()
 
   and pp_mod fmt me =
@@ -192,7 +192,8 @@ module MakePP (Config : PPConfig) = struct
         Fmt.fprintf fmt "@[<v 2>functor (%s : " name;
         pp_mod_ty fmt mt;
         Fmt.fprintf fmt ")@\n-> @\n";
-        pp_mod fmt me
+        pp_mod fmt me;
+        Fmt.fprintf fmt "@]"
     | MEField (me, name, _) ->
         Fmt.fprintf fmt "@[";
         pp_mod fmt me;
@@ -236,7 +237,8 @@ module MakePP (Config : PPConfig) = struct
                 Fmt.fprintf fmt "@\nand %s = @[" x;
                 pp_lam fmt lam;
                 Fmt.fprintf fmt "@]")
-              tail)
+              tail;
+            Fmt.fprintf fmt "@]")
     | TopTypeDef td -> pp_ty_def fmt td
     | TopMod (name, me) ->
         Fmt.fprintf fmt "@[<v 2>module %s = @\n" name;

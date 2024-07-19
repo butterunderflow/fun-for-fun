@@ -132,7 +132,8 @@ let%expect_test "Test: pretty print typed program" =
 
               end)
 
-      let c = (M.x is () 1.t) |}];
+    let c = (M.x is () 1.t)
+    |}];
   print_typed
     {|
      module M =
@@ -184,46 +185,47 @@ let%expect_test "Test: pretty print typed program" =
 
                    end)
 
-           let z = (N.Nil[0] is () 2.t)
+         let z = (N.Nil[0] is () 2.t)
 
-         end is sig
+       end is sig
 
-                  id = 1
+                id = 1
 
-                  val z : () 2.t
+                val z : () 2.t
 
-                  val x : () 1.t
+                val x : () 1.t
 
-                  constr Nil[0] : () 1.t
+                constr Nil[0] : () 1.t
 
-                  type () t =
-                  | Nil
+                type () t =
+                | Nil
 
-                  module N : sig
+                module N : sig
 
-                               id = 2
+                             id = 2
 
-                               constr Nil[0] : () 2.t
+                             constr Nil[0] : () 2.t
 
-                               type () t =
-                               | Nil
+                             type () t =
+                             | Nil
 
-                               Owned Modules = {
-                               }
+                             Owned Modules = {
+                             }
 
-                             end
+                           end
 
-                  Owned Modules = {
-                    2 ;
-                  }
+                Owned Modules = {
+                  2 ;
+                }
 
-                end)
+              end)
 
-       let c = (M.x is () 1.t)
+    let c = (M.x is () 1.t)
 
-       let x = (M.N.Nil[0] is () 2.t)
+    let x = (M.N.Nil[0] is () 2.t)
 
-       let y = (M.z is () 2.t) |}];
+    let y = (M.z is () 2.t)
+    |}];
 
   print_typed
     {|
@@ -486,169 +488,68 @@ module MMM = (M(F).K : I)
 
               end)
 
-      module Simple =
-        (struct
+    module Simple =
+      (struct
 
-           let x = (1 is () 0.int)
+         let x = (1 is () 0.int)
 
-           let y = (2 is () 0.int)
+         let y = (2 is () 0.int)
 
-         end is sig
+       end is sig
 
-                  id = 4
+                id = 4
 
-                  val y : () 0.int
+                val y : () 0.int
 
-                  val x : () 0.int
+                val x : () 0.int
 
-                  Owned Modules = {
-                  }
+                Owned Modules = {
+                }
 
-                end)
+              end)
 
-        module M =
-          functor (MI : functor (_ : sig
+    module M =
+      functor (MI : functor (_ : sig
 
-                                       id = 1
+                                   id = 1
 
-                                       val y : () 0.int
+                                   val y : () 0.int
 
-                                       val x : () 0.int
+                                   val x : () 0.int
 
-                                       Owned Modules = {
-                                       }
+                                   Owned Modules = {
+                                   }
 
-                                     end)
-                          ->
-                          sig
+                                 end)
+                      ->
+                      sig
 
-                            id = 1
+                        id = 1
 
-                            val y : () 0.int
+                        val y : () 0.int
 
-                            val x : () 0.int
+                        val x : () 0.int
 
-                            Owned Modules = {
-                            }
+                        Owned Modules = {
+                        }
 
-                          end)
-                          ->
-                          (struct
+                      end)
+                      ->
+                      (struct
 
-                             module K =
-                               MI(Simple)
+                         module K =
+                           MI(Simple)
 
-                             module K2 =
-                               MI(MJ)
+                         module K2 =
+                           MI(MJ)
 
-                           end is sig
+                       end is sig
 
-                                    id = 5
+                                id = 5
 
-                                    module K2 : sig
+                                module K2 : sig
 
-                                                  id = 7
-
-                                                  val y : () 0.int
-
-                                                  val x : () 0.int
-
-                                                  Owned Modules = {
-                                                  }
-
-                                                end
-
-                                    module K : sig
-
-                                                 id = 6
-
-                                                 val y : () 0.int
-
-                                                 val x : () 0.int
-
-                                                 Owned Modules = {
-                                                 }
-
-                                               end
-
-                                    Owned Modules = {
-                                      7 ;
-                                      6 ;
-                                    }
-
-                                  end)
-
-                          module F =
-                            functor (MI : sig
-
-                                            id = 1
-
-                                            val y : () 0.int
-
-                                            val x : () 0.int
-
-                                            Owned Modules = {
-                                            }
-
-                              end)
-                              ->
-                              (((struct
-
-                                   let x = (1 is () 0.int)
-
-                                   let y = (1 is () 0.int)
-
-                                   let z = (1 is () 0.int)
-
-                                   let w = (2 is () 0.int)
-
-                                 end is sig
-
-                                          id = 8
-
-                                          val w : () 0.int
-
-                                          val z : () 0.int
-
-                                          val y : () 0.int
-
-                                          val x : () 0.int
-
-                                          Owned Modules = {
-                                          }
-
-                                        end) : sig
-
-                                                 id = 2
-
-                                                 val z : () 0.int
-
-                                                 val y : () 0.int
-
-                                                 val x : () 0.int
-
-                                                 Owned Modules = {
-                                                 }
-
-                                               end) is sig
-
-                                                         id = 8
-
-                                                         val z : () 0.int
-
-                                                         val y : () 0.int
-
-                                                         val x : () 0.int
-
-                                                         Owned Modules = {
-                                                         }
-
-                                                       end)
-
-                               module MMM =
-                                 ((M(F).K : sig
-
-                                              id = 1
+                                              id = 7
 
                                               val y : () 0.int
 
@@ -657,18 +558,120 @@ module MMM = (M(F).K : I)
                                               Owned Modules = {
                                               }
 
-                                            end) is sig
+                                            end
 
-                                                      id = 11
+                                module K : sig
 
-                                                      val y : () 0.int
+                                             id = 6
 
-                                                      val x : () 0.int
+                                             val y : () 0.int
 
-                                                      Owned Modules = {
-                                                      }
+                                             val x : () 0.int
 
-                                                    end) |}];
+                                             Owned Modules = {
+                                             }
+
+                                           end
+
+                                Owned Modules = {
+                                  7 ;
+                                  6 ;
+                                }
+
+                              end)
+
+      module F =
+        functor (MI : sig
+
+                        id = 1
+
+                        val y : () 0.int
+
+                        val x : () 0.int
+
+                        Owned Modules = {
+                        }
+
+          end)
+          ->
+          (((struct
+
+               let x = (1 is () 0.int)
+
+               let y = (1 is () 0.int)
+
+               let z = (1 is () 0.int)
+
+               let w = (2 is () 0.int)
+
+             end is sig
+
+                      id = 8
+
+                      val w : () 0.int
+
+                      val z : () 0.int
+
+                      val y : () 0.int
+
+                      val x : () 0.int
+
+                      Owned Modules = {
+                      }
+
+                    end) : sig
+
+                             id = 2
+
+                             val z : () 0.int
+
+                             val y : () 0.int
+
+                             val x : () 0.int
+
+                             Owned Modules = {
+                             }
+
+                           end) is sig
+
+                                     id = 8
+
+                                     val z : () 0.int
+
+                                     val y : () 0.int
+
+                                     val x : () 0.int
+
+                                     Owned Modules = {
+                                     }
+
+                                   end)
+
+      module MMM =
+        ((M(F).K : sig
+
+                     id = 1
+
+                     val y : () 0.int
+
+                     val x : () 0.int
+
+                     Owned Modules = {
+                     }
+
+                   end) is sig
+
+                             id = 11
+
+                             val y : () 0.int
+
+                             val x : () 0.int
+
+                             Owned Modules = {
+                             }
+
+                           end)
+    |}];
 
   print_typed
     {|
@@ -706,27 +709,28 @@ module MMM = (M(F).K : I)
 
               end)
 
-      module N =
-        (struct
+    module N =
+      (struct
 
-           type t = () 1.x
+         type t = () 1.x
 
-           type n = () 1.x
+         type n = () 1.x
 
-         end is sig
+       end is sig
 
-                  id = 2
+                id = 2
 
-                  type n = () 1.x
+                type n = () 1.x
 
-                  type t = () 1.x
+                type t = () 1.x
 
-                  Owned Modules = {
-                  }
+                Owned Modules = {
+                }
 
-                end)
+              end)
 
-        type y = () 1.x |}];
+    type y = () 1.x
+    |}];
 
   print_typed {| let x = ();();();1 |};
   [%expect
@@ -780,11 +784,11 @@ module MMM = (M(F).K : I)
 
               end)
 
-      let c = (C.Nil[0] is () 1.t)
+    let c = (C.Nil[0] is () 1.t)
 
-      let result = match (c is () 1.t) with
-                   | Nil -> (() is () 0.unit)
-                   | (i is () 0.int) -> (() is () 0.unit)
+    let result = match (c is () 1.t) with
+                 | Nil -> (() is () 0.unit)
+                 | (i is () 0.int) -> (() is () 0.unit)
     |}];
 
   print_typed
@@ -927,43 +931,43 @@ module MMM = (M(F).K : I)
 
                               end)
 
-                      module N =
-                        functor (MI0 : sig
+      module N =
+        functor (MI0 : sig
 
-                                         id = 1
+                         id = 1
 
-                                         val x : () 1.t
+                         val x : () 1.t
 
-                                         type () t
+                         type () t
 
-                                         Owned Modules = {
-                                         }
+                         Owned Modules = {
+                         }
 
-                          end)
-                          ->
-                          (struct
+          end)
+          ->
+          (struct
 
-                             type t = () 0.int
+             type t = () 0.int
 
-                             type s = () 0.int
+             type s = () 0.int
 
-                             let x = (1 is () 0.int)
+             let x = (1 is () 0.int)
 
-                           end is sig
+           end is sig
 
-                                    id = 4
+                    id = 4
 
-                                    val x : () 0.int
+                    val x : () 0.int
 
-                                    type s = () 0.int
+                    type s = () 0.int
 
-                                    type t = () 0.int
+                    type t = () 0.int
 
-                                    Owned Modules = {
-                                    }
+                    Owned Modules = {
+                    }
 
-                                  end)
+                  end)
 
-                          module M =
-                            F(N)
+      module M =
+        F(N)
     |}]
