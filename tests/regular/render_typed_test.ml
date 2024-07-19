@@ -804,7 +804,8 @@ module MMM = (M(F).K : I)
                let result2 = match x with
                             | Tu (a, b) -> b
                |};
-  [%expect {|
+  [%expect
+    {|
     type () list =
     | Nil
     | Cons of (() 0.int
@@ -826,4 +827,143 @@ module MMM = (M(F).K : I)
     let result2 = match (x is (() 0.string, () 0.int) 0.tu) with
                   | (Tu[0] ((a is {() 0.int})
                              * (b is {() 0.string}))) -> (b is () 0.string)
+    |}];
+
+  print_typed {|
+               module type I0 =
+               sig
+                 type () t
+                 
+                 val x : t
+               end
+
+               module type I1 = sig
+                 type () t
+                 
+                 type () s
+
+                 val x : t
+               end
+
+               module F = functor(F1: functor (X:I1) -> I0) -> struct
+               end
+
+               module N = functor(MI0: I0) -> struct
+                 type t = int
+                 type s = t
+                 let x = 1
+               end
+
+               module M = F(N)
+               |};
+  [%expect {|
+    module type I0 =
+      sig
+
+        id = 1
+
+        val x : () 1.t
+
+        type () t
+
+        Owned Modules = {
+        }
+
+      end
+
+    module type I1 =
+      sig
+
+        id = 2
+
+        val x : () 2.t
+
+        type () s
+
+        type () t
+
+        Owned Modules = {
+        }
+
+      end
+
+    module F =
+      functor (F1 : functor (_ : sig
+
+                                   id = 2
+
+                                   val x : () 2.t
+
+                                   type () s
+
+                                   type () t
+
+                                   Owned Modules = {
+                                   }
+
+                                 end)
+                      ->
+                      sig
+
+                        id = 1
+
+                        val x : () 1.t
+
+                        type () t
+
+                        Owned Modules = {
+                        }
+
+                      end)
+                      ->
+                      (struct
+
+                       end is sig
+
+                                id = 3
+
+                                Owned Modules = {
+                                }
+
+                              end)
+
+                      module N =
+                        functor (MI0 : sig
+
+                                         id = 1
+
+                                         val x : () 1.t
+
+                                         type () t
+
+                                         Owned Modules = {
+                                         }
+
+                          end)
+                          ->
+                          (struct
+
+                             type t = () 0.int
+
+                             type s = () 0.int
+
+                             let x = (1 is () 0.int)
+
+                           end is sig
+
+                                    id = 4
+
+                                    val x : () 0.int
+
+                                    type s = () 0.int
+
+                                    type t = () 0.int
+
+                                    Owned Modules = {
+                                    }
+
+                                  end)
+
+                          module M =
+                            F(N)
     |}]
