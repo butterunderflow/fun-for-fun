@@ -79,7 +79,7 @@ let generalize (t : I.ty) (env : Env.t) : I.bind_ty =
         else t
     | I.TVarI { contents = I.Link t } -> gen t
     | I.TConsI (c, tes) -> I.TConsI (c, List.map gen tes)
-    | I.TQVarI _ -> t
+    | I.TQVarI _ -> failwith "neverreach"
     | I.TArrowI (t1, t2) -> I.TArrowI (gen t1, gen t2)
     | I.TTupleI tes -> I.TTupleI (List.map gen tes)
     | I.TRecordI fields ->
