@@ -193,19 +193,17 @@ and tc_pattern p te env : pattern * (string * I.ty) list =
       let v_typed = tc_const v in
       U.unify (get_ty v_typed) te;
       (PVal v, [])
-  | T.PTuple pats, te -> (
-      U.unify te (I.TTupleI (List.map (fun _ -> make_tv ()) pats));
-      match te with
-      | I.TTupleI tes ->
-          let pats, vars =
-            List.fold_left2
-              (fun (pats_acc, vars_acc) pat te ->
-                let pat, vars = tc_pattern pat te env in
-                (pats_acc @ [ pat ], vars_acc @ vars))
-              ([], []) pats tes
-          in
-          (PTuple pats, vars)
-      | _ -> failwith "wrong")
+  | T.PTuple pats, te ->
+      let payload_tvs = List.map (fun _ -> make_tv ()) pats in
+      U.unify te (I.TTupleI payload_tvs);
+      let pats, vars =
+        List.fold_left2
+          (fun (pats_acc, vars_acc) pat te ->
+            let pat, vars = tc_pattern pat te env in
+            (pats_acc @ [ pat ], vars_acc @ vars))
+          ([], []) pats payload_tvs
+      in
+      (PTuple pats, vars)
 
 and tc_let x e0 e1 env =
   let e0_typed, env = tc_let_binding x e0 env in

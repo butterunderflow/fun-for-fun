@@ -324,8 +324,8 @@ let%expect_test "Test: program toplevel typing" =
                 (TVarI (Link (TVarI (Unbound '_t/9)))))))
           (((PCons Cons 0
               ((PTuple
-                 ((PVar a (TVarI (Link (TVarI (Link (TVarI (Unbound '_t/8)))))))
-                   (PVar b (TVarI (Link (TVarI (Link (TVarI (Unbound '_t/9)))))))))))
+                 ((PVar a (TVarI (Unbound '_t/8)))
+                   (PVar b (TVarI (Unbound '_t/9)))))))
              (ETuple
                ((EVar b (TVarI (Unbound '_t/9)))
                  (EVar a (TVarI (Unbound '_t/8))))
