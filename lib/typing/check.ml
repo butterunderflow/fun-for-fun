@@ -504,7 +504,8 @@ and apply_functor para_mt body_mt arg_mt env =
   body_mt
 
 and shift_mt (mt : I.mod_ty) env : I.mod_ty =
-  (* collect type id need to be shift *)
+  (* collect type ids need to be shift, which correspond to all modules
+     created by the functor body *)
   let dict =
     let result = ref IntMap.empty in
     let rec go mt =
@@ -527,9 +528,11 @@ and shift_mt (mt : I.mod_ty) env : I.mod_ty =
             (id :: owned_mods);
           List.iter (fun (_, mt) -> go mt) mod_defs;
           List.iter (fun (_, mt) -> go mt) mod_sigs
-      | I.MTFun (para_mt, body_mt) ->
-          go para_mt;
-          go body_mt
+      | I.MTFun (_para_mt, _body_mt) ->
+          (* It's OK to ignore functor's input and output in shifting,
+             because they are not indicate modules "created" by the functor.
+             They are just module types indicate compatibility. *)
+          ()
     in
     go mt;
     !result
@@ -548,14 +551,12 @@ and shift_mt (mt : I.mod_ty) env : I.mod_ty =
 
         method! visit_MTMod () id val_defs constr_defs ty_defs mod_sigs
             mod_defs owned_mods =
-          super#visit_MTMod () (IntMap.find id dict) val_defs constr_defs
-            ty_defs mod_sigs mod_defs
+          let shifted_id = get_id_or_default id in
+          super#visit_MTMod () shifted_id val_defs constr_defs ty_defs
+            mod_sigs mod_defs
             (List.map get_id_or_default owned_mods)
 
-        method! visit_ty_id () (id, name) =
-          match IntMap.find_opt id dict with
-          | None -> (id, name)
-          | Some id' -> (id', name)
+        method! visit_ty_id () (id, name) = (get_id_or_default id, name)
       end
     in
     fun mt -> mapper#visit_mod_ty () mt

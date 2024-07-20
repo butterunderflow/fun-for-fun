@@ -1275,13 +1275,15 @@ let%expect_test "Error reporting test" =
               (mod_sigs ()) (mod_defs ()) (owned_mods ()))))))
     |}];
 
-print_typed {|
+  print_typed
+    {|
              let x = 
                 let y  = (1: 'a , 1) in
                 let z = (2, 1: 'a) in
                 (y, z)
              |};
-  [%expect {|
+  [%expect
+    {|
     ((TopLet x
        (ELet y
          (ETuple
@@ -1307,7 +1309,8 @@ print_typed {|
              (TTupleI ((TConsI (0 int) ()) (TConsI (0 int) ()))))))))
     |}];
 
-print_typed {|
+  print_typed
+    {|
 module type M = sig
 
              module N : sig
@@ -1334,7 +1337,8 @@ end
 module L = (K: M)
 
              |};
-  [%expect {|
+  [%expect
+    {|
     ((TopModSig M
        (MTMod (id 1) (val_defs ()) (constr_defs ()) (ty_defs ()) (mod_sigs ())
          (mod_defs
@@ -1391,4 +1395,3 @@ module L = (K: M)
                    (mod_defs ()) (owned_mods ())))))
             (owned_mods ())))))
     |}]
-

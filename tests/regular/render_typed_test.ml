@@ -1036,4 +1036,135 @@ module MMM = (M(F).K : I)
                    }
 
                  end)
+    |}];
+  print_typed
+    {|
+               module type I0 =
+               sig
+               end
+
+
+               module N = functor(MI0: I0) -> struct
+                 module K = functor(MI0: I0) -> struct
+                 end
+               end
+
+               module A = struct
+               end
+
+               module L = N(A)
+
+               |};
+  [%expect {|
+    module type I0 =
+      sig
+
+        id = 1
+
+        Owned Modules = {
+        }
+
+      end
+
+    module N =
+      functor (MI0 : sig
+
+                       id = 1
+
+                       Owned Modules = {
+                       }
+
+        end)
+        ->
+        (struct
+
+           module K =
+             functor (MI0 : sig
+
+                              id = 1
+
+                              Owned Modules = {
+                              }
+
+               end)
+               ->
+               (struct
+
+                end is sig
+
+                         id = 3
+
+                         Owned Modules = {
+                         }
+
+                       end)
+
+         end is sig
+
+                  id = 2
+
+                  module K : functor (_ : sig
+
+                                            id = 1
+
+                                            Owned Modules = {
+                                            }
+
+                                          end)
+                               ->
+                               sig
+
+                                 id = 3
+
+                                 Owned Modules = {
+                                 }
+
+                               end
+
+                             Owned Modules = {
+                               3 ;
+                             }
+
+                  end)
+
+      module A =
+        (struct
+
+         end is sig
+
+                  id = 4
+
+                  Owned Modules = {
+                  }
+
+                end)
+
+      module L =
+        (N(A) is sig
+
+                   id = 5
+
+                   module K : functor (_ : sig
+
+                                             id = 1
+
+                                             Owned Modules = {
+                                             }
+
+                                           end)
+                                ->
+                                sig
+
+                                  id = 6
+
+                                  Owned Modules = {
+                                  }
+
+                                end
+
+                              Owned Modules = {
+                                6 ;
+                              }
+
+                   end)
     |}]
