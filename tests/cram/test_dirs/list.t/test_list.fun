@@ -10,19 +10,19 @@ type ('a) list =
 
 let cons = 
     fun x ->
-    (fun y ->
-    Cons (x, y))
+    fun y ->
+    Cons (x, y)
 
 
 
-let lst = (cons 3 (cons 2 (cons 1) Nil))
+let lst = cons 3 (cons 2 (cons 1 Nil))
 
 let rec iter =
     fun lst ->
-    (fun f ->
+    fun f ->
     match lst with
     | Cons (x, lst) -> (f x ; iter lst f)
-    | Nil -> ())
+    | Nil -> ()
 
 let print_int_lst = fun lst -> iter lst println_int
 
@@ -31,14 +31,14 @@ let result = print_int_lst lst
 
 let rec map =
     fun lst ->
-    (fun f ->
+    fun f ->
     match lst with
-    | Cons (x, lst) -> (cons (f x)) (map lst f)
-    | Nil -> Nil)
+    | Cons (x, lst) -> cons (f x) (map lst f)
+    | Nil -> Nil
 
 let result = print_int_lst (map lst (add 7))
 
-let lst = (cons (2, 4) (cons (1,2)) Nil)
+let lst = cons (2, 4) (cons (1,2) Nil)
 
 let print_int_tu = fun tu ->
     match tu with

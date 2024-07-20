@@ -64,7 +64,7 @@ let mk_type_ref fon t_args =
 %nonassoc below_SEMI
 %right SEMI
 
-%nonassoc IDENT, INT, STRING, BOOL
+%nonassoc IDENT, MIDENT, INT, STRING, BOOL
 
 
 %left EQ
