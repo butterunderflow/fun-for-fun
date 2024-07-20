@@ -82,7 +82,11 @@ let () =
     |> read_file
     |-> (S.Parsing.parse_string_program, S.Parsetree.dbg, ".parsing")
     |-> ( (fun prog ->
-            let typed, _env = Typing.Tools.type_check_program prog in
+            let typed, _env =
+              Option.get
+                (Typing.Report.wrap_with_error_report (fun () ->
+                     Typing.Tools.type_check_program prog))
+            in
             typed),
           Typing.Render.default_dbg,
           ".typed" )
