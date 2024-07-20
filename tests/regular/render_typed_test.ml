@@ -23,7 +23,8 @@ let%expect_test "Test: pretty print typed expression" =
     {|
     fun x ->
       let y = (x is {'_t/1})
-      in (y is {'_t/2}) |}];
+      in (y is {'_t/1})
+    |}];
 
   print_typed {| if true then 1 else 2 |};
   [%expect
@@ -1055,7 +1056,8 @@ module MMM = (M(F).K : I)
                module L = N(A)
 
                |};
-  [%expect {|
+  [%expect
+    {|
     module type I0 =
       sig
 

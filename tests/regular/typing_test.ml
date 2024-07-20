@@ -324,14 +324,15 @@ let%expect_test "Test: program toplevel typing" =
                 (TVarI (Link (TVarI (Unbound '_t/9)))))))
           (((PCons Cons 0
               ((PTuple
-                 ((PVar a (TVarI (Link (TVarI (Link (TVarI (Unbound '_t/8)))))))
-                   (PVar b (TVarI (Link (TVarI (Link (TVarI (Unbound '_t/9)))))))))))
+                 ((PVar a (TVarI (Unbound '_t/8)))
+                   (PVar b (TVarI (Unbound '_t/9)))))))
              (ETuple
                ((EVar b (TVarI (Unbound '_t/9)))
                  (EVar a (TVarI (Unbound '_t/8))))
                (TTupleI ((TVarI (Unbound '_t/9)) (TVarI (Unbound '_t/8)))))))
           (TVarI
-            (Link (TTupleI ((TVarI (Unbound '_t/9)) (TVarI (Unbound '_t/8))))))))) |}];
+            (Link (TTupleI ((TVarI (Unbound '_t/9)) (TVarI (Unbound '_t/8)))))))))
+    |}];
   print_effect
     {|
      type ('a, 'b) int_l
@@ -349,7 +350,7 @@ let%expect_test "Test: program toplevel typing" =
 
     ++++++++++++++++++Scope Debug Info Begin++++++++++++++++++
     Value Bindings:
-      f |-> forall  . (TTupleI ((TVarI (Unbound '_t/9)) (TVarI (Unbound '_t/8))));
+      f |-> forall '_t/8;'_t/9 . (TTupleI ((TQVarI '_t/9) (TQVarI '_t/8)));
       x |-> forall 'b/2;'a/1 . (TConsI (0 int_l) ((TQVarI 'a/1) (TQVarI 'b/2)))
     Type Definitions:
       int_l |-> (TDAdtI int_l ('a/0 'b/0)
@@ -364,7 +365,8 @@ let%expect_test "Test: program toplevel typing" =
       0
     ++++++++++++++++++Scope Debug Info Begin++++++++++++++++++
 
-    ------------------Envirment Debug Info End-------------------------- |}]
+    ------------------Envirment Debug Info End--------------------------
+    |}]
 
 let%expect_test "Test: full program typing" =
   let print_typed str =
@@ -1396,12 +1398,14 @@ module L = (K: M)
             (owned_mods ())))))
     |}];
 
-  print_typed {|
+  print_typed
+    {|
                let result =
                  let id = fun x -> x in
                  (id 1, id "xx")
                |};
-  [%expect {|
+  [%expect
+    {|
     ((TopLet result
        (ELet id
          (ELam
