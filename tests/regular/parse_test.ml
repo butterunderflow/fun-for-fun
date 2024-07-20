@@ -18,28 +18,32 @@ let%expect_test "Test: expression parsing" =
     parse_string_expr str |> sexp_of_expr |> print_sexp
   in
   print_parsed "x";
-  [%expect {|
+  [%expect
+    {|
     ((node (EVar x))
       (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
       (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 1)))
       (attrs ()))
     |}];
   print_parsed "1";
-  [%expect {|
+  [%expect
+    {|
     ((node (EConst (CInt 1)))
       (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
       (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 1)))
       (attrs ()))
     |}];
   print_parsed {| () |};
-  [%expect {|
+  [%expect
+    {|
     ((node (EConst CUnit))
       (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 1)))
       (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 3)))
       (attrs ()))
     |}];
   print_parsed {| "x \n \t"|};
-  [%expect {|
+  [%expect
+    {|
     ((node (EConst (CString "\"x \\n \\t\"")))
       (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 1)))
       (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 10)))
@@ -92,7 +96,8 @@ let%expect_test "Test: expression parsing" =
       (attrs ()))
     |}];
   print_parsed "let x = 1 in y";
-  [%expect {|
+  [%expect
+    {|
     ((node
        (ELet x
          ((node (EConst (CInt 1)))
@@ -108,7 +113,8 @@ let%expect_test "Test: expression parsing" =
       (attrs ()))
     |}];
   print_parsed {| Nil |};
-  [%expect {|
+  [%expect
+    {|
     ((node (ECons Nil))
       (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 1)))
       (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 4)))
@@ -198,7 +204,8 @@ let%expect_test "Test: expression parsing" =
       (attrs ()))
     |}];
   print_parsed {|Cons (1)|};
-  [%expect {|
+  [%expect
+    {|
     ((node
        (EApp
          ((node (ECons Cons))
@@ -285,7 +292,8 @@ let%expect_test "Test: expression parsing" =
       (attrs ()))
     |}];
   print_parsed {|E.f y|};
-  [%expect {|
+  [%expect
+    {|
     ((node
        (EApp
          ((node
@@ -308,7 +316,8 @@ let%expect_test "Test: expression parsing" =
       (attrs ()))
     |}];
   print_parsed {|Cons 1|};
-  [%expect {|
+  [%expect
+    {|
     ((node
        (EApp
          ((node (ECons Cons))
@@ -324,7 +333,8 @@ let%expect_test "Test: expression parsing" =
       (attrs ()))
     |}];
   print_parsed {|Cons (x, y)|};
-  [%expect {|
+  [%expect
+    {|
     ((node
        (EApp
          ((node (ECons Cons))
@@ -388,7 +398,8 @@ let%expect_test "Test: expression parsing" =
       (attrs ()))
     |}];
   print_parsed {|fun x -> x|};
-  [%expect {|
+  [%expect
+    {|
     ((node
        (ELam
          ((PBare x)
@@ -401,7 +412,8 @@ let%expect_test "Test: expression parsing" =
       (attrs ()))
     |}];
   print_parsed {|f 1|};
-  [%expect {|
+  [%expect
+    {|
     ((node
        (EApp
          ((node (EVar f))
@@ -446,7 +458,8 @@ let%expect_test "Test: expression parsing" =
       (attrs ()))
     |}];
   print_parsed {| x = y |};
-  [%expect {|
+  [%expect
+    {|
     ((node
        (ECmp Eq
          ((node (EVar x))
@@ -462,7 +475,8 @@ let%expect_test "Test: expression parsing" =
       (attrs ()))
     |}];
   print_parsed {| x <> y |};
-  [%expect {|
+  [%expect
+    {|
     ((node
        (ECmp Neq
          ((node (EVar x))
@@ -480,7 +494,8 @@ let%expect_test "Test: expression parsing" =
   print_parsed {|
    f 1 ; f 2 ; f 2 = 3
  |};
-  [%expect {|
+  [%expect
+    {|
     ((node
        (ESeq
          ((node
@@ -561,7 +576,8 @@ let%expect_test "Test: expression parsing" =
       (attrs ()))
     |}];
   print_parsed {|add x (minus x 1)|};
-  [%expect {|
+  [%expect
+    {|
     ((node
        (EApp
          ((node
@@ -610,8 +626,35 @@ let%expect_test "Test: expression parsing" =
       (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
       (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 17)))
       (attrs ()))
+    |}];
+  print_parsed {|a b Nil|};
+  [%expect
+    {|
+    ((node
+       (EApp
+         ((node
+            (EApp
+              ((node (EVar a))
+                (start_loc
+                  ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
+                (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 1)))
+                (attrs ()))
+              ((node (EVar b))
+                (start_loc
+                  ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 2)))
+                (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 3)))
+                (attrs ()))))
+           (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
+           (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 3)))
+           (attrs ()))
+         ((node (ECons Nil))
+           (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 4)))
+           (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 7)))
+           (attrs ()))))
+      (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
+      (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 7)))
+      (attrs ()))
     |}]
-
 
 let%expect_test "Test: pattern parsing" =
   let print_parsed str =
@@ -632,7 +675,8 @@ let%expect_test "Test: pattern parsing" =
 
 let%expect_test "Test: full program parsing" =
   print_parsed_program {|let x = 1|};
-  [%expect {|
+  [%expect
+    {|
     ((TopLet x
        ((node (EConst (CInt 1)))
          (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 8)))
@@ -1066,7 +1110,8 @@ let y = 2
           (attrs ()))))
     |}];
 
-print_parsed_program {|
+  print_parsed_program
+    {|
 let rec sum = fun x ->
     (if x = 0
     then 0
@@ -1074,7 +1119,8 @@ let rec sum = fun x ->
 
 let result = print_int (sum 4)
 |};
-  [%expect {|
+  [%expect
+    {|
     ((TopLetRec
        ((sum
           ((PBare x)
@@ -1143,19 +1189,29 @@ let result = print_int (sum 4)
           (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 75)))
           (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 92)))
           (attrs ()))))
-    |}]
+    |}];
+  print_parsed_program {|
+                type 'a t = Nil
+                        |};
+  [%expect {| ((TopTypeDef (TDAdt t ('a/0) ((Nil ()))))) |}];
+  print_parsed_program {|
+                type t = | Nil
+                        |};
+  [%expect {| ((TopTypeDef (TDAdt t () ((Nil ()))))) |}]
 
 
 let%expect_test "Test: path parsing" =
   print_parsed_mod_expr {|X|};
-  [%expect {|
+  [%expect
+    {|
     ((node (MEName X))
       (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
       (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 1)))
       (attrs ()))
     |}];
   print_parsed_mod_expr {|X.Y|};
-  [%expect {|
+  [%expect
+    {|
     ((node
        (MEField
          ((node (MEName X))
@@ -1168,7 +1224,8 @@ let%expect_test "Test: path parsing" =
       (attrs ()))
     |}];
   print_parsed_mod_expr {|X(Y)|};
-  [%expect {|
+  [%expect
+    {|
     ((node
        (MEApply
          ((node (MEName X))
@@ -1275,7 +1332,8 @@ let%expect_test "Test: type expression parsing" =
       ((x (TCons int ())) (y (TCons float ()))
         (z (TArrow (TCons int ()) (TCons float ()))))) |}];
   print_parsed_type_expr "(int, float) T.t";
-  [%expect {|
+  [%expect
+    {|
     (TField
       ((node (MEName T))
         (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 13)))
@@ -1284,7 +1342,8 @@ let%expect_test "Test: type expression parsing" =
       t ((TCons int ()) (TCons float ())))
     |}];
   print_parsed_type_expr "int T(M).t";
-  [%expect {|
+  [%expect
+    {|
     (TField
       ((node
          (MEApply
@@ -1302,7 +1361,8 @@ let%expect_test "Test: type expression parsing" =
       t ((TCons int ())))
     |}];
   print_parsed_type_expr "(int) T.t";
-  [%expect {|
+  [%expect
+    {|
     (TField
       ((node (MEName T))
         (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 6)))
@@ -1316,7 +1376,8 @@ let%expect_test "Test: top level module" =
      module X = struct
      end
      |};
-  [%expect {|
+  [%expect
+    {|
     ((TopMod X
        ((node (MEStruct ()))
          (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 17)))
@@ -1395,7 +1456,8 @@ let%expect_test "Test: module expression" =
       (attrs ()))
     |}];
   print_parsed {|functor (X: M) -> struct end|};
-  [%expect {|
+  [%expect
+    {|
     ((node
        (MEFunctor
          ((X (MTName M))
@@ -1415,7 +1477,8 @@ let%expect_test "Test: module type" =
   print_parsed {|M|};
   [%expect {| (MTName M) |}];
   print_parsed {|M.X(M).E|};
-  [%expect {|
+  [%expect
+    {|
     (MTField
       ((node
          (MEApply

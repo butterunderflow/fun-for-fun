@@ -1100,7 +1100,8 @@ external print_int : int ->  int = "ff_builtin_print_int"
   print_effect {|
                let rec id = fun x -> x
                |};
-  [%expect {|
+  [%expect
+    {|
     ------------------Envirment Debug Info Begin------------------------
 
     ++++++++++++++++++Scope Debug Info Begin++++++++++++++++++

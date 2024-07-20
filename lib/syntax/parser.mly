@@ -64,7 +64,7 @@ let mk_type_ref fon t_args =
 %nonassoc below_SEMI
 %right SEMI
 
-%nonassoc IDENT, INT, STRING, BOOL
+%nonassoc IDENT, MIDENT, INT, STRING, BOOL
 
 
 %left EQ
@@ -152,6 +152,12 @@ type_def:
         EQ OR? vs=separated_list(OR, variant) %prec over_TOP
                 { TDAdt (n, (List.map Ident.from tvs), vs) }
     | TYPE UNIT n=IDENT
+        EQ OR? vs=separated_list(OR, variant) %prec over_TOP
+                { TDAdt (n, [], vs) }
+    | TYPE tv=TYPEVAR n=IDENT
+        EQ OR? vs=separated_list(OR, variant) %prec over_TOP
+                { TDAdt (n, [ Ident.from tv ], vs) }
+    | TYPE n=IDENT
         EQ OR? vs=separated_list(OR, variant) %prec over_TOP
                 { TDAdt (n, [], vs) }
     | TYPE n=IDENT
