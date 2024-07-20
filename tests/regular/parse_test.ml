@@ -628,7 +628,8 @@ let%expect_test "Test: expression parsing" =
       (attrs ()))
     |}];
   print_parsed {|a b Nil|};
-  [%expect {|
+  [%expect
+    {|
     ((node
        (EApp
          ((node
@@ -1188,7 +1189,16 @@ let result = print_int (sum 4)
           (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 75)))
           (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 92)))
           (attrs ()))))
-    |}]
+    |}];
+  print_parsed_program {|
+                type 'a t = Nil
+                        |};
+  [%expect {| ((TopTypeDef (TDAdt t ('a/0) ((Nil ()))))) |}];
+  print_parsed_program {|
+                type t = | Nil
+                        |};
+  [%expect {| ((TopTypeDef (TDAdt t () ((Nil ()))))) |}]
+
 
 let%expect_test "Test: path parsing" =
   print_parsed_mod_expr {|X|};

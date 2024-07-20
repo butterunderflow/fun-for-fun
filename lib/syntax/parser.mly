@@ -154,6 +154,12 @@ type_def:
     | TYPE UNIT n=IDENT
         EQ OR? vs=separated_list(OR, variant) %prec over_TOP
                 { TDAdt (n, [], vs) }
+    | TYPE tv=TYPEVAR n=IDENT
+        EQ OR? vs=separated_list(OR, variant) %prec over_TOP
+                { TDAdt (n, [ Ident.from tv ], vs) }
+    | TYPE n=IDENT
+        EQ OR? vs=separated_list(OR, variant) %prec over_TOP
+                { TDAdt (n, [], vs) }
     | TYPE n=IDENT
         EQ te=type_expr %prec over_TOP
                 { TDAlias (n, te) }
