@@ -20,6 +20,8 @@ extern const ff_obj_t ff_builtin_print_bool;
 
 extern const ff_obj_t ff_builtin_println_int;
 
+extern const ff_obj_t ff_builtin_println_str;
+
 extern const ff_obj_t ff_builtin_read_int;
 
 #endif /* FUN4FUN_RUNTIME_FUN_RT_LIB_HPP */
