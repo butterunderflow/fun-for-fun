@@ -155,7 +155,7 @@ and tc_pattern p te env : pattern * (string * I.ty) list =
         U.unify te1 te0;
         let p, vars = tc_pattern p pay_ty env in
         (p, vars)
-    | _ -> failwith "wrong type"
+    | _ -> failwith "payload constructor is not arrow type"
   in
   match (p, te) with
   | T.PVar x, te -> (PVar (x, te), [ (x, te) ])
@@ -166,8 +166,10 @@ and tc_pattern p te env : pattern * (string * I.ty) list =
       let cons_ty = inst cons_ty_gen in
       U.unify cons_ty te;
       match cons_ty with
-      | I.TConsI (_, []) -> (PCons (c, id, None), [])
-      | _ -> failwith "wrong type")
+      | I.TConsI _ -> (PCons (c, id, None), [])
+      | _ ->
+          failwith
+            (Printf.sprintf "wrong no-payload constructor pattern %s" c))
   | T.PFieldCons (me, c, None), te -> (
       let cons_typed (* constructor *) = tc_field_cons me c env in
       let[@warning "-8"] (EFieldCons (_, _, id, _)) = cons_typed in
