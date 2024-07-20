@@ -38,31 +38,47 @@ let show_usage () = Arg.usage speclist help_msg
 
 let read_file filename =
   (* open_in_bin works correctly on Unix and Windows *)
-  let ch = open_in_bin filename in
-  let s = really_input_string ch (in_channel_length ch) in
-  close_in ch;
-  s
+  if Sys.file_exists filename then (
+    let ch = open_in_bin filename in
+    let s = really_input_string ch (in_channel_length ch) in
+    close_in ch;
+    Some s)
+  else None
 
 let out_sexp oc s =
   Printf.fprintf oc "%s\n" (Sexplib.Sexp.to_string_hum ?indent:(Some 2) s)
 
 let default_output_file = "a.out"
 
-let get_output_file ?postfix:(post = "") () =
-  let output_basename =
-    if !output_file = "" then default_output_file else !output_file
-  in
-  Printf.sprintf "%s%s" output_basename post
+let get_output_file () =
+  if !output_file = "" then default_output_file else !output_file
 
-let debug_compose prog (pass, dbg, post) =
-  let result = pass prog in
-  if !debug then (
-    let oc = open_out (get_output_file ~postfix:post ()) in
-    Printf.fprintf oc "%s" (dbg result);
-    close_out oc);
-  result
+let debug_compose input (pass, dbg, post) =
+  Option.bind input (fun prog ->
+      let result = pass prog in
+      match result with
+      | Some result' ->
+          if !debug then (
+            let no_extension_filename =
+              Filename.remove_extension (get_output_file ())
+            in
+            let debug_filename =
+              Printf.sprintf "%s.%s" no_extension_filename post
+            in
+            let oc = open_out debug_filename in
+            Printf.fprintf oc "%s" (dbg result');
+            close_out oc);
+          result
+      | None -> None)
 
 let ( |-> ) = debug_compose
+
+let wrap_pass pass x =
+  try Some (pass x) with
+  | Failure msg ->
+      Printf.printf "Failed with: %s\n" msg;
+      None
+  | _ -> None
 
 let () =
   Arg.parse speclist store_input help_msg;
@@ -77,26 +93,27 @@ let () =
         exit 0
     | Some f -> f
   in
-  let prog =
+  let output =
     input_file
     |> read_file
-    |-> (S.Parsing.parse_string_program, S.Parsetree.dbg, ".parsing")
+    |-> (S.Tools.parse_string_program_opt, S.Parsetree.dbg, "parsing")
     |-> ( (fun prog ->
-            let typed, _env =
-              Option.get
-                (Typing.Report.wrap_with_error_report (fun () ->
-                     Typing.Tools.type_check_program prog))
-            in
-            typed),
+            Option.map
+              (fun (typed, _env) -> typed)
+              (Typing.Report.wrap_with_error_report (fun () ->
+                   Typing.Tools.type_check_program prog))),
           Typing.Render.default_dbg,
-          ".typed" )
-    |-> (Lo.compile_program, Lam.Tree.dbg, ".lambda")
-    |-> (Li.lift, Clos.Closure.dbg, ".closure")
-    |-> (Back.Closure_translator.translate, (fun x -> x), ".c_dbg")
+          "typed" )
+    |-> (wrap_pass Lo.compile_program, Lam.Tree.dbg, "lambda")
+    |-> (wrap_pass Li.lift, Clos.Closure.dbg, "closure")
+    |-> (wrap_pass Back.Closure_translator.translate, (fun x -> x), "c_dbg")
   in
-  if !output_stdout then print_string prog
-  else
-    let output_file = get_output_file () in
-    let oc = open_out output_file in
-    Stdlib.output_string oc prog;
-    close_out oc
+  match output with
+  | Some prog ->
+      if !output_stdout then print_string prog
+      else
+        let output_file = get_output_file () in
+        let oc = open_out output_file in
+        Stdlib.output_string oc prog;
+        close_out oc
+  | None -> Printf.printf "Compilation failed!"

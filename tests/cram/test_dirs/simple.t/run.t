@@ -86,15 +86,15 @@
   a.out
   fib.fun
   simple.fun
+  simple1.c_dbg
+  simple1.closure
+  simple1.lambda
   simple1.out
-  simple1.out.c_dbg
-  simple1.out.closure
-  simple1.out.lambda
-  simple1.out.parsing
-  simple1.out.typed
+  simple1.parsing
+  simple1.typed
 
 
-  $ cat simple1.out.closure
+  $ cat simple1.closure
   Main function: 
   main/1
   Global C functions: 
@@ -104,14 +104,14 @@
         (FSimple z (EClosure ((y) z/2))) (FSimple w (EClosure (() w/3)))
         (FSimple m (EClosure ((w) m/4))))))(m/4 (w) (x) (EApp (EVar w) ((EConst (CInt 1)))))(w/3 () (x) (EConst (CInt 0)))(z/2 (y) (x) (EVar y))
 
-  $ cat simple1.out.lambda
+  $ cat simple1.lambda
   (EModObject
     ((FSimple x (EConst (CInt 1))) (FSimple y (EConst (CInt 1)))
       (FSimple z (ELam ((x) (EVar y) (y))))
       (FSimple w (ELam ((x) (EConst (CInt 0)) ())))
       (FSimple m (ELam ((x) (EApp (EVar w) ((EConst (CInt 1)))) (w))))))
 
-  $ cat simple1.out.parsing
+  $ cat simple1.parsing
   ((TopLet x
      ((node (EConst (CInt 1)))
        (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 8)))
@@ -175,7 +175,7 @@
         (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 87)))
         (attrs ()))))
 
-  $ cat simple1.out.typed
+  $ cat simple1.typed
   
   
   let x = (1 is () 0.int)
