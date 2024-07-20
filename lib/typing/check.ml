@@ -557,6 +557,13 @@ and shift_mt (mt : I.mod_ty) env : I.mod_ty =
             (List.map get_id_or_default owned_mods)
 
         method! visit_ty_id () (id, name) = (get_id_or_default id, name)
+
+        method! visit_tv () tv =
+          match tv with
+          | I.Unbound _ ->
+              failwith
+                "neverreach: any module should have empty inference space"
+          | I.Link _ -> super#visit_tv () tv
       end
     in
     fun mt -> mapper#visit_mod_ty () mt
@@ -590,12 +597,19 @@ and check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) :
     let mapper =
       object
         (* todo: remove this object *)
-        inherit [_] Types_in.map
+        inherit [_] Types_in.map as super
 
         method! visit_ty_id () (id, name) =
           match List.assoc_opt id map with
           | Some id1 -> (id1, name)
           | _ -> (id, name)
+
+        method! visit_tv () tv =
+          match tv with
+          | I.Unbound _ ->
+              failwith
+                "neverreach: any module should have empty inference space"
+          | I.Link _ -> super#visit_tv () tv
       end
     in
     fun mt -> mapper#visit_mod_ty () mt
