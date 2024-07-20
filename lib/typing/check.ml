@@ -66,15 +66,15 @@ let get_all_tvs (te : I.ty) : I.tv ref list =
   List_utils.remove_from_left !tvs
 
 let generalize (t : I.ty) (env : Env.t) : I.bind_ty =
-  let tvs = get_all_tvs t in
-  (* get all type variables *)
-  let uncaptured_tvs = List.filter (fun x -> not (Env.captured env x)) tvs in
   let qvs = ref [] in
+  let cons_uniq x xs = if List.mem x xs then xs else x :: xs in
   let rec gen (t : I.ty) =
     match t with
     | I.TVarI ({ contents = I.Unbound x } as tv) ->
-        if List.memq tv uncaptured_tvs then (
-          if not (List.mem x !qvs) then qvs := x :: !qvs;
+        (* if a type variable not captured by environment, we need to
+           generalize it *)
+        if not (Env.captured env tv) then (
+          qvs := cons_uniq x !qvs;
           I.TQVarI x)
         else t
     | I.TVarI { contents = I.Link t } -> gen t

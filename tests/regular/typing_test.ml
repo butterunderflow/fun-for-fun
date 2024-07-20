@@ -1394,4 +1394,36 @@ module L = (K: M)
                    (ty_defs ((TDOpaqueI s ()) (TDOpaqueI t ()))) (mod_sigs ())
                    (mod_defs ()) (owned_mods ())))))
             (owned_mods ())))))
+    |}];
+
+  print_typed {|
+               let result =
+                 let id = fun x -> x in
+                 (id 1, id "xx")
+               |};
+  [%expect {|
+    ((TopLet result
+       (ELet id
+         (ELam
+           (x (EVar x (TVarI (Unbound '_t/1)))
+             (TArrowI (TVarI (Unbound '_t/1)) (TVarI (Unbound '_t/1)))))
+         (ETuple
+           ((EApp
+              (EVar id
+                (TArrowI (TVarI (Link (TConsI (0 int) ())))
+                  (TVarI (Link (TConsI (0 int) ())))))
+              (EConst (CInt 1) (TConsI (0 int) ()))
+              (TVarI (Link (TConsI (0 int) ()))))
+             (EApp
+               (EVar id
+                 (TArrowI (TVarI (Link (TConsI (0 string) ())))
+                   (TVarI (Link (TConsI (0 string) ())))))
+               (EConst (CString "\"xx\"") (TConsI (0 string) ()))
+               (TVarI (Link (TConsI (0 string) ())))))
+           (TTupleI
+             ((TVarI (Link (TConsI (0 int) ())))
+               (TVarI (Link (TConsI (0 string) ()))))))
+         (TTupleI
+           ((TVarI (Link (TConsI (0 int) ())))
+             (TVarI (Link (TConsI (0 string) ()))))))))
     |}]
