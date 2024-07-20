@@ -235,6 +235,7 @@ expr:
          make_node (ECase (e, branches)) $startpos $endpos
        }
     | e=bin_expr { e }
+    | e=expr COLON te=type_expr { make_node (EAnn (e, te)) $startpos $endpos }
     ;
 
 bin_expr:
@@ -274,7 +275,7 @@ sig_comp:
     | TYPE UNIT t=IDENT
         { TAbstTySpec (t, []) }
     | def=type_def                   { TManiTySpec def }
-    | MODULE m_name=MIDENT EQ mt=mod_type { TModSpec (m_name, mt) }
+    | MODULE m_name=MIDENT COLON mt=mod_type { TModSpec (m_name, mt) }
 ;
 
 constant:

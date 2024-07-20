@@ -23,7 +23,8 @@ let%expect_test "Test: pretty print typed expression" =
     {|
     fun x ->
       let y = (x is {'_t/1})
-      in (y is {'_t/2}) |}];
+      in (y is {'_t/1})
+    |}];
 
   print_typed {| if true then 1 else 2 |};
   [%expect
@@ -538,10 +539,32 @@ module MMM = (M(F).K : I)
                       (struct
 
                          module K =
-                           MI(Simple)
+                           (MI(Simple) is sig
+
+                                            id = 6
+
+                                            val y : () 0.int
+
+                                            val x : () 0.int
+
+                                            Owned Modules = {
+                                            }
+
+                                          end)
 
                          module K2 =
-                           MI(MJ)
+                           (MI(MJ) is sig
+
+                                        id = 7
+
+                                        val y : () 0.int
+
+                                        val x : () 0.int
+
+                                        Owned Modules = {
+                                        }
+
+                                      end)
 
                        end is sig
 
@@ -648,29 +671,64 @@ module MMM = (M(F).K : I)
                                    end)
 
       module MMM =
-        ((M(F).K : sig
+        (((M(F) is sig
 
-                     id = 1
+                     id = 9
 
-                     val y : () 0.int
+                     module K2 : sig
 
-                     val x : () 0.int
+                                   id = 10
+
+                                   val y : () 0.int
+
+                                   val x : () 0.int
+
+                                   Owned Modules = {
+                                   }
+
+                                 end
+
+                     module K : sig
+
+                                  id = 11
+
+                                  val y : () 0.int
+
+                                  val x : () 0.int
+
+                                  Owned Modules = {
+                                  }
+
+                                end
 
                      Owned Modules = {
+                       10 ;
+                       11 ;
                      }
 
-                   end) is sig
+                   end).K : sig
 
-                             id = 11
+                              id = 1
 
-                             val y : () 0.int
+                              val y : () 0.int
 
-                             val x : () 0.int
+                              val x : () 0.int
 
-                             Owned Modules = {
-                             }
+                              Owned Modules = {
+                              }
 
-                           end)
+                            end) is sig
+
+                                      id = 11
+
+                                      val y : () 0.int
+
+                                      val x : () 0.int
+
+                                      Owned Modules = {
+                                      }
+
+                                    end)
     |}];
 
   print_typed
@@ -833,7 +891,8 @@ module MMM = (M(F).K : I)
                              * (b is {() 0.string}))) -> (b is () 0.string)
     |}];
 
-  print_typed {|
+  print_typed
+    {|
                module type I0 =
                sig
                  type () t
@@ -860,7 +919,8 @@ module MMM = (M(F).K : I)
 
                module M = F(N)
                |};
-  [%expect {|
+  [%expect
+    {|
     module type I0 =
       sig
 
@@ -969,5 +1029,144 @@ module MMM = (M(F).K : I)
                   end)
 
       module M =
-        F(N)
+        (F(N) is sig
+
+                   id = 5
+
+                   Owned Modules = {
+                   }
+
+                 end)
+    |}];
+  print_typed
+    {|
+               module type I0 =
+               sig
+               end
+
+
+               module N = functor(MI0: I0) -> struct
+                 module K = functor(MI0: I0) -> struct
+                 end
+               end
+
+               module A = struct
+               end
+
+               module L = N(A)
+
+               |};
+  [%expect
+    {|
+    module type I0 =
+      sig
+
+        id = 1
+
+        Owned Modules = {
+        }
+
+      end
+
+    module N =
+      functor (MI0 : sig
+
+                       id = 1
+
+                       Owned Modules = {
+                       }
+
+        end)
+        ->
+        (struct
+
+           module K =
+             functor (MI0 : sig
+
+                              id = 1
+
+                              Owned Modules = {
+                              }
+
+               end)
+               ->
+               (struct
+
+                end is sig
+
+                         id = 3
+
+                         Owned Modules = {
+                         }
+
+                       end)
+
+         end is sig
+
+                  id = 2
+
+                  module K : functor (_ : sig
+
+                                            id = 1
+
+                                            Owned Modules = {
+                                            }
+
+                                          end)
+                               ->
+                               sig
+
+                                 id = 3
+
+                                 Owned Modules = {
+                                 }
+
+                               end
+
+                             Owned Modules = {
+                               3 ;
+                             }
+
+                  end)
+
+      module A =
+        (struct
+
+         end is sig
+
+                  id = 4
+
+                  Owned Modules = {
+                  }
+
+                end)
+
+      module L =
+        (N(A) is sig
+
+                   id = 5
+
+                   module K : functor (_ : sig
+
+                                             id = 1
+
+                                             Owned Modules = {
+                                             }
+
+                                           end)
+                                ->
+                                sig
+
+                                  id = 6
+
+                                  Owned Modules = {
+                                  }
+
+                                end
+
+                              Owned Modules = {
+                                6 ;
+                              }
+
+                   end)
     |}]

@@ -324,14 +324,15 @@ let%expect_test "Test: program toplevel typing" =
                 (TVarI (Link (TVarI (Unbound '_t/9)))))))
           (((PCons Cons 0
               ((PTuple
-                 ((PVar a (TVarI (Link (TVarI (Link (TVarI (Unbound '_t/8)))))))
-                   (PVar b (TVarI (Link (TVarI (Link (TVarI (Unbound '_t/9)))))))))))
+                 ((PVar a (TVarI (Unbound '_t/8)))
+                   (PVar b (TVarI (Unbound '_t/9)))))))
              (ETuple
                ((EVar b (TVarI (Unbound '_t/9)))
                  (EVar a (TVarI (Unbound '_t/8))))
                (TTupleI ((TVarI (Unbound '_t/9)) (TVarI (Unbound '_t/8)))))))
           (TVarI
-            (Link (TTupleI ((TVarI (Unbound '_t/9)) (TVarI (Unbound '_t/8))))))))) |}];
+            (Link (TTupleI ((TVarI (Unbound '_t/9)) (TVarI (Unbound '_t/8)))))))))
+    |}];
   print_effect
     {|
      type ('a, 'b) int_l
@@ -349,7 +350,7 @@ let%expect_test "Test: program toplevel typing" =
 
     ++++++++++++++++++Scope Debug Info Begin++++++++++++++++++
     Value Bindings:
-      f |-> forall  . (TTupleI ((TVarI (Unbound '_t/9)) (TVarI (Unbound '_t/8))));
+      f |-> forall '_t/8;'_t/9 . (TTupleI ((TQVarI '_t/9) (TQVarI '_t/8)));
       x |-> forall 'b/2;'a/1 . (TConsI (0 int_l) ((TQVarI 'a/1) (TQVarI 'b/2)))
     Type Definitions:
       int_l |-> (TDAdtI int_l ('a/0 'b/0)
@@ -364,7 +365,8 @@ let%expect_test "Test: program toplevel typing" =
       0
     ++++++++++++++++++Scope Debug Info Begin++++++++++++++++++
 
-    ------------------Envirment Debug Info End-------------------------- |}]
+    ------------------Envirment Debug Info End--------------------------
+    |}]
 
 let%expect_test "Test: full program typing" =
   let print_typed str =
@@ -1093,6 +1095,30 @@ external print_int : int ->  int = "ff_builtin_print_int"
       (TopLet n
         (ECmp Eq (EVar x (TConsI (0 int) ()))
           (EConst (CInt 1) (TConsI (0 int) ())) (TConsI (0 bool) ()))))
+    |}];
+
+  print_effect {|
+               let rec id = fun x -> x
+               |};
+  [%expect {|
+    ------------------Envirment Debug Info Begin------------------------
+
+    ++++++++++++++++++Scope Debug Info Begin++++++++++++++++++
+    Value Bindings:
+      id |-> forall '_t/2 . (TArrowI (TQVarI '_t/2) (TQVarI '_t/2))
+    Type Definitions:
+
+    Module Definitions:
+
+    Module Types:
+
+    Module Creation History:
+
+    Current Module Index:
+      0
+    ++++++++++++++++++Scope Debug Info Begin++++++++++++++++++
+
+    ------------------Envirment Debug Info End--------------------------
     |}]
 
 let%expect_test "Error reporting test" =
@@ -1273,4 +1299,159 @@ let%expect_test "Error reporting test" =
             (MTMod (id 2) (val_defs ((y (() (TConsI (2 t) ())))))
               (constr_defs ()) (ty_defs ((TDOpaqueI t ()) (TDOpaqueI n ())))
               (mod_sigs ()) (mod_defs ()) (owned_mods ()))))))
+    |}];
+
+  print_typed
+    {|
+             let x = 
+                let y  = (1: 'a , 1) in
+                let z = (2, 1: 'a) in
+                (y, z)
+             |};
+  [%expect
+    {|
+    ((TopLet x
+       (ELet y
+         (ETuple
+           ((EConst (CInt 1) (TConsI (0 int) ()))
+             (EConst (CInt 1) (TConsI (0 int) ())))
+           (TTupleI ((TConsI (0 int) ()) (TConsI (0 int) ()))))
+         (ELet z
+           (ETuple
+             ((EConst (CInt 2) (TConsI (0 int) ()))
+               (EConst (CInt 1) (TConsI (0 int) ())))
+             (TTupleI ((TConsI (0 int) ()) (TConsI (0 int) ()))))
+           (ETuple
+             ((EVar y (TTupleI ((TConsI (0 int) ()) (TConsI (0 int) ()))))
+               (EVar z (TTupleI ((TConsI (0 int) ()) (TConsI (0 int) ())))))
+             (TTupleI
+               ((TTupleI ((TConsI (0 int) ()) (TConsI (0 int) ())))
+                 (TTupleI ((TConsI (0 int) ()) (TConsI (0 int) ()))))))
+           (TTupleI
+             ((TTupleI ((TConsI (0 int) ()) (TConsI (0 int) ())))
+               (TTupleI ((TConsI (0 int) ()) (TConsI (0 int) ()))))))
+         (TTupleI
+           ((TTupleI ((TConsI (0 int) ()) (TConsI (0 int) ())))
+             (TTupleI ((TConsI (0 int) ()) (TConsI (0 int) ()))))))))
+    |}];
+
+  print_typed
+    {|
+module type M = sig
+
+             module N : sig
+
+               type () t 
+
+               type () s
+
+             end
+             
+end
+
+
+module K = struct
+
+             module N = struct 
+
+               type t = int
+
+               type s = int
+             end
+end
+
+module L = (K: M)
+
+             |};
+  [%expect
+    {|
+    ((TopModSig M
+       (MTMod (id 1) (val_defs ()) (constr_defs ()) (ty_defs ()) (mod_sigs ())
+         (mod_defs
+           ((N
+              (MTMod (id 2) (val_defs ()) (constr_defs ())
+                (ty_defs ((TDOpaqueI s ()) (TDOpaqueI t ()))) (mod_sigs ())
+                (mod_defs ()) (owned_mods ())))))
+         (owned_mods (2))))
+      (TopMod K
+        (MEStruct
+          ((TopMod N
+             (MEStruct
+               ((TopTypeDef (TDAliasI t (TConsI (0 int) ())))
+                 (TopTypeDef (TDAliasI s (TConsI (0 int) ()))))
+               (MTMod (id 4) (val_defs ()) (constr_defs ())
+                 (ty_defs
+                   ((TDAliasI s (TConsI (0 int) ()))
+                     (TDAliasI t (TConsI (0 int) ()))))
+                 (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
+          (MTMod (id 3) (val_defs ()) (constr_defs ()) (ty_defs ()) (mod_sigs ())
+            (mod_defs
+              ((N
+                 (MTMod (id 4) (val_defs ()) (constr_defs ())
+                   (ty_defs
+                     ((TDAliasI s (TConsI (0 int) ()))
+                       (TDAliasI t (TConsI (0 int) ()))))
+                   (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
+            (owned_mods (4)))))
+      (TopMod L
+        (MERestrict
+          (MEName K
+            (MTMod (id 3) (val_defs ()) (constr_defs ()) (ty_defs ())
+              (mod_sigs ())
+              (mod_defs
+                ((N
+                   (MTMod (id 4) (val_defs ()) (constr_defs ())
+                     (ty_defs
+                       ((TDAliasI s (TConsI (0 int) ()))
+                         (TDAliasI t (TConsI (0 int) ()))))
+                     (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
+              (owned_mods (4))))
+          (MTMod (id 1) (val_defs ()) (constr_defs ()) (ty_defs ()) (mod_sigs ())
+            (mod_defs
+              ((N
+                 (MTMod (id 2) (val_defs ()) (constr_defs ())
+                   (ty_defs ((TDOpaqueI s ()) (TDOpaqueI t ()))) (mod_sigs ())
+                   (mod_defs ()) (owned_mods ())))))
+            (owned_mods (2)))
+          (MTMod (id 3) (val_defs ()) (constr_defs ()) (ty_defs ()) (mod_sigs ())
+            (mod_defs
+              ((N
+                 (MTMod (id 4) (val_defs ()) (constr_defs ())
+                   (ty_defs ((TDOpaqueI s ()) (TDOpaqueI t ()))) (mod_sigs ())
+                   (mod_defs ()) (owned_mods ())))))
+            (owned_mods ())))))
+    |}];
+
+  print_typed
+    {|
+               let result =
+                 let id = fun x -> x in
+                 (id 1, id "xx")
+               |};
+  [%expect
+    {|
+    ((TopLet result
+       (ELet id
+         (ELam
+           (x (EVar x (TVarI (Unbound '_t/1)))
+             (TArrowI (TVarI (Unbound '_t/1)) (TVarI (Unbound '_t/1)))))
+         (ETuple
+           ((EApp
+              (EVar id
+                (TArrowI (TVarI (Link (TConsI (0 int) ())))
+                  (TVarI (Link (TConsI (0 int) ())))))
+              (EConst (CInt 1) (TConsI (0 int) ()))
+              (TVarI (Link (TConsI (0 int) ()))))
+             (EApp
+               (EVar id
+                 (TArrowI (TVarI (Link (TConsI (0 string) ())))
+                   (TVarI (Link (TConsI (0 string) ())))))
+               (EConst (CString "\"xx\"") (TConsI (0 string) ()))
+               (TVarI (Link (TConsI (0 string) ())))))
+           (TTupleI
+             ((TVarI (Link (TConsI (0 int) ())))
+               (TVarI (Link (TConsI (0 string) ()))))))
+         (TTupleI
+           ((TVarI (Link (TConsI (0 int) ())))
+             (TVarI (Link (TConsI (0 string) ()))))))))
     |}]

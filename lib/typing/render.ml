@@ -199,11 +199,14 @@ module MakePP (Config : PPConfig) = struct
         pp_mod fmt me;
         Fmt.fprintf fmt ".%s" name;
         Fmt.fprintf fmt "@]"
-    | MEApply (me0, me1, _) ->
-        pp_mod fmt me0;
-        Fmt.fprintf fmt "(";
-        pp_mod fmt me1;
-        Fmt.fprintf fmt ")"
+    | MEApply (me0, me1, mt) ->
+        pp_is_mod_ty fmt Config.show_mod_ty
+          (fun _ ->
+            pp_mod fmt me0;
+            Fmt.fprintf fmt "(";
+            pp_mod fmt me1;
+            Fmt.fprintf fmt ")")
+          mt
     | MERestrict (me, mt, mt') ->
         pp_is_mod_ty fmt Config.show_mod_ty
           (fun _ ->

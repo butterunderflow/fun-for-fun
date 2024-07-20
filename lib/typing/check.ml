@@ -66,20 +66,20 @@ let get_all_tvs (te : I.ty) : I.tv ref list =
   List_utils.remove_from_left !tvs
 
 let generalize (t : I.ty) (env : Env.t) : I.bind_ty =
-  let tvs = get_all_tvs t in
-  (* get all type variables *)
-  let uncaptured_tvs = List.filter (fun x -> not (Env.captured env x)) tvs in
   let qvs = ref [] in
+  let cons_uniq x xs = if List.mem x xs then xs else x :: xs in
   let rec gen (t : I.ty) =
     match t with
     | I.TVarI ({ contents = I.Unbound x } as tv) ->
-        if List.memq tv uncaptured_tvs then (
-          if not (List.mem x !qvs) then qvs := x :: !qvs;
+        (* if a type variable not captured by environment, we need to
+           generalize it *)
+        if not (Env.captured env tv) then (
+          qvs := cons_uniq x !qvs;
           I.TQVarI x)
         else t
     | I.TVarI { contents = I.Link t } -> gen t
     | I.TConsI (c, tes) -> I.TConsI (c, List.map gen tes)
-    | I.TQVarI _ -> t
+    | I.TQVarI _ -> failwith "neverreach"
     | I.TArrowI (t1, t2) -> I.TArrowI (gen t1, gen t2)
     | I.TTupleI tes -> I.TTupleI (List.map gen tes)
     | I.TRecordI fields ->
@@ -155,7 +155,7 @@ and tc_pattern p te env : pattern * (string * I.ty) list =
         U.unify te1 te0;
         let p, vars = tc_pattern p pay_ty env in
         (p, vars)
-    | _ -> failwith "wrong type"
+    | _ -> failwith "payload constructor is not arrow type"
   in
   match (p, te) with
   | T.PVar x, te -> (PVar (x, te), [ (x, te) ])
@@ -166,8 +166,10 @@ and tc_pattern p te env : pattern * (string * I.ty) list =
       let cons_ty = inst cons_ty_gen in
       U.unify cons_ty te;
       match cons_ty with
-      | I.TConsI (_, []) -> (PCons (c, id, None), [])
-      | _ -> failwith "wrong type")
+      | I.TConsI _ -> (PCons (c, id, None), [])
+      | _ ->
+          failwith
+            (Printf.sprintf "wrong no-payload constructor pattern %s" c))
   | T.PFieldCons (me, c, None), te -> (
       let cons_typed (* constructor *) = tc_field_cons me c env in
       let[@warning "-8"] (EFieldCons (_, _, id, _)) = cons_typed in
@@ -191,19 +193,17 @@ and tc_pattern p te env : pattern * (string * I.ty) list =
       let v_typed = tc_const v in
       U.unify (get_ty v_typed) te;
       (PVal v, [])
-  | T.PTuple pats, te -> (
-      U.unify te (I.TTupleI (List.map (fun _ -> make_tv ()) pats));
-      match te with
-      | I.TTupleI tes ->
-          let pats, vars =
-            List.fold_left2
-              (fun (pats_acc, vars_acc) pat te ->
-                let pat, vars = tc_pattern pat te env in
-                (pats_acc @ [ pat ], vars_acc @ vars))
-              ([], []) pats tes
-          in
-          (PTuple pats, vars)
-      | _ -> failwith "wrong")
+  | T.PTuple pats, te ->
+      let payload_tvs = List.map (fun _ -> make_tv ()) pats in
+      U.unify te (I.TTupleI payload_tvs);
+      let pats, vars =
+        List.fold_left2
+          (fun (pats_acc, vars_acc) pat te ->
+            let pat, vars = tc_pattern pat te env in
+            (pats_acc @ [ pat ], vars_acc @ vars))
+          ([], []) pats payload_tvs
+      in
+      (PTuple pats, vars)
 
 and tc_let x e0 e1 env =
   let e0_typed, env = tc_let_binding x e0 env in
@@ -224,6 +224,7 @@ and tc_letrec binds body env : expr =
 
 and tc_letrec_binding binds env =
   let tvs = List.map (fun _ -> ([], make_tv ())) binds in
+  let origin_env = env in
   let env =
     List.fold_left2
       (fun acc (x, _) tv -> Env.add_value x tv acc)
@@ -249,8 +250,9 @@ and tc_letrec_binding binds env =
   in
   let env =
     List.fold_left2
-      (fun acc (_, _, te) x -> Env.add_value x (generalize te env) acc)
-      env lams_typed vars
+      (fun acc_env (_, _, te) x ->
+        Env.add_value x (generalize te origin_env) acc_env)
+      origin_env lams_typed vars
   in
   (env, vars, lams_typed)
 
@@ -504,7 +506,8 @@ and apply_functor para_mt body_mt arg_mt env =
   body_mt
 
 and shift_mt (mt : I.mod_ty) env : I.mod_ty =
-  (* collect type id need to be shift *)
+  (* collect type ids need to be shift, which correspond to all modules
+     created by the functor body *)
   let dict =
     let result = ref IntMap.empty in
     let rec go mt =
@@ -527,9 +530,11 @@ and shift_mt (mt : I.mod_ty) env : I.mod_ty =
             (id :: owned_mods);
           List.iter (fun (_, mt) -> go mt) mod_defs;
           List.iter (fun (_, mt) -> go mt) mod_sigs
-      | I.MTFun (para_mt, body_mt) ->
-          go para_mt;
-          go body_mt
+      | I.MTFun (_para_mt, _body_mt) ->
+          (* It's OK to ignore functor's input and output in shifting,
+             because they are not indicate modules "created" by the functor.
+             They are just module types indicate compatibility. *)
+          ()
     in
     go mt;
     !result
@@ -548,14 +553,19 @@ and shift_mt (mt : I.mod_ty) env : I.mod_ty =
 
         method! visit_MTMod () id val_defs constr_defs ty_defs mod_sigs
             mod_defs owned_mods =
-          super#visit_MTMod () (IntMap.find id dict) val_defs constr_defs
-            ty_defs mod_sigs mod_defs
+          let shifted_id = get_id_or_default id in
+          super#visit_MTMod () shifted_id val_defs constr_defs ty_defs
+            mod_sigs mod_defs
             (List.map get_id_or_default owned_mods)
 
-        method! visit_ty_id () (id, name) =
-          match IntMap.find_opt id dict with
-          | None -> (id, name)
-          | Some id' -> (id', name)
+        method! visit_ty_id () (id, name) = (get_id_or_default id, name)
+
+        method! visit_tv () tv =
+          match tv with
+          | I.Unbound _ ->
+              failwith
+                "neverreach: any module should have empty inference space"
+          | I.Link _ -> super#visit_tv () tv
       end
     in
     fun mt -> mapper#visit_mod_ty () mt
@@ -589,12 +599,19 @@ and check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) :
     let mapper =
       object
         (* todo: remove this object *)
-        inherit [_] Types_in.map
+        inherit [_] Types_in.map as super
 
         method! visit_ty_id () (id, name) =
           match List.assoc_opt id map with
           | Some id1 -> (id1, name)
           | _ -> (id, name)
+
+        method! visit_tv () tv =
+          match tv with
+          | I.Unbound _ ->
+              failwith
+                "neverreach: any module should have empty inference space"
+          | I.Link _ -> super#visit_tv () tv
       end
     in
     fun mt -> mapper#visit_mod_ty () mt

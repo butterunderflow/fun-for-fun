@@ -69,6 +69,7 @@ and unify_lst t0 t1 =
 let occur (tpv : tv ref) (te : ty) : bool =
   try
     occurs tpv te;
-    true
+    false
   with
-  | OccurError _ -> false
+  | OccurError (_tpv, _te) ->
+     true
