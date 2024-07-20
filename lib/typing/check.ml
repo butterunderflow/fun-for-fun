@@ -226,6 +226,7 @@ and tc_letrec binds body env : expr =
 
 and tc_letrec_binding binds env =
   let tvs = List.map (fun _ -> ([], make_tv ())) binds in
+  let origin_env = env in
   let env =
     List.fold_left2
       (fun acc (x, _) tv -> Env.add_value x tv acc)
@@ -251,8 +252,9 @@ and tc_letrec_binding binds env =
   in
   let env =
     List.fold_left2
-      (fun acc (_, _, te) x -> Env.add_value x (generalize te env) acc)
-      env lams_typed vars
+      (fun acc_env (_, _, te) x ->
+        Env.add_value x (generalize te origin_env) acc_env)
+      origin_env lams_typed vars
   in
   (env, vars, lams_typed)
 

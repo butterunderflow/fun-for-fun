@@ -324,8 +324,8 @@ let%expect_test "Test: program toplevel typing" =
                 (TVarI (Link (TVarI (Unbound '_t/9)))))))
           (((PCons Cons 0
               ((PTuple
-                 ((PVar a (TVarI (Unbound '_t/8)))
-                   (PVar b (TVarI (Unbound '_t/9)))))))
+                 ((PVar a (TVarI (Link (TVarI (Link (TVarI (Unbound '_t/8)))))))
+                   (PVar b (TVarI (Link (TVarI (Link (TVarI (Unbound '_t/9)))))))))))
              (ETuple
                ((EVar b (TVarI (Unbound '_t/9)))
                  (EVar a (TVarI (Unbound '_t/8))))
@@ -1095,6 +1095,30 @@ external print_int : int ->  int = "ff_builtin_print_int"
       (TopLet n
         (ECmp Eq (EVar x (TConsI (0 int) ()))
           (EConst (CInt 1) (TConsI (0 int) ())) (TConsI (0 bool) ()))))
+    |}];
+
+  print_effect {|
+               let rec id = fun x -> x
+               |};
+  [%expect {|
+    ------------------Envirment Debug Info Begin------------------------
+
+    ++++++++++++++++++Scope Debug Info Begin++++++++++++++++++
+    Value Bindings:
+      id |-> forall '_t/2 . (TArrowI (TQVarI '_t/2) (TQVarI '_t/2))
+    Type Definitions:
+
+    Module Definitions:
+
+    Module Types:
+
+    Module Creation History:
+
+    Current Module Index:
+      0
+    ++++++++++++++++++Scope Debug Info Begin++++++++++++++++++
+
+    ------------------Envirment Debug Info End--------------------------
     |}]
 
 let%expect_test "Error reporting test" =
