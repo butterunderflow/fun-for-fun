@@ -96,7 +96,7 @@ let () =
   let output =
     input_file
     |> read_file
-    |-> (S.Tools.parse_string_program_opt, S.Parsetree.dbg, "parsing")
+    |-> (S.Parsing.attempt2 input_file, S.Parsetree.dbg, "parsing")
     |-> ( (fun prog ->
             Option.map
               (fun (typed, _env) -> typed)
@@ -115,4 +115,4 @@ let () =
       let oc = open_out output_file in
       Stdlib.output_string oc prog;
       close_out oc
-  | None -> Printf.printf "Compilation failed!"
+  | None -> Printf.eprintf "\nCompilation failed!"
