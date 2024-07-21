@@ -23,9 +23,11 @@ let occur_error tv te loc1 loc2 =
   | T.Unbound v -> raise (OccurError (Ident.to_string v, te, loc1, loc2))
   | T.Link _ -> failwith "neverreach"
 
-let print_code_range start last =
-  Printf.printf "%d:%d-%d:%d " start.Lexing.pos_lnum start.Lexing.pos_cnum
-    last.Lexing.pos_lnum last.Lexing.pos_cnum
+let print_code_range (start : Lexing.position) (last : Lexing.position) =
+  let start_col = start.pos_cnum - start.pos_bol in
+  let last_col = start.pos_cnum - start.pos_bol in
+  Printf.printf "%d:%d-%d:%d " start.pos_lnum start_col last.pos_lnum
+    last_col
 
 let unknown_location () = Printf.printf "At some unknown location: "
 

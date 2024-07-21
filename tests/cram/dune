@@ -1,11 +1,9 @@
-(env (_
- (binaries ff_wrapper)
- (env-vars
-  (FF ff_wrapper))))
+(env
+ (_
+  (binaries ff_wrapper)
+  (env-vars
+   (FF ff_wrapper))))
 
 (cram
  (applies_to :whole_subtree)
- (deps
-   %{bin:ff}
-   %{bin:ff_wrapper}))
-
+ (deps %{bin:ff} %{bin:ff_wrapper}))

@@ -22,7 +22,6 @@ type 'a node_desc = {
   attrs : string list; (* unused now *)
 }
 
-
 and program = top_level list
 
 and top_level =

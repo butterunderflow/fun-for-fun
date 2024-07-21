@@ -237,19 +237,19 @@ let%expect_test "Test: expression parsing" =
                  (EApp
                    ((node (EVar even))
                      (start_loc
-                       ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 29)))
+                       ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 29)))
                      (end_loc
-                       ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 33)))
+                       ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 33)))
                      (attrs ()))
                    ((node (EVar x))
                      (start_loc
-                       ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 34)))
+                       ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 34)))
                      (end_loc
-                       ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 35)))
+                       ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 35)))
                      (attrs ()))))
                 (start_loc
-                  ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 29)))
-                (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 35)))
+                  ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 29)))
+                (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 35)))
                 (attrs ()))))
            (even
              ((PAnn x (TCons int ()))
@@ -257,38 +257,40 @@ let%expect_test "Test: expression parsing" =
                   (EApp
                     ((node (EVar odd))
                       (start_loc
-                        ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 67)))
+                        ((pos_fname "") (pos_lnum 3) (pos_bol 36) (pos_cnum 67)))
                       (end_loc
-                        ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 70)))
+                        ((pos_fname "") (pos_lnum 3) (pos_bol 36) (pos_cnum 70)))
                       (attrs ()))
                     ((node (EVar x))
                       (start_loc
-                        ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 71)))
+                        ((pos_fname "") (pos_lnum 3) (pos_bol 36) (pos_cnum 71)))
                       (end_loc
-                        ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 72)))
+                        ((pos_fname "") (pos_lnum 3) (pos_bol 36) (pos_cnum 72)))
                       (attrs ()))))
                  (start_loc
-                   ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 67)))
+                   ((pos_fname "") (pos_lnum 3) (pos_bol 36) (pos_cnum 67)))
                  (end_loc
-                   ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 72)))
+                   ((pos_fname "") (pos_lnum 3) (pos_bol 36) (pos_cnum 72)))
                  (attrs ())))))
          ((node
             (EApp
               ((node (EVar odd))
                 (start_loc
-                  ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 86)))
-                (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 89)))
+                  ((pos_fname "") (pos_lnum 5) (pos_bol 81) (pos_cnum 86)))
+                (end_loc
+                  ((pos_fname "") (pos_lnum 5) (pos_bol 81) (pos_cnum 89)))
                 (attrs ()))
               ((node (EConst (CInt 1)))
                 (start_loc
-                  ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 90)))
-                (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 91)))
+                  ((pos_fname "") (pos_lnum 5) (pos_bol 81) (pos_cnum 90)))
+                (end_loc
+                  ((pos_fname "") (pos_lnum 5) (pos_bol 81) (pos_cnum 91)))
                 (attrs ()))))
-           (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 86)))
-           (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 91)))
+           (start_loc ((pos_fname "") (pos_lnum 5) (pos_bol 81) (pos_cnum 86)))
+           (end_loc ((pos_fname "") (pos_lnum 5) (pos_bol 81) (pos_cnum 91)))
            (attrs ()))))
-      (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 6)))
-      (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 91)))
+      (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 6)))
+      (end_loc ((pos_fname "") (pos_lnum 5) (pos_bol 81) (pos_cnum 91)))
       (attrs ()))
     |}];
   print_parsed {|E.f y|};
@@ -439,22 +441,23 @@ let%expect_test "Test: expression parsing" =
     ((node
        (ECase
          ((node (EVar c))
-           (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 16)))
-           (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 17)))
+           (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 16)))
+           (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 17)))
            (attrs ()))
          (((PCons Cons ((PVar x)))
             ((node (EVar x))
-              (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 44)))
-              (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 45)))
+              (start_loc
+                ((pos_fname "") (pos_lnum 3) (pos_bol 23) (pos_cnum 44)))
+              (end_loc ((pos_fname "") (pos_lnum 3) (pos_bol 23) (pos_cnum 45)))
               (attrs ())))
            ((PCons Nil ())
              ((node (EConst (CInt 0)))
                (start_loc
-                 ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 67)))
-               (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 68)))
+                 ((pos_fname "") (pos_lnum 4) (pos_bol 46) (pos_cnum 67)))
+               (end_loc ((pos_fname "") (pos_lnum 4) (pos_bol 46) (pos_cnum 68)))
                (attrs ()))))))
-      (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 10)))
-      (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 68)))
+      (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 10)))
+      (end_loc ((pos_fname "") (pos_lnum 4) (pos_bol 46) (pos_cnum 68)))
       (attrs ()))
     |}];
   print_parsed {| x = y |};
@@ -502,16 +505,16 @@ let%expect_test "Test: expression parsing" =
             (EApp
               ((node (EVar f))
                 (start_loc
-                  ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 4)))
-                (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 5)))
+                  ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 4)))
+                (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 5)))
                 (attrs ()))
               ((node (EConst (CInt 1)))
                 (start_loc
-                  ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 6)))
-                (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 7)))
+                  ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 6)))
+                (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 7)))
                 (attrs ()))))
-           (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 4)))
-           (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 7)))
+           (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 4)))
+           (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 7)))
            (attrs ()))
          ((node
             (ESeq
@@ -519,19 +522,19 @@ let%expect_test "Test: expression parsing" =
                  (EApp
                    ((node (EVar f))
                      (start_loc
-                       ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 10)))
+                       ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 10)))
                      (end_loc
-                       ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 11)))
+                       ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 11)))
                      (attrs ()))
                    ((node (EConst (CInt 2)))
                      (start_loc
-                       ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 12)))
+                       ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 12)))
                      (end_loc
-                       ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 13)))
+                       ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 13)))
                      (attrs ()))))
                 (start_loc
-                  ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 10)))
-                (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 13)))
+                  ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 10)))
+                (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 13)))
                 (attrs ()))
               ((node
                  (ECmp Eq
@@ -539,40 +542,40 @@ let%expect_test "Test: expression parsing" =
                       (EApp
                         ((node (EVar f))
                           (start_loc
-                            ((pos_fname "") (pos_lnum 1) (pos_bol 0)
+                            ((pos_fname "") (pos_lnum 2) (pos_bol 1)
                               (pos_cnum 16)))
                           (end_loc
-                            ((pos_fname "") (pos_lnum 1) (pos_bol 0)
+                            ((pos_fname "") (pos_lnum 2) (pos_bol 1)
                               (pos_cnum 17)))
                           (attrs ()))
                         ((node (EConst (CInt 2)))
                           (start_loc
-                            ((pos_fname "") (pos_lnum 1) (pos_bol 0)
+                            ((pos_fname "") (pos_lnum 2) (pos_bol 1)
                               (pos_cnum 18)))
                           (end_loc
-                            ((pos_fname "") (pos_lnum 1) (pos_bol 0)
+                            ((pos_fname "") (pos_lnum 2) (pos_bol 1)
                               (pos_cnum 19)))
                           (attrs ()))))
                      (start_loc
-                       ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 16)))
+                       ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 16)))
                      (end_loc
-                       ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 19)))
+                       ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 19)))
                      (attrs ()))
                    ((node (EConst (CInt 3)))
                      (start_loc
-                       ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 22)))
+                       ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 22)))
                      (end_loc
-                       ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 23)))
+                       ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 23)))
                      (attrs ()))))
                 (start_loc
-                  ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 16)))
-                (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 23)))
+                  ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 16)))
+                (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 23)))
                 (attrs ()))))
-           (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 10)))
-           (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 23)))
+           (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 10)))
+           (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 23)))
            (attrs ()))))
-      (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 4)))
-      (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 23)))
+      (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 4)))
+      (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 23)))
       (attrs ()))
     |}];
   print_parsed {|add x (minus x 1)|};
@@ -693,13 +696,13 @@ let%expect_test "Test: full program parsing" =
     {|
     ((TopLet x
        ((node (EConst (CInt 1)))
-         (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 14)))
-         (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 15)))
+         (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 14)))
+         (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 15)))
          (attrs ())))
       (TopLet y
         ((node (EConst (CInt 2)))
-          (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 29)))
-          (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 30)))
+          (start_loc ((pos_fname "") (pos_lnum 3) (pos_bol 16) (pos_cnum 29)))
+          (end_loc ((pos_fname "") (pos_lnum 3) (pos_bol 16) (pos_cnum 30)))
           (attrs ())))
       (TopLetRec
         ((foo
@@ -708,19 +711,19 @@ let%expect_test "Test: full program parsing" =
                 (EApp
                   ((node (EVar foo))
                     (start_loc
-                      ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 59)))
+                      ((pos_fname "") (pos_lnum 4) (pos_bol 31) (pos_cnum 59)))
                     (end_loc
-                      ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 62)))
+                      ((pos_fname "") (pos_lnum 4) (pos_bol 31) (pos_cnum 62)))
                     (attrs ()))
                   ((node (EVar x))
                     (start_loc
-                      ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 63)))
+                      ((pos_fname "") (pos_lnum 4) (pos_bol 31) (pos_cnum 63)))
                     (end_loc
-                      ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 64)))
+                      ((pos_fname "") (pos_lnum 4) (pos_bol 31) (pos_cnum 64)))
                     (attrs ()))))
                (start_loc
-                 ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 59)))
-               (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 64)))
+                 ((pos_fname "") (pos_lnum 4) (pos_bol 31) (pos_cnum 59)))
+               (end_loc ((pos_fname "") (pos_lnum 4) (pos_bol 31) (pos_cnum 64)))
                (attrs ())))))))
     |}];
   print_parsed_program {|let rec f = fun (x:int) -> 1|};
@@ -748,18 +751,18 @@ let%expect_test "Test: full program parsing" =
                (EApp
                  ((node (EVar even))
                    (start_loc
-                     ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 28)))
+                     ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 28)))
                    (end_loc
-                     ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 32)))
+                     ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 32)))
                    (attrs ()))
                  ((node (EVar x))
                    (start_loc
-                     ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 33)))
+                     ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 33)))
                    (end_loc
-                     ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 34)))
+                     ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 34)))
                    (attrs ()))))
-              (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 28)))
-              (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 34)))
+              (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 28)))
+              (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 34)))
               (attrs ()))))
          (even
            ((PBare x)
@@ -767,19 +770,19 @@ let%expect_test "Test: full program parsing" =
                 (EApp
                   ((node (EVar odd))
                     (start_loc
-                      ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 59)))
+                      ((pos_fname "") (pos_lnum 3) (pos_bol 35) (pos_cnum 59)))
                     (end_loc
-                      ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 62)))
+                      ((pos_fname "") (pos_lnum 3) (pos_bol 35) (pos_cnum 62)))
                     (attrs ()))
                   ((node (EVar x))
                     (start_loc
-                      ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 63)))
+                      ((pos_fname "") (pos_lnum 3) (pos_bol 35) (pos_cnum 63)))
                     (end_loc
-                      ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 64)))
+                      ((pos_fname "") (pos_lnum 3) (pos_bol 35) (pos_cnum 64)))
                     (attrs ()))))
                (start_loc
-                 ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 59)))
-               (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 64)))
+                 ((pos_fname "") (pos_lnum 3) (pos_bol 35) (pos_cnum 59)))
+               (end_loc ((pos_fname "") (pos_lnum 3) (pos_bol 35) (pos_cnum 64)))
                (attrs ())))))))
     |}];
 
@@ -807,16 +810,17 @@ let%expect_test "Test: full program parsing" =
                    (TopLet x
                      ((node (ECons Nil))
                        (start_loc
-                         ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 70)))
+                         ((pos_fname "") (pos_lnum 6) (pos_bol 55) (pos_cnum 70)))
                        (end_loc
-                         ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 73)))
+                         ((pos_fname "") (pos_lnum 6) (pos_bol 55) (pos_cnum 73)))
                        (attrs ()))))))
-              (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 23)))
-              (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 82)))
+              (start_loc
+                ((pos_fname "") (pos_lnum 3) (pos_bol 18) (pos_cnum 23)))
+              (end_loc ((pos_fname "") (pos_lnum 7) (pos_bol 74) (pos_cnum 82)))
               (attrs ()))
             (MTSig ((TAbstTySpec t ()) (TValueSpec x (TCons t ()))))))
-         (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 23)))
-         (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 136)))
+         (start_loc ((pos_fname "") (pos_lnum 3) (pos_bol 18) (pos_cnum 23)))
+         (end_loc ((pos_fname "") (pos_lnum 11) (pos_bol 128) (pos_cnum 136)))
          (attrs ()))))
     |}];
 
@@ -865,43 +869,44 @@ functor
                         ((TopLet x
                            ((node (EConst (CInt 1)))
                              (start_loc
-                               ((pos_fname "") (pos_lnum 1) (pos_bol 0)
+                               ((pos_fname "") (pos_lnum 8) (pos_bol 51)
                                  (pos_cnum 65)))
                              (end_loc
-                               ((pos_fname "") (pos_lnum 1) (pos_bol 0)
+                               ((pos_fname "") (pos_lnum 8) (pos_bol 51)
                                  (pos_cnum 66)))
                              (attrs ())))
                           (TopLet y
                             ((node (EConst (CInt 1)))
                               (start_loc
-                                ((pos_fname "") (pos_lnum 1) (pos_bol 0)
+                                ((pos_fname "") (pos_lnum 10) (pos_bol 68)
                                   (pos_cnum 82)))
                               (end_loc
-                                ((pos_fname "") (pos_lnum 1) (pos_bol 0)
+                                ((pos_fname "") (pos_lnum 10) (pos_bol 68)
                                   (pos_cnum 83)))
                               (attrs ())))
                           (TopLet z
                             ((node (EConst (CInt 1)))
                               (start_loc
-                                ((pos_fname "") (pos_lnum 1) (pos_bol 0)
+                                ((pos_fname "") (pos_lnum 12) (pos_bol 85)
                                   (pos_cnum 99)))
                               (end_loc
-                                ((pos_fname "") (pos_lnum 1) (pos_bol 0)
+                                ((pos_fname "") (pos_lnum 12) (pos_bol 85)
                                   (pos_cnum 100)))
                               (attrs ()))))))
                      (start_loc
-                       ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 44)))
+                       ((pos_fname "") (pos_lnum 7) (pos_bol 40) (pos_cnum 44)))
                      (end_loc
-                       ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 108)))
+                       ((pos_fname "") (pos_lnum 13) (pos_bol 101)
+                         (pos_cnum 108)))
                      (attrs ()))
                    (MTName J)))
                 (start_loc
-                  ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 44)))
+                  ((pos_fname "") (pos_lnum 7) (pos_bol 40) (pos_cnum 44)))
                 (end_loc
-                  ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 118)))
+                  ((pos_fname "") (pos_lnum 14) (pos_bol 111) (pos_cnum 118)))
                 (attrs ())))))
-         (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 12)))
-         (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 119)))
+         (start_loc ((pos_fname "") (pos_lnum 3) (pos_bol 12) (pos_cnum 12)))
+         (end_loc ((pos_fname "") (pos_lnum 14) (pos_bol 111) (pos_cnum 119)))
          (attrs ()))))
     |}];
 
@@ -916,20 +921,20 @@ functor
        ((node
           (EApp
             ((node (ECons Cons))
-              (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 14)))
-              (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 18)))
+              (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 14)))
+              (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 18)))
               (attrs ()))
             ((node (EConst (CInt 1)))
-              (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 19)))
-              (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 20)))
+              (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 19)))
+              (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 20)))
               (attrs ()))))
-         (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 14)))
-         (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 20)))
+         (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 14)))
+         (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 20)))
          (attrs ())))
       (TopLet f
         ((node (EConst (CInt 1)))
-          (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 34)))
-          (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 35)))
+          (start_loc ((pos_fname "") (pos_lnum 4) (pos_bol 22) (pos_cnum 34)))
+          (end_loc ((pos_fname "") (pos_lnum 4) (pos_bol 22) (pos_cnum 35)))
           (attrs ()))))
     |}];
 
@@ -961,23 +966,23 @@ let y = 2
        ((node
           (ECase
             ((node (EVar a))
-              (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 15)))
-              (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 16)))
+              (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 15)))
+              (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 16)))
               (attrs ()))
             (((PCons Cons ())
                ((node (EConst (CInt 0)))
                  (start_loc
-                   ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 38)))
+                   ((pos_fname "") (pos_lnum 3) (pos_bol 22) (pos_cnum 38)))
                  (end_loc
-                   ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 39)))
+                   ((pos_fname "") (pos_lnum 3) (pos_bol 22) (pos_cnum 39)))
                  (attrs ()))))))
-         (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 9)))
-         (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 39)))
+         (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 9)))
+         (end_loc ((pos_fname "") (pos_lnum 3) (pos_bol 22) (pos_cnum 39)))
          (attrs ())))
       (TopLet y
         ((node (EConst (CInt 2)))
-          (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 49)))
-          (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 50)))
+          (start_loc ((pos_fname "") (pos_lnum 5) (pos_bol 41) (pos_cnum 49)))
+          (end_loc ((pos_fname "") (pos_lnum 5) (pos_bol 41) (pos_cnum 50)))
           (attrs ()))))
     |}];
 
@@ -994,16 +999,16 @@ let y = 2
             ((PBare x)
               ((node (EVar y))
                 (start_loc
-                  ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 18)))
-                (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 19)))
+                  ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 18)))
+                (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 19)))
                 (attrs ())))))
-         (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 9)))
-         (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 19)))
+         (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 9)))
+         (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 19)))
          (attrs ())))
       (TopLet y
         ((node (EConst (CInt 2)))
-          (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 29)))
-          (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 30)))
+          (start_loc ((pos_fname "") (pos_lnum 4) (pos_bol 21) (pos_cnum 29)))
+          (end_loc ((pos_fname "") (pos_lnum 4) (pos_bol 21) (pos_cnum 30)))
           (attrs ()))))
     |}];
 
@@ -1028,51 +1033,52 @@ let y = 2
           (ETuple
             (((node (EConst (CInt 1)))
                (start_loc
-                 ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 15)))
-               (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 16)))
+                 ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 15)))
+               (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 16)))
                (attrs ()))
               ((node (EConst (CInt 2)))
                 (start_loc
-                  ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 17)))
-                (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 18)))
+                  ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 17)))
+                (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 18)))
                 (attrs ())))))
-         (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 15)))
-         (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 18)))
+         (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 15)))
+         (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 18)))
          (attrs ())))
       (TopLet y
         ((node
            (ETuple
              (((node (EConst (CInt 1)))
                 (start_loc
-                  ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 35)))
-                (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 36)))
+                  ((pos_fname "") (pos_lnum 4) (pos_bol 21) (pos_cnum 35)))
+                (end_loc
+                  ((pos_fname "") (pos_lnum 4) (pos_bol 21) (pos_cnum 36)))
                 (attrs ()))
                ((node (EConst (CInt 2)))
                  (start_loc
-                   ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 38)))
+                   ((pos_fname "") (pos_lnum 4) (pos_bol 21) (pos_cnum 38)))
                  (end_loc
-                   ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 39)))
+                   ((pos_fname "") (pos_lnum 4) (pos_bol 21) (pos_cnum 39)))
                  (attrs ())))))
-          (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 35)))
-          (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 39)))
+          (start_loc ((pos_fname "") (pos_lnum 4) (pos_bol 21) (pos_cnum 35)))
+          (end_loc ((pos_fname "") (pos_lnum 4) (pos_bol 21) (pos_cnum 39)))
           (attrs ())))
       (TopLet z
         ((node
            (ECase
              ((node (EVar y))
                (start_loc
-                 ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 61)))
-               (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 62)))
+                 ((pos_fname "") (pos_lnum 6) (pos_bol 42) (pos_cnum 61)))
+               (end_loc ((pos_fname "") (pos_lnum 6) (pos_bol 42) (pos_cnum 62)))
                (attrs ()))
              (((PTuple ((PVar x) (PVar y)))
                 ((node (EVar x))
                   (start_loc
-                    ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 94)))
+                    ((pos_fname "") (pos_lnum 7) (pos_bol 69) (pos_cnum 94)))
                   (end_loc
-                    ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 95)))
+                    ((pos_fname "") (pos_lnum 7) (pos_bol 69) (pos_cnum 95)))
                   (attrs ()))))))
-          (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 55)))
-          (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 95)))
+          (start_loc ((pos_fname "") (pos_lnum 6) (pos_bol 42) (pos_cnum 55)))
+          (end_loc ((pos_fname "") (pos_lnum 7) (pos_bol 69) (pos_cnum 95)))
           (attrs ())))
       (TopLet n
         ((node
@@ -1082,31 +1088,31 @@ let y = 2
                   (ECase
                     ((node (EVar y))
                       (start_loc
-                        ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 125)))
+                        ((pos_fname "") (pos_lnum 9) (pos_bol 97) (pos_cnum 125)))
                       (end_loc
-                        ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 126)))
+                        ((pos_fname "") (pos_lnum 9) (pos_bol 97) (pos_cnum 126)))
                       (attrs ()))
                     (((PTuple ((PVar x) (PVar y)))
                        ((node (EVar y))
                          (start_loc
-                           ((pos_fname "") (pos_lnum 1) (pos_bol 0)
+                           ((pos_fname "") (pos_lnum 10) (pos_bol 133)
                              (pos_cnum 152)))
                          (end_loc
-                           ((pos_fname "") (pos_lnum 1) (pos_bol 0)
+                           ((pos_fname "") (pos_lnum 10) (pos_bol 133)
                              (pos_cnum 153)))
                          (attrs ()))))))
                  (start_loc
-                   ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 119)))
+                   ((pos_fname "") (pos_lnum 9) (pos_bol 97) (pos_cnum 119)))
                  (end_loc
-                   ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 153)))
+                   ((pos_fname "") (pos_lnum 10) (pos_bol 133) (pos_cnum 153)))
                  (attrs ())))))
-          (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 110)))
-          (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 153)))
+          (start_loc ((pos_fname "") (pos_lnum 9) (pos_bol 97) (pos_cnum 110)))
+          (end_loc ((pos_fname "") (pos_lnum 10) (pos_bol 133) (pos_cnum 153)))
           (attrs ())))
       (TopLet w
         ((node (EConst (CInt 1)))
-          (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 168)))
-          (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 169)))
+          (start_loc ((pos_fname "") (pos_lnum 12) (pos_bol 155) (pos_cnum 168)))
+          (end_loc ((pos_fname "") (pos_lnum 12) (pos_bol 155) (pos_cnum 169)))
           (attrs ()))))
     |}];
 
@@ -1130,75 +1136,81 @@ let result = print_int (sum 4)
                     (ECmp Eq
                       ((node (EVar x))
                         (start_loc
-                          ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 32)))
+                          ((pos_fname "") (pos_lnum 3) (pos_bol 24)
+                            (pos_cnum 32)))
                         (end_loc
-                          ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 33)))
+                          ((pos_fname "") (pos_lnum 3) (pos_bol 24)
+                            (pos_cnum 33)))
                         (attrs ()))
                       ((node (EConst (CInt 0)))
                         (start_loc
-                          ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 36)))
+                          ((pos_fname "") (pos_lnum 3) (pos_bol 24)
+                            (pos_cnum 36)))
                         (end_loc
-                          ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 37)))
+                          ((pos_fname "") (pos_lnum 3) (pos_bol 24)
+                            (pos_cnum 37)))
                         (attrs ()))))
                    (start_loc
-                     ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 32)))
+                     ((pos_fname "") (pos_lnum 3) (pos_bol 24) (pos_cnum 32)))
                    (end_loc
-                     ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 37)))
+                     ((pos_fname "") (pos_lnum 3) (pos_bol 24) (pos_cnum 37)))
                    (attrs ()))
                  ((node (EConst (CInt 0)))
                    (start_loc
-                     ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 47)))
+                     ((pos_fname "") (pos_lnum 4) (pos_bol 38) (pos_cnum 47)))
                    (end_loc
-                     ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 48)))
+                     ((pos_fname "") (pos_lnum 4) (pos_bol 38) (pos_cnum 48)))
                    (attrs ()))
                  ((node (EConst (CInt 1)))
                    (start_loc
-                     ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 58)))
+                     ((pos_fname "") (pos_lnum 5) (pos_bol 49) (pos_cnum 58)))
                    (end_loc
-                     ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 59)))
+                     ((pos_fname "") (pos_lnum 5) (pos_bol 49) (pos_cnum 59)))
                    (attrs ()))))
-              (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 29)))
-              (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 59)))
+              (start_loc
+                ((pos_fname "") (pos_lnum 3) (pos_bol 24) (pos_cnum 29)))
+              (end_loc ((pos_fname "") (pos_lnum 5) (pos_bol 49) (pos_cnum 59)))
               (attrs ()))))))
       (TopLet result
         ((node
            (EApp
              ((node (EVar print_int))
                (start_loc
-                 ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 75)))
-               (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 84)))
+                 ((pos_fname "") (pos_lnum 7) (pos_bol 62) (pos_cnum 75)))
+               (end_loc ((pos_fname "") (pos_lnum 7) (pos_bol 62) (pos_cnum 84)))
                (attrs ()))
              ((node
                 (EApp
                   ((node (EVar sum))
                     (start_loc
-                      ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 86)))
+                      ((pos_fname "") (pos_lnum 7) (pos_bol 62) (pos_cnum 86)))
                     (end_loc
-                      ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 89)))
+                      ((pos_fname "") (pos_lnum 7) (pos_bol 62) (pos_cnum 89)))
                     (attrs ()))
                   ((node (EConst (CInt 4)))
                     (start_loc
-                      ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 90)))
+                      ((pos_fname "") (pos_lnum 7) (pos_bol 62) (pos_cnum 90)))
                     (end_loc
-                      ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 91)))
+                      ((pos_fname "") (pos_lnum 7) (pos_bol 62) (pos_cnum 91)))
                     (attrs ()))))
                (start_loc
-                 ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 86)))
-               (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 91)))
+                 ((pos_fname "") (pos_lnum 7) (pos_bol 62) (pos_cnum 86)))
+               (end_loc ((pos_fname "") (pos_lnum 7) (pos_bol 62) (pos_cnum 91)))
                (attrs ()))))
-          (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 75)))
-          (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 92)))
+          (start_loc ((pos_fname "") (pos_lnum 7) (pos_bol 62) (pos_cnum 75)))
+          (end_loc ((pos_fname "") (pos_lnum 7) (pos_bol 62) (pos_cnum 92)))
           (attrs ()))))
     |}];
-  print_parsed_program {|
+  print_parsed_program
+    {|
                 type 'a t = Nil
                         |};
   [%expect {| ((TopTypeDef (TDAdt t ('a/0) ((Nil ()))))) |}];
-  print_parsed_program {|
+  print_parsed_program
+    {|
                 type t = | Nil
                         |};
   [%expect {| ((TopTypeDef (TDAdt t () ((Nil ()))))) |}]
-
 
 let%expect_test "Test: path parsing" =
   print_parsed_mod_expr {|X|};
@@ -1380,8 +1392,8 @@ let%expect_test "Test: top level module" =
     {|
     ((TopMod X
        ((node (MEStruct ()))
-         (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 17)))
-         (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 32)))
+         (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 17)))
+         (end_loc ((pos_fname "") (pos_lnum 3) (pos_bol 24) (pos_cnum 32)))
          (attrs ()))))
     |}];
 
@@ -1402,28 +1414,28 @@ let%expect_test "Test: top level module" =
             ((TopLet x
                ((node (EConst (CInt 1)))
                  (start_loc
-                   ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 39)))
+                   ((pos_fname "") (pos_lnum 3) (pos_bol 24) (pos_cnum 39)))
                  (end_loc
-                   ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 40)))
+                   ((pos_fname "") (pos_lnum 3) (pos_bol 24) (pos_cnum 40)))
                  (attrs ())))
               (TopLetRec
                 ((y
                    ((PBare x)
                      ((node (EConst (CInt 3)))
                        (start_loc
-                         ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 69)))
+                         ((pos_fname "") (pos_lnum 4) (pos_bol 41) (pos_cnum 69)))
                        (end_loc
-                         ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 70)))
+                         ((pos_fname "") (pos_lnum 4) (pos_bol 41) (pos_cnum 70)))
                        (attrs ()))))))
               (TopMod Y
                 ((node (MEStruct ()))
                   (start_loc
-                    ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 89)))
+                    ((pos_fname "") (pos_lnum 5) (pos_bol 71) (pos_cnum 89)))
                   (end_loc
-                    ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 106)))
+                    ((pos_fname "") (pos_lnum 6) (pos_bol 96) (pos_cnum 106)))
                   (attrs ()))))))
-         (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 17)))
-         (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 115)))
+         (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 17)))
+         (end_loc ((pos_fname "") (pos_lnum 7) (pos_bol 107) (pos_cnum 115)))
          (attrs ()))))
     |}]
 
@@ -1447,12 +1459,13 @@ let%expect_test "Test: module expression" =
        (MEStruct
          ((TopLet x
             ((node (EConst (CInt 1)))
-              (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 29)))
-              (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 30)))
+              (start_loc
+                ((pos_fname "") (pos_lnum 3) (pos_bol 14) (pos_cnum 29)))
+              (end_loc ((pos_fname "") (pos_lnum 3) (pos_bol 14) (pos_cnum 30)))
               (attrs ())))
            (TopTypeDef (TDAdt a () ((Cons ((TCons int ()))) (Nil ())))))))
-      (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 6)))
-      (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 99)))
+      (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 6)))
+      (end_loc ((pos_fname "") (pos_lnum 8) (pos_bol 91) (pos_cnum 99)))
       (attrs ()))
     |}];
   print_parsed {|functor (X: M) -> struct end|};
