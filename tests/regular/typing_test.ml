@@ -1455,4 +1455,11 @@ module L = (K: M)
          (TTupleI
            ((TVarI (Link (TConsI (0 int) ())))
              (TVarI (Link (TConsI (0 string) ()))))))))
-    |}]
+    |}];
+
+print_typed {|
+             let _ = 1
+
+             let result = _
+|};
+  [%expect {| name `_` not found |}]

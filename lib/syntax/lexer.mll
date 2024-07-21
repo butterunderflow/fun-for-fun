@@ -19,7 +19,7 @@ let sign = ['+' '-']
 let alphanumerical = upper_case | underline | lower_case | digit
 
 (* module identifiers*)
-let mod_ident = (underline | upper_case) alphanumerical *
+let mod_ident = upper_case alphanumerical *
 
 (* Variables *)
 let ident = (underline | lower_case) alphanumerical *

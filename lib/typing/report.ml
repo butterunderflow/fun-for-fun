@@ -50,3 +50,6 @@ let wrap_with_error_report f =
         "Value component %s has type `%s`, which is not compatible with `%s`"
         name (PP.pp_str_of_ty t0) (PP.pp_str_of_ty t1);
       None
+  | Failure msg ->
+      Printf.printf "%s\n" msg;
+      None
