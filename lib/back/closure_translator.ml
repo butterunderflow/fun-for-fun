@@ -19,6 +19,9 @@ let to_c_ident_local (id : Ident.ident) =
       | _ -> c)
     str
 
+(** Create a c identifier represents function.
+    Every function name end with "__fn" (like "add_3__fn"),
+    to avoid name collision with local variables. *)
 let to_c_ident_fn (id : Ident.ident) = to_c_ident_local id ^ "__fn"
 
 let ff_obj_typename = C.NAMED_TYPE "ff_obj_t"
@@ -75,6 +78,7 @@ let header = {|
 
 |}
 
+(** create a local c identifier *)
 let make_c_ident_local x = to_c_ident_local (Ident.create ~hint:x)
 
 let make_context fvs =
