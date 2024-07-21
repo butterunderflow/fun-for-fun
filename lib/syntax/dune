@@ -10,3 +10,21 @@
 (menhir
  (modules parser)
  (flags --explain --inspection --table --dump))
+
+
+;; -----------------------------------------------------------------------------
+
+;; This section deals with the .messages file.
+
+;; The following rule generates "parserMessages.ml" based on the source file
+;; "parserMessages.messages". It requires the completeness check to have been
+;; performed first. (If desired, this check could be disabled.)
+
+(rule
+  (action (with-stdout-to parserMessages.ml
+    (run menhir
+      %{dep:parser.mly}
+      --compile-errors %{dep:parserMessages.messages}
+    )
+  ))
+)
