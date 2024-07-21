@@ -564,7 +564,7 @@ and shift_mt (mt : I.mod_ty) env : I.mod_ty =
           match tv with
           | I.Unbound _ ->
               failwith
-                "neverreach: any module should have empty inference space"
+                "neverreach: every module should have empty inference space"
           | I.Link _ -> super#visit_tv () tv
       end
     in
@@ -610,7 +610,7 @@ and check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) :
           match tv with
           | I.Unbound _ ->
               failwith
-                "neverreach: any module should have empty inference space"
+                "neverreach: every module should have empty inference space"
           | I.Link _ -> super#visit_tv () tv
       end
     in
