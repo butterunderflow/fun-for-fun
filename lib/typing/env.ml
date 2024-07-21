@@ -15,9 +15,11 @@ type scope = {
 type t = scope list
 
 let add_value x ty env =
-  match env with
-  | s :: env' -> { s with values = (x, ty) :: s.values } :: env'
-  | [] -> failwith "neverreach"
+  if x = "_" then env
+  else
+    match env with
+    | s :: env' -> { s with values = (x, ty) :: s.values } :: env'
+    | [] -> failwith "neverreach"
 
 let add_module m ty env =
   match env with
@@ -32,11 +34,6 @@ let add_module_sig m ty env =
 let add_type_def def env =
   match env with
   | s :: env' -> { s with types = def :: s.types } :: env'
-  | [] -> failwith "neverreach"
-
-let add_values binds env =
-  match env with
-  | s :: env' -> { s with values = binds @ s.values } :: env'
   | [] -> failwith "neverreach"
 
 let add_constrs binds env =

@@ -1462,7 +1462,4 @@ print_typed {|
 
              let result = _
 |};
-  [%expect {|
-    ((TopLet _ (EConst (CInt 1) (TConsI (0 int) ())))
-      (TopLet result (EVar _ (TConsI (0 int) ()))))
-    |}]
+  [%expect {| name `_` not found |}]
