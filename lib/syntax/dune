@@ -10,8 +10,3 @@
 (menhir
  (modules parser)
  (flags --explain --inspection --table --dump))
-
-(env
- (dev
-  (flags
-   (:standard -w -32))))
