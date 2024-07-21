@@ -119,8 +119,8 @@
        (attrs ())))
     (TopLet y
       ((node (EConst (CInt 1)))
-        (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 19)))
-        (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 20)))
+        (start_loc ((pos_fname "") (pos_lnum 3) (pos_bol 11) (pos_cnum 19)))
+        (end_loc ((pos_fname "") (pos_lnum 3) (pos_bol 11) (pos_cnum 20)))
         (attrs ())))
     (TopLet z
       ((node
@@ -128,12 +128,12 @@
            ((PBare x)
              ((node (EVar y))
                (start_loc
-                 ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 40)))
+                 ((pos_fname "") (pos_lnum 5) (pos_bol 22) (pos_cnum 40)))
                (end_loc
-                 ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 41)))
+                 ((pos_fname "") (pos_lnum 5) (pos_bol 22) (pos_cnum 41)))
                (attrs ())))))
-        (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 31)))
-        (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 41)))
+        (start_loc ((pos_fname "") (pos_lnum 5) (pos_bol 22) (pos_cnum 31)))
+        (end_loc ((pos_fname "") (pos_lnum 5) (pos_bol 22) (pos_cnum 41)))
         (attrs ())))
     (TopLet w
       ((node
@@ -141,12 +141,12 @@
            ((PBare x)
              ((node (EConst (CInt 0)))
                (start_loc
-                 ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 62)))
+                 ((pos_fname "") (pos_lnum 7) (pos_bol 44) (pos_cnum 62)))
                (end_loc
-                 ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 63)))
+                 ((pos_fname "") (pos_lnum 7) (pos_bol 44) (pos_cnum 63)))
                (attrs ())))))
-        (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 53)))
-        (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 63)))
+        (start_loc ((pos_fname "") (pos_lnum 7) (pos_bol 44) (pos_cnum 53)))
+        (end_loc ((pos_fname "") (pos_lnum 7) (pos_bol 44) (pos_cnum 63)))
         (attrs ())))
     (TopLet m
       ((node
@@ -156,23 +156,23 @@
                 (EApp
                   ((node (EVar w))
                     (start_loc
-                      ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 84)))
+                      ((pos_fname "") (pos_lnum 9) (pos_bol 66) (pos_cnum 84)))
                     (end_loc
-                      ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 85)))
+                      ((pos_fname "") (pos_lnum 9) (pos_bol 66) (pos_cnum 85)))
                     (attrs ()))
                   ((node (EConst (CInt 1)))
                     (start_loc
-                      ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 86)))
+                      ((pos_fname "") (pos_lnum 9) (pos_bol 66) (pos_cnum 86)))
                     (end_loc
-                      ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 87)))
+                      ((pos_fname "") (pos_lnum 9) (pos_bol 66) (pos_cnum 87)))
                     (attrs ()))))
                (start_loc
-                 ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 84)))
+                 ((pos_fname "") (pos_lnum 9) (pos_bol 66) (pos_cnum 84)))
                (end_loc
-                 ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 87)))
+                 ((pos_fname "") (pos_lnum 9) (pos_bol 66) (pos_cnum 87)))
                (attrs ())))))
-        (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 75)))
-        (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 87)))
+        (start_loc ((pos_fname "") (pos_lnum 9) (pos_bol 66) (pos_cnum 75)))
+        (end_loc ((pos_fname "") (pos_lnum 9) (pos_bol 66) (pos_cnum 87)))
         (attrs ()))))
 
   $ cat simple1.typed

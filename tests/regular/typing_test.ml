@@ -1139,7 +1139,7 @@ let%expect_test "Error reporting test" =
      let y = true
      let z = x = y
      |};
-  [%expect {| 1:47-1:52 Can't unify `() 0.int` with `() 0.bool` |}];
+  [%expect {| 4:13-4:13 Can't unify `() 0.int` with `() 0.bool` |}];
 
   print_typed
     {|
@@ -1251,7 +1251,7 @@ let%expect_test "Error reporting test" =
 
              let z = Y1.y = Y2.y
      |};
-  [%expect {| 1:453-1:464 Can't unify `() 5.t` with `() 6.t` |}];
+  [%expect {| 25:21-25:21 Can't unify `() 5.t` with `() 6.t` |}];
   print_typed
     {|
              module type I = sig

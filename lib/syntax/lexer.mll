@@ -6,11 +6,11 @@ let upper_case = ['A' - 'Z']
 let underline = '_'
 let lower_case = ['a' - 'z']
 let digit = ['0' - '9']
-let blank_space = [' ' '\t']
-let end_of_line = '\n'
 let atom_quote = '''
 let string_quote = '"'
 let line_comment = '%' [^ '\n'] *
+let white = [' ' '\t']+
+let newline = '\r' | '\n' | "\r\n"
 let open_comment = "/*"
 let close_comment = "*/"
 let escape = '\\' ('t'|'n'|'\"'|'\''|'\\')
@@ -38,7 +38,8 @@ let strings = '\"' (alphanumerical|escape|' ')* '\"'
 
 rule token = parse
     (* Meta-characters *)
-    | [' ' '\t' '\n']   { token lexbuf }
+    | white             { token lexbuf}
+    | newline           { Lexing.new_line lexbuf; token lexbuf }
     | eof               { EOF }
     | "let"             { LET }
     | "if"              { IF }
