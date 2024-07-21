@@ -110,10 +110,9 @@ let () =
   in
   match output with
   | Some prog ->
-      if !output_stdout then print_string prog
-      else
-        let output_file = get_output_file () in
-        let oc = open_out output_file in
-        Stdlib.output_string oc prog;
-        close_out oc
+      if !output_stdout then print_string prog;
+      let output_file = get_output_file () in
+      let oc = open_out output_file in
+      Stdlib.output_string oc prog;
+      close_out oc
   | None -> Printf.printf "Compilation failed!"
