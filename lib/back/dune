@@ -3,7 +3,8 @@
  (libraries sexplib FrontC clos syntax)
  (preprocess
   (pps ppx_sexp_conv))
- (instrumentation (backend bisect_ppx)))
+ (instrumentation
+  (backend bisect_ppx)))
 
 (env
  (dev

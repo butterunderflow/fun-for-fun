@@ -71,5 +71,4 @@ let occur (tpv : tv ref) (te : ty) : bool =
     occurs tpv te;
     false
   with
-  | OccurError (_tpv, _te) ->
-     true
+  | OccurError (_tpv, _te) -> true

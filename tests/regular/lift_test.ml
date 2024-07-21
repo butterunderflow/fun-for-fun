@@ -94,7 +94,8 @@ let y = 2
 
 let z = fun z -> x = y
 |};
-  [%expect {|
+  [%expect
+    {|
     Main function name:
     main/1
     Global C functions:
@@ -105,13 +106,15 @@ let z = fun z -> x = y
     (z/2 (x y) (z) (ECmp Eq (EVar x) (EVar y)))
     |}];
 
-print_lifted {|
+  print_lifted
+    {|
                let rec sum = fun x ->
                if x = 0
                then 1
                else 2
 |};
-  [%expect {|
+  [%expect
+    {|
     Main function name:
     main/1
     Global C functions:
@@ -120,4 +123,3 @@ print_lifted {|
       (EIf (ECmp Eq (EVar x) (EConst (CInt 0))) (EConst (CInt 1))
         (EConst (CInt 2))))
     |}]
-

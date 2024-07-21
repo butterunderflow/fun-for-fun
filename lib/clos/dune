@@ -3,4 +3,5 @@
  (libraries sexplib common lam)
  (preprocess
   (pps ppx_sexp_conv))
- (instrumentation (backend bisect_ppx)))
+ (instrumentation
+  (backend bisect_ppx)))

@@ -1201,15 +1201,16 @@ let result = print_int (sum 4)
           (end_loc ((pos_fname "") (pos_lnum 7) (pos_bol 62) (pos_cnum 92)))
           (attrs ()))))
     |}];
-  print_parsed_program {|
+  print_parsed_program
+    {|
                 type 'a t = Nil
                         |};
   [%expect {| ((TopTypeDef (TDAdt t ('a/0) ((Nil ()))))) |}];
-  print_parsed_program {|
+  print_parsed_program
+    {|
                 type t = | Nil
                         |};
   [%expect {| ((TopTypeDef (TDAdt t () ((Nil ()))))) |}]
-
 
 let%expect_test "Test: path parsing" =
   print_parsed_mod_expr {|X|};

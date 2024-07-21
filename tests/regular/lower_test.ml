@@ -254,19 +254,20 @@ module MMM = (M(F).K : I)
               ())))))
     |}];
 
-print_lowered {|
+  print_lowered {|
 external add : int -> int -> int = "ff_add"
 |};
   [%expect {| (EModObject ((FSimple add (EExt ff_add)))) |}];
 
-print_lowered {|
+  print_lowered {|
 let x = 1
 
 let y = 2
 
 let z = x = y
 |};
-  [%expect {|
+  [%expect
+    {|
     (EModObject
       ((FSimple x (EConst (CInt 1))) (FSimple y (EConst (CInt 2)))
         (FSimple z (ECmp Eq (EVar x) (EVar y)))))

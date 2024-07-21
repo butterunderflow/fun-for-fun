@@ -1,10 +1,11 @@
-(env (_
- (binaries ff_wrapper)))
+(env
+ (_
+  (binaries ff_wrapper)))
 
 (test
  (name test_entry)
  (libraries unix qcheck qcheck-alcotest)
  (deps
-   %{bin:ff}
-   %{bin:ff_wrapper}
-   (glob_files *.fun)))
+  %{bin:ff}
+  %{bin:ff_wrapper}
+  (glob_files *.fun)))
