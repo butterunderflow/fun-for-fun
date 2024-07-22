@@ -33,8 +33,7 @@ let integers = (sign?) digits
 
 let boolean = "true" | "false"
 
-let strings = '\"' (alphanumerical|escape|' ')* '\"' 
-(* todo: support full featured string literal *)
+let strings = '\"' (escape|' '| [^ '\"' '\'' '\\'] )* '\"' 
 
 rule token = parse
     (* Meta-characters *)

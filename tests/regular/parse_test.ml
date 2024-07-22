@@ -41,12 +41,12 @@ let%expect_test "Test: expression parsing" =
       (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 3)))
       (attrs ()))
     |}];
-  print_parsed {| "x \n \t"|};
+  print_parsed {| "x \n \t,()*@/"|};
   [%expect
     {|
-    ((node (EConst (CString "\"x \\n \\t\"")))
+    ((node (EConst (CString "\"x \\n \\t,()*@/\"")))
       (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 1)))
-      (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 10)))
+      (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 16)))
       (attrs ()))
     |}];
   print_parsed {|a b c d|};
