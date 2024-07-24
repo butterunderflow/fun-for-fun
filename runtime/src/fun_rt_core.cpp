@@ -257,5 +257,5 @@ ff_obj_t ff_is_not_equal(ff_obj_t x, ff_obj_t y) {
 
 bool ff_is_zero(ff_obj_t x) {
     auto val = ff_get_int(x);
-    return val;
+    return val == 0;
 }

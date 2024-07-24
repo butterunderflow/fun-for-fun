@@ -112,6 +112,8 @@ let make_const_int i = C.CONSTANT (CONST_INT (string_of_int i))
 
 let make_addrof e = C.(UNARY (ADDROF, e))
 
+let make_not e = C.UNARY (C.NOT, e)
+
 type match_operation =
   | Bind of C.expression
   | CheckPat of C.expression
@@ -188,7 +190,7 @@ and trans_expr ctx e =
         @ [
             C.(
               IF
-                ( C.CALL (ff_is_zero, [ VARIABLE e0_v ]),
+                ( make_not (C.CALL (ff_is_zero, [ VARIABLE e0_v ])),
                   make_stmt_seq
                     (e1_stmts
                     @ [ make_assign (VARIABLE ifel_v) (VARIABLE e1_v) ]),
