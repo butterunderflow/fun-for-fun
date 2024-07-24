@@ -59,7 +59,7 @@ let rec lift ?(hint = "temp") (e : L.expr) (vars : string list) :
       let es, fns1 =
         bs
         |> List.map (fun (p, e) ->
-               lift e (Lam__Compile.get_pat_vars p @ vars))
+               lift e (Lam.Compile.get_pat_vars p @ vars))
         |> List.split
         |> fun (e, fns) -> (e, List.flatten fns)
       in
