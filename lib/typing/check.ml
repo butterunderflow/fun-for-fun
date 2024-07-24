@@ -170,6 +170,12 @@ and tc_pattern p te env : pattern * (string * I.ty) list =
       | _ ->
           failwith
             (Printf.sprintf "wrong no-payload constructor pattern %s" c))
+  | T.PCons (c, Some p0 (* pattern *)), te ->
+      let cons_ty_gen (* type of constructor *), id =
+        Env.get_constr_type c env
+      in
+      let p0, binds = tc_PCons_aux (inst cons_ty_gen) p0 te in
+      (PCons (c, id, Some p0), binds)
   | T.PFieldCons (me, c, None), te -> (
       let cons_typed (* constructor *) = tc_field_cons me c env in
       let[@warning "-8"] (EFieldCons (_, _, id, _)) = cons_typed in
@@ -179,12 +185,6 @@ and tc_pattern p te env : pattern * (string * I.ty) list =
       match cons_ty with
       | I.TConsI (_, _) -> (PCons (c, id, None), [ (* bind nothing *) ])
       | _ -> failwith "wrong type")
-  | T.PCons (c, Some p0 (* pattern *)), te ->
-      let cons_ty_gen (* type of constructor *), id =
-        Env.get_constr_type c env
-      in
-      let p0, binds = tc_PCons_aux (inst cons_ty_gen) p0 te in
-      (PCons (c, id, Some p0), binds)
   | T.PFieldCons (p (* path *), c, Some p0), te ->
       let cons_typed (* typed constructor *) = tc_field_cons p c env in
       let cons_ty = get_ty cons_typed in
