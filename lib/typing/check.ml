@@ -187,8 +187,9 @@ and tc_pattern p te env : pattern * (string * I.ty) list =
       | _ -> failwith "wrong type")
   | T.PFieldCons (p (* path *), c, Some p0), te ->
       let cons_typed (* typed constructor *) = tc_field_cons p c env in
-      let cons_ty = get_ty cons_typed in
-      tc_PCons_aux cons_ty p0 te
+      let[@warning "-8"] (EFieldCons (_, _, id, cons_ty)) = cons_typed in
+      let p0, binds = tc_PCons_aux cons_ty p0 te in
+      (PCons (c, id, Some p0), binds)
   | T.PVal v, te ->
       let v_typed = tc_const v in
       U.unify (get_ty v_typed) te;

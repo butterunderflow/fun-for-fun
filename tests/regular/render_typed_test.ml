@@ -846,7 +846,7 @@ module MMM = (M(F).K : I)
 
     let result = match (c is () 1.t) with
                  | Nil -> (() is () 0.unit)
-                 | (i is () 0.int) -> (() is () 0.unit)
+                 | (Integer[1] (i is () 0.int)) -> (() is () 0.unit)
     |}];
 
   print_typed
