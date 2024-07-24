@@ -1,6 +1,10 @@
-external greater : int -> int -> bool = "ff_builtin_minus"
+external println_int : int -> unit = "ff_builtin_println_int"
+
+external println_string : string -> unit = "ff_builtin_println_str"
 
 external compare : int -> int -> int = "ff_builtin_minus"
+
+external greater : int -> int -> bool = "ff_builtin_greater"
 
 module type Comparable = sig
   type () t
@@ -48,3 +52,18 @@ module Int_interval = Make_interval(Int)
 
 let i_0_10 = Int_interval.create 0 10
 
+let ii_0_10 = Int_interval.Interval (0, 10)
+
+let print_int_interval = (fun interval ->
+    match interval with
+    | Int_interval.Interval (l,h) ->
+        println_string "low";
+        println_int l;
+        println_string "high";
+        println_int h
+    | Int_interval.Empty ->
+        println_string "Empty")
+
+let _ = print_int_interval ii_0_10
+
+let _ = print_int_interval i_0_10
