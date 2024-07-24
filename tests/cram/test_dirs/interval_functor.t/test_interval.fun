@@ -67,3 +67,11 @@ let print_int_interval = (fun interval ->
 let _ = print_int_interval ii_0_10
 
 let _ = print_int_interval i_0_10
+
+let i1 = Int_interval.create 3 8
+
+let i2 = Int_interval.create 4 10
+
+let i3 = Int_interval.intersect i1 i2
+
+let _ = print_int_interval i3

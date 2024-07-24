@@ -22,7 +22,25 @@
   
   ff_obj_t main_1__fn(ff_fvs_t fvs_1)
   {
-  	ff_obj_t mod_31;
+  	ff_obj_t mod_49;
+  	ff_obj_t __48;
+  	ff_obj_t app_res_47;
+  	ff_obj_t i3_46;
+  	ff_obj_t field_45;
+  	ff_obj_t app_res_44;
+  	ff_obj_t app_res_43;
+  	ff_obj_t i2_42;
+  	ff_obj_t temp_41;
+  	ff_obj_t temp_40;
+  	ff_obj_t field_39;
+  	ff_obj_t app_res_38;
+  	ff_obj_t app_res_37;
+  	ff_obj_t i1_36;
+  	ff_obj_t temp_35;
+  	ff_obj_t temp_34;
+  	ff_obj_t field_33;
+  	ff_obj_t app_res_32;
+  	ff_obj_t app_res_31;
   	ff_obj_t __30;
   	ff_obj_t app_res_29;
   	ff_obj_t __28;
@@ -83,13 +101,32 @@
   	__28 = app_res_27;
   	app_res_29 = ff_apply_generic(print_int_interval_26, i_0_10_18);
   	__30 = app_res_29;
-  	mod_31 = ff_make_mod_obj(12, {"println_int", "println_string",
+  	field_33 = ff_get_member(Int_interval_12, "create");
+  	temp_34 = ff_make_int(3);
+  	app_res_32 = ff_apply_generic(field_33, temp_34);
+  	temp_35 = ff_make_int(8);
+  	app_res_31 = ff_apply_generic(app_res_32, temp_35);
+  	i1_36 = app_res_31;
+  	field_39 = ff_get_member(Int_interval_12, "create");
+  	temp_40 = ff_make_int(4);
+  	app_res_38 = ff_apply_generic(field_39, temp_40);
+  	temp_41 = ff_make_int(10);
+  	app_res_37 = ff_apply_generic(app_res_38, temp_41);
+  	i2_42 = app_res_37;
+  	field_45 = ff_get_member(Int_interval_12, "intersect");
+  	app_res_44 = ff_apply_generic(field_45, i1_36);
+  	app_res_43 = ff_apply_generic(app_res_44, i2_42);
+  	i3_46 = app_res_43;
+  	app_res_47 = ff_apply_generic(print_int_interval_26, i3_46);
+  	__48 = app_res_47;
+  	mod_49 = ff_make_mod_obj(16, {"println_int", "println_string",
   		"compare", "greater", "Make_interval", "Int", "Int_interval",
-  		"i_0_10", "ii_0_10", "print_int_interval", "_", "_"},
-  		{println_int_2, println_string_3, compare_4, greater_5,
-  		Make_interval_7, Int_10, Int_interval_12, i_0_10_18, ii_0_10_24,
-  		print_int_interval_26, __28, __30});
-  	return mod_31;
+  		"i_0_10", "ii_0_10", "print_int_interval", "_", "_", "i1", "i2",
+  		"i3", "_"}, {println_int_2, println_string_3, compare_4,
+  		greater_5, Make_interval_7, Int_10, Int_interval_12, i_0_10_18,
+  		ii_0_10_24, print_int_interval_26, __28, __30, i1_36, i2_42,
+  		i3_46, __48});
+  	return mod_49;
   }
   
   ff_obj_t print_int_interval_14__fn(ff_fvs_t fvs_4, ff_obj_t interval_3)
@@ -533,4 +570,8 @@
   0
   high
   10
+  low
+  4
+  high
+  8
 
