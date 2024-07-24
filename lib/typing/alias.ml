@@ -10,7 +10,7 @@ let dealias_te (te : I.ty) alias_map =
         | Some t' -> (
             match t' with
             | I.TConsI (id', []) -> I.TConsI (id', paras)
-            | _ -> failwith "ill form alias")
+            | _ -> if paras = [] then t' else failwith "ill form alias")
         | None -> t)
     | I.TVarI { contents = I.Unbound _ } ->
         t (* it's not a neverreach branch *)

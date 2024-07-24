@@ -14,6 +14,8 @@ extern const ff_obj_t ff_builtin_print_int;
 
 extern const ff_obj_t ff_builtin_minus;
 
+extern const ff_obj_t ff_builtin_greater;
+
 extern const ff_obj_t ff_builtin_print_str;
 
 extern const ff_obj_t ff_builtin_print_bool;

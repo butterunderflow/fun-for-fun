@@ -20,6 +20,7 @@ let rec compile_expr (e : T.expr) =
   | T.EField (me, name, _) -> L.EField (compile_mod_expr me, name)
   | T.ECons (_, id, Typing.Types_in.TArrowI (_, _)) -> L.EConsWith id
   | T.ECons (_, id, _) -> L.ECons id
+  | T.EFieldCons (_, _, id, Typing.Types_in.TArrowI (_, _)) -> L.EConsWith id
   | T.EFieldCons (_, _, id, _) -> L.ECons id
   | T.ECmp (op, e1, e2, _) -> L.ECmp (op, compile_expr e1, compile_expr e2)
   | T.ESeq (e0, e1, _) -> L.ESeq (compile_expr e0, compile_expr e1)
