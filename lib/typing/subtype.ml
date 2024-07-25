@@ -3,7 +3,7 @@ module P = Poly
 
 (* Check if mt0 is more specifc than mt1, return a substituter. This
    substituter tell us how to replace module id in mt1 with their
-   correspondence in mt0 *)
+   correspondence in mt0, and how to reolve aliases introduced by mt0 *)
 let check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) : I.mod_ty -> I.mod_ty =
   (* a map which correspond mt0 with mt1 *)
   let map =
