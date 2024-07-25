@@ -2,90 +2,9 @@ open Typedtree
 module U = Unify
 module T = Syntax.Parsetree
 module I = Types_in
+module P = Poly
 module IdMap = Map.Make (Ident)
 module IntMap = Map.Make (Int)
-
-let make_tv () =
-  let name = "'_t" in
-  I.TVarI (ref (I.Unbound (Ident.create ~hint:name)))
-
-let make_tv_of hint = I.TVarI (ref (I.Unbound (Ident.create ~hint)))
-
-let inst_with (t : I.bind_ty) tes : I.ty =
-  let qvs, te = t in
-  let dict = List.combine qvs tes in
-  let rec go te =
-    match (te : I.ty) with
-    | I.TConsI (tid, tes) -> I.TConsI (tid, List.map go tes)
-    | I.TVarI { contents = I.Unbound _ } -> te
-    | I.TVarI { contents = I.Link t } -> go t
-    | I.TQVarI qtv -> List.assoc qtv dict
-    | I.TArrowI (te0, te1) -> TArrowI (go te0, go te1)
-    | I.TTupleI tes -> TTupleI (List.map go tes)
-    | I.TRecordI fields ->
-        I.TRecordI (List.map (fun (name, te) -> (name, go te)) fields)
-  in
-  go te
-
-let inst (t : I.bind_ty) : I.ty =
-  (* We can gaurantee that captured type variables will never duplicated with
-     free type variables *)
-  let qvs, _ = t in
-  let new_tvs =
-    List.map (fun id -> make_tv_of (Ident.name_of_ident id)) qvs
-  in
-  inst_with t new_tvs
-
-let align_inst (t : I.bind_ty) : I.ty =
-  (* We can gaurantee that captured type variables will never duplicated with
-     free type variables *)
-  let qvs, _ = t in
-  let new_tvs =
-    List.mapi (fun i _id -> I.TQVarI (Ident.mk_ident i "_stable")) qvs
-  in
-  inst_with t new_tvs
-
-let get_all_tvs (te : I.ty) : I.tv ref list =
-  let tvs = ref [] in
-  let rec go te =
-    match te with
-    | I.TConsI (_, tes)
-    | I.TTupleI tes ->
-        List.iter go tes
-    | I.TVarI ({ contents = I.Unbound _ } as tv) ->
-        (* only collect unbound type variable *)
-        tvs := tv :: !tvs
-    | I.TVarI { contents = I.Link te } -> go te
-    | I.TQVarI _ -> assert false
-    | I.TArrowI (te0, te1) ->
-        go te0;
-        go te1
-    | I.TRecordI fields -> List.iter (fun (_, te) -> go te) fields
-  in
-  go te;
-  List_utils.remove_from_left !tvs
-
-let generalize (t : I.ty) (env : Env.t) : I.bind_ty =
-  let qvs = ref [] in
-  let cons_uniq x xs = if List.mem x xs then xs else x :: xs in
-  let rec gen (t : I.ty) =
-    match t with
-    | I.TVarI ({ contents = I.Unbound x } as tv) ->
-        (* if a type variable not captured by environment, we need to
-           generalize it *)
-        if not (Env.captured env tv) then (
-          qvs := cons_uniq x !qvs;
-          I.TQVarI x)
-        else t
-    | I.TVarI { contents = I.Link t } -> gen t
-    | I.TConsI (c, tes) -> I.TConsI (c, List.map gen tes)
-    | I.TQVarI _ -> failwith "neverreach"
-    | I.TArrowI (t1, t2) -> I.TArrowI (gen t1, gen t2)
-    | I.TTupleI tes -> I.TTupleI (List.map gen tes)
-    | I.TRecordI fields ->
-        I.TRecordI (List.map (fun (name, te) -> (name, gen te)) fields)
-  in
-  (!qvs, gen t)
 
 let tv_pool = ref IdMap.empty
 
@@ -96,7 +15,7 @@ let recover_pool pool = tv_pool := pool
 let pool_make_tv n =
   match IdMap.find_opt n !tv_pool with
   | Some tpv -> tpv
-  | None -> make_tv ()
+  | None -> P.make_tv ()
 
 (* record top history of env0 to env1 *)
 let absorb_history (env0 : Env.t) (env1 : Env.t) =
@@ -108,141 +27,7 @@ type norm_ctx =
   | Type
   | Let
 
-(* Check if mt0 is more specifc than mt1, return a substituter. This
-   substituter tell us how to replace module id in mt1 with their
-   correspondence in mt0 *)
-let check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) : I.mod_ty -> I.mod_ty =
-  (* a map which correspond mt0 with mt1 *)
-  let map =
-    let mid_map = ref [] in
-    let rec collect_mid_maping mt0 mt1 =
-      match (mt0, mt1) with
-      | ( I.MTMod { id = id0; mod_defs = mds0; _ },
-          I.MTMod { id = id1; mod_defs = mds1; _ } ) ->
-          mid_map := (id1, id0) :: !mid_map;
-          List.iter
-            (fun (name, md1) ->
-              let md0 = List.assoc name mds0 in
-              collect_mid_maping md0 md1)
-            mds1
-      | I.MTFun (argt0, mt0), I.MTFun (argt1, mt1) ->
-          collect_mid_maping argt0 argt1;
-          collect_mid_maping mt0 mt1
-      | _ -> failwith "subtype check error"
-    in
-    collect_mid_maping mt0 mt1;
-    !mid_map
-  in
-  (* a substituter substitute module id in mt1 with their correspondence in
-     mt0 *)
-  let subst =
-    let mapper =
-      object
-        (* todo: remove this object *)
-        inherit [_] Types_in.map as super
-
-        method! visit_ty_id () (id, name) =
-          match List.assoc_opt id map with
-          | Some id1 -> (id1, name)
-          | _ -> (id, name)
-
-        method! visit_tv () tv =
-          match tv with
-          | I.Unbound _ ->
-              failwith
-                "neverreach: every module should have empty inference space"
-          | I.Link _ -> super#visit_tv () tv
-      end
-    in
-    fun mt -> mapper#visit_mod_ty () mt
-  in
-  let mt1 = subst mt1 in
-  (* We need a map to keep alias between opaque type to it's coreesponding
-     transparent type alias *)
-  let alias_map : (I.ty_id * I.ty) list ref = ref [] in
-  let rec compatible mt0 mt1 : unit =
-    match (mt0, mt1) with
-    | ( I.MTMod
-          {
-            val_defs = vds0;
-            constr_defs = cds0;
-            ty_defs = tds0;
-            mod_defs = mds0;
-            mod_sigs = _ms0;
-            id = id0;
-            _;
-          },
-        I.MTMod
-          {
-            val_defs = vds1;
-            constr_defs = cds1;
-            ty_defs = tds1;
-            mod_defs = mds1;
-            mod_sigs = ms1;
-            _;
-          } ) ->
-        List.iter
-          (fun td1 ->
-            match td1 with
-            | I.TDOpaqueI (name, paras) -> (
-                let td0 = I.get_def name tds0 in
-                match td0 with
-                | I.TDOpaqueI (_, paras0)
-                | I.TDAdtI (_, paras0, _)
-                | I.TDRecordI (_, paras0, _) ->
-                    if List.length paras0 <> List.length paras then
-                      failwith
-                        "number of type parameter not compatible in opaque \
-                         type"
-                | I.TDAliasI (_, ty0) -> (
-                    match paras with
-                    | [] -> alias_map := ((id0, name), ty0) :: !alias_map
-                    | _ :: _ -> failwith "type alias has parameter"))
-            | _ ->
-                let td0 = I.get_def (I.get_def_name td1) tds0 in
-                if td0 <> Alias.dealias_td td1 !alias_map then
-                  failwith "a type def component not compatible")
-          tds1;
-        List.iter
-          (fun (name, vt1) ->
-            let vt0 = List.assoc name vds0 in
-            if align_inst vt0 <> align_inst (Alias.dealias vt1 !alias_map)
-            then Report.in_compatible_error name vt0 vt1)
-          vds1;
-        List.iter
-          (fun (name, (cd1, cid1)) ->
-            let cd0, cid0 = List.assoc name cds0 in
-            if
-              cid1 <> cid0
-              || align_inst cd0 <> align_inst (Alias.dealias cd1 !alias_map)
-            then
-              failwith
-                (Printf.sprintf "a constructor component `%s` not compatible"
-                   name))
-          cds1;
-        List.iter
-          (fun (name, md1) -> compatible (List.assoc name mds0) md1)
-          mds1;
-        List.iter
-          (fun (name, ms1) -> compatible (List.assoc name mds0) ms1)
-          ms1
-    | I.MTFun (argt0, mt0), I.MTFun (argt1, mt1) ->
-        compatible argt1 argt0;
-        compatible mt0 mt1
-    | _ -> failwith "subtype check error"
-  in
-  let dealias =
-    object
-      (* todo: remove this object *)
-      inherit [_] Types_in.map
-
-      method! visit_ty () te = Alias.dealias_te te !alias_map
-    end
-  in
-  compatible mt0 mt1;
-  (* a substituter knows how to replace mt, which depends on mt1, with mt0,
-     which is more specific than mt1 *)
-  fun mt -> dealias#visit_mod_ty () (subst mt)
+let check_subtype = Subtype.check_subtype
 
 (* typing expression *)
 let rec tc_expr (e : T.expr) (env : Env.t) : expr =
@@ -279,7 +64,7 @@ and tc_const c =
 and tc_var x env =
   (* lookup a binding won't unify anything *)
   let bind = Env.get_value_type x env in
-  let t = inst bind in
+  let t = P.inst bind in
   EVar (x, t)
 
 (* pattern will create bindings under context's type *)
@@ -299,7 +84,7 @@ and tc_pattern p te env : pattern * (string * I.ty) list =
       let cons_ty_gen (* type of constructor *), id =
         Env.get_constr_type c env
       in
-      let cons_ty = inst cons_ty_gen in
+      let cons_ty = P.inst cons_ty_gen in
       U.unify cons_ty te;
       match cons_ty with
       | I.TConsI _ -> (PCons (c, id, None), [])
@@ -310,7 +95,7 @@ and tc_pattern p te env : pattern * (string * I.ty) list =
       let cons_ty_gen (* type of constructor *), id =
         Env.get_constr_type c env
       in
-      let p0, binds = tc_PCons_aux (inst cons_ty_gen) p0 te in
+      let p0, binds = tc_PCons_aux (P.inst cons_ty_gen) p0 te in
       (PCons (c, id, Some p0), binds)
   | T.PFieldCons (me, c, None), te -> (
       let cons_typed (* constructor *) = tc_field_cons me c env in
@@ -331,7 +116,7 @@ and tc_pattern p te env : pattern * (string * I.ty) list =
       U.unify (get_ty v_typed) te;
       (PVal v, [])
   | T.PTuple pats, te ->
-      let payload_tvs = List.map (fun _ -> make_tv ()) pats in
+      let payload_tvs = List.map (fun _ -> P.make_tv ()) pats in
       U.unify te (I.TTupleI payload_tvs);
       let pats, vars =
         List.fold_left2
@@ -350,7 +135,7 @@ and tc_let x e0 e1 env =
 and tc_let_binding x e0 env : expr * Env.t =
   let e_typed = tc_expr e0 env in
   let e_ty = get_ty e_typed in
-  let gen (* generalized type *) = generalize e_ty env in
+  let gen (* generalized type *) = P.generalize e_ty env in
   let env = Env.add_value x gen env in
   (e_typed, env)
 
@@ -360,7 +145,7 @@ and tc_letrec binds body env : expr =
   ELetrec (List.combine vars lams_typed, body_typed, get_ty body_typed)
 
 and tc_letrec_binding binds env =
-  let tvs = List.map (fun _ -> ([], make_tv ())) binds in
+  let tvs = List.map (fun _ -> ([], P.make_tv ())) binds in
   let origin_env = env in
   let env =
     List.fold_left2
@@ -374,7 +159,7 @@ and tc_letrec_binding binds env =
       (fun acc x (para, body) ->
         let lam_typed = tc_lambda para body env in
         let lam_ty = get_ty lam_typed in
-        U.unify lam_ty (inst (Env.get_value_type x env));
+        U.unify lam_ty (P.inst (Env.get_value_type x env));
         acc @ [ lam_typed ])
       [] vars lams
   in
@@ -388,7 +173,7 @@ and tc_letrec_binding binds env =
   let env =
     List.fold_left2
       (fun acc_env (_, _, te) x ->
-        Env.add_value x (generalize te origin_env) acc_env)
+        Env.add_value x (P.generalize te origin_env) acc_env)
       origin_env lams_typed vars
   in
   (env, vars, lams_typed)
@@ -402,7 +187,7 @@ and tc_lambda para body env0 : expr =
       let body_ty0 = get_ty body0 in
       ELam (x, body0, I.TArrowI (ann, body_ty0))
   | T.PBare x ->
-      let tv = make_tv () in
+      let tv = P.make_tv () in
       let env = Env.add_value x ([], tv) env0 in
       let body0 = tc_expr body env in
       let body_ty0 = get_ty body0 in
@@ -421,7 +206,7 @@ and tc_app op arg env =
   let op_ty = get_ty op_typed in
   let arg_typed = tc_expr arg env in
   let arg_ty = get_ty arg_typed in
-  let tv = make_tv_of "'ret" in
+  let tv = P.make_tv_of "'ret" in
   U.unify op_ty (I.TArrowI (arg_ty, tv));
 
   EApp (op_typed, arg_typed, tv)
@@ -442,7 +227,7 @@ and tc_seq e0 e1 env =
 and tc_cases e bs env =
   let e_typed = tc_expr e env in
   let e_ty = get_ty e_typed in
-  let res_ty = make_tv_of "'res" in
+  let res_ty = P.make_tv_of "'res" in
   let bs_typed =
     List.fold_left
       (fun bs_typed ((p : T.pattern) (* pattern *), res) ->
@@ -480,21 +265,21 @@ and tc_tuple es env =
 
 and tc_cons c env =
   let t, id = Env.get_constr_type c env in
-  ECons (c, id, inst t)
+  ECons (c, id, P.inst t)
 
 and tc_field_cons me c env =
   let me_typed = tc_mod me env in
   match get_mod_ty me_typed with
   | I.MTMod { constr_defs; _ } ->
       let t, id = List.assoc c constr_defs in
-      EFieldCons (me_typed, c, id, inst t)
+      EFieldCons (me_typed, c, id, P.inst t)
   | I.MTFun _ -> failwith "try get field from functor"
 
 and tc_field me x env =
   let me_typed = tc_mod me env in
   match get_mod_ty me_typed with
   | I.MTMod { val_defs; _ } ->
-      EField (me_typed, x, inst (List.assoc x val_defs))
+      EField (me_typed, x, P.inst (List.assoc x val_defs))
   | I.MTFun _ -> failwith "try get field from functor"
 
 and tc_ann e te env =
@@ -542,7 +327,7 @@ and tc_top_level (top : T.top_level) env : top_level * Env.t =
         (TopModSig (name, mt), Env.add_module_sig name mt env)
     | T.TopExternal (name, e_ty, ext_name) ->
         let te = normalize e_ty Let env in
-        let gen = generalize te env in
+        let gen = P.generalize te env in
         (TopExternal (name, te, ext_name), Env.add_value name gen env)
   in
 
@@ -795,7 +580,7 @@ and normalize_msig comps env =
         match comp with
         | T.TValueSpec (name, te) ->
             reset_pool ();
-            Env.add_value name (generalize (normalize_ty te env) env) env
+            Env.add_value name (P.generalize (normalize_ty te env) env) env
         | T.TAbstTySpec (name, paras) ->
             Env.add_type_def (TDOpaqueI (name, paras)) env
         | T.TManiTySpec def -> Env.add_type_def (normalize_def def env) env
