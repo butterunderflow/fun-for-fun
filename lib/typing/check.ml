@@ -108,11 +108,10 @@ type norm_ctx =
   | Type
   | Let
 
-(* check if mt0 is more specifc than mt1, return an mt1 view of mt0, and a
-   substituter. This substituter will substitute module id in mt1 with their
+(* Check if mt0 is more specifc than mt1, return a substituter. This
+   substituter tell us how to replace module id in mt1 with their
    correspondence in mt0 *)
-let check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) :
-    I.mod_ty * (I.mod_ty -> I.mod_ty) =
+let check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) : I.mod_ty -> I.mod_ty =
   (* a map which correspond mt0 with mt1 *)
   let map =
     let mid_map = ref [] in
@@ -161,7 +160,7 @@ let check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) :
   (* We need a map to keep alias between opaque type to it's coreesponding
      transparent type alias *)
   let alias_map : (I.ty_id * I.ty) list ref = ref [] in
-  let rec compatible mt0 mt1 : I.mod_ty =
+  let rec compatible mt0 mt1 : unit =
     match (mt0, mt1) with
     | ( I.MTMod
           {
@@ -182,74 +181,54 @@ let check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) :
             mod_sigs = ms1;
             _;
           } ) ->
-        I.MTMod
-          {
-            ty_defs =
-              (List.iter
-                 (fun td1 ->
-                   match td1 with
-                   | I.TDOpaqueI (name, paras) -> (
-                       let td0 = I.get_def name tds0 in
-                       match td0 with
-                       | I.TDOpaqueI (_, paras0)
-                       | I.TDAdtI (_, paras0, _)
-                       | I.TDRecordI (_, paras0, _) ->
-                           if List.length paras0 <> List.length paras then
-                             failwith
-                               "number of type parameter not compatible in \
-                                opaque type"
-                       | I.TDAliasI (_, ty0) -> (
-                           match paras with
-                           | [] ->
-                               alias_map := ((id0, name), ty0) :: !alias_map
-                           | _ :: _ -> failwith "type alias has parameter"))
-                   | _ ->
-                       let td0 = I.get_def (I.get_def_name td1) tds0 in
-                       if td0 <> Alias.dealias_td td1 !alias_map then
-                         failwith "a type def component not compatible")
-                 tds1;
-               tds1);
-            val_defs =
-              (List.iter
-                 (fun (name, vt1) ->
-                   let vt0 = List.assoc name vds0 in
-                   if
-                     align_inst vt0
-                     <> align_inst (Alias.dealias vt1 !alias_map)
-                   then Report.in_compatible_error name vt0 vt1)
-                 vds1;
-               vds1);
-            constr_defs =
-              (List.iter
-                 (fun (name, (cd1, cid1)) ->
-                   let cd0, cid0 = List.assoc name cds0 in
-                   if
-                     cid1 <> cid0
-                     || align_inst cd0
-                        <> align_inst (Alias.dealias cd1 !alias_map)
-                   then
-                     failwith
-                       (Printf.sprintf
-                          "a constructor component `%s` not compatible" name))
-                 cds1;
-               cds1);
-            mod_defs =
-              List.map
-                (fun (name, md1) ->
-                  (name, compatible (List.assoc name mds0) md1))
-                mds1;
-            mod_sigs =
-              List.map
-                (fun (name, ms1) ->
-                  (name, compatible (List.assoc name mds0) ms1))
-                ms1;
-            id = id0;
-            owned_mods = [];
-          }
+        List.iter
+          (fun td1 ->
+            match td1 with
+            | I.TDOpaqueI (name, paras) -> (
+                let td0 = I.get_def name tds0 in
+                match td0 with
+                | I.TDOpaqueI (_, paras0)
+                | I.TDAdtI (_, paras0, _)
+                | I.TDRecordI (_, paras0, _) ->
+                    if List.length paras0 <> List.length paras then
+                      failwith
+                        "number of type parameter not compatible in opaque \
+                         type"
+                | I.TDAliasI (_, ty0) -> (
+                    match paras with
+                    | [] -> alias_map := ((id0, name), ty0) :: !alias_map
+                    | _ :: _ -> failwith "type alias has parameter"))
+            | _ ->
+                let td0 = I.get_def (I.get_def_name td1) tds0 in
+                if td0 <> Alias.dealias_td td1 !alias_map then
+                  failwith "a type def component not compatible")
+          tds1;
+        List.iter
+          (fun (name, vt1) ->
+            let vt0 = List.assoc name vds0 in
+            if align_inst vt0 <> align_inst (Alias.dealias vt1 !alias_map)
+            then Report.in_compatible_error name vt0 vt1)
+          vds1;
+        List.iter
+          (fun (name, (cd1, cid1)) ->
+            let cd0, cid0 = List.assoc name cds0 in
+            if
+              cid1 <> cid0
+              || align_inst cd0 <> align_inst (Alias.dealias cd1 !alias_map)
+            then
+              failwith
+                (Printf.sprintf "a constructor component `%s` not compatible"
+                   name))
+          cds1;
+        List.iter
+          (fun (name, md1) -> compatible (List.assoc name mds0) md1)
+          mds1;
+        List.iter
+          (fun (name, ms1) -> compatible (List.assoc name mds0) ms1)
+          ms1
     | I.MTFun (argt0, mt0), I.MTFun (argt1, mt1) ->
-        let arg_t = compatible argt1 argt0 in
-        let ret_t = compatible mt0 mt1 in
-        I.MTFun (arg_t, ret_t)
+        compatible argt1 argt0;
+        compatible mt0 mt1
     | _ -> failwith "subtype check error"
   in
   let dealias =
@@ -260,7 +239,10 @@ let check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) :
       method! visit_ty () te = Alias.dealias_te te !alias_map
     end
   in
-  (compatible mt0 mt1, fun mt -> dealias#visit_mod_ty () (subst mt))
+  compatible mt0 mt1;
+  (* a substituter knows how to replace mt, which depends on mt1, with mt0,
+     which is more specific than mt1 *)
+  fun mt -> dealias#visit_mod_ty () (subst mt)
 
 (* typing expression *)
 let rec tc_expr (e : T.expr) (env : Env.t) : expr =
@@ -650,12 +632,12 @@ and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
   | T.MERestrict (me, mt) ->
       let me_typed = tc_mod me env in
       let mt = normalize_mt mt env in
-      let mt', _subst = check_subtype (get_mod_ty me_typed) mt in
-      MERestrict (me_typed, mt, mt')
+      let _subst = check_subtype (get_mod_ty me_typed) mt in
+      MERestrict (me_typed, mt, shift_mt mt env)
 
 (* apply a functor, add returned module type's id into environment *)
 and apply_functor para_mt body_mt arg_mt env =
-  let _arg_mt, subst = check_subtype arg_mt para_mt in
+  let subst = check_subtype arg_mt para_mt in
   let substituted = subst body_mt in
   let body_mt = shift_mt substituted env in
   body_mt

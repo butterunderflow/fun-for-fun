@@ -278,16 +278,17 @@ let%expect_test "Test: pretty print typed program" =
 
                        end) is sig
 
-                                 id = 1
+                                 id = 3
 
-                                 val x : () 1.t
+                                 val x : () 3.t
 
                                  type () t
 
                                  Owned Modules = {
                                  }
 
-                               end) |}];
+                               end)
+    |}];
 
   print_typed
     {|
@@ -363,16 +364,17 @@ let%expect_test "Test: pretty print typed program" =
 
                        end) is sig
 
-                                 id = 2
+                                 id = 3
 
-                                 val x : () 2.t
+                                 val x : () 3.t
 
                                  type () t
 
                                  Owned Modules = {
                                  }
 
-                               end) |}];
+                               end)
+    |}];
 
   print_typed
     {|
@@ -657,7 +659,7 @@ module MMM = (M(F).K : I)
 
                            end) is sig
 
-                                     id = 8
+                                     id = 9
 
                                      val z : () 0.int
 
@@ -673,11 +675,11 @@ module MMM = (M(F).K : I)
       module MMM =
         (((M(F) is sig
 
-                     id = 9
+                     id = 10
 
                      module K2 : sig
 
-                                   id = 10
+                                   id = 11
 
                                    val y : () 0.int
 
@@ -690,7 +692,7 @@ module MMM = (M(F).K : I)
 
                      module K : sig
 
-                                  id = 11
+                                  id = 12
 
                                   val y : () 0.int
 
@@ -702,8 +704,8 @@ module MMM = (M(F).K : I)
                                 end
 
                      Owned Modules = {
-                       10 ;
                        11 ;
+                       12 ;
                      }
 
                    end).K : sig
@@ -719,7 +721,7 @@ module MMM = (M(F).K : I)
 
                             end) is sig
 
-                                      id = 11
+                                      id = 13
 
                                       val y : () 0.int
 
