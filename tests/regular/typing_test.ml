@@ -1361,7 +1361,8 @@ module K = struct
              end
 end
 
-module L = (K: M)
+module L1 = (K: M)
+module L2 = (K: M)
 
              |};
   [%expect
@@ -1394,7 +1395,34 @@ module L = (K: M)
                        (TDAliasI t (TConsI (0 int) ()))))
                    (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
             (owned_mods (4)))))
-      (TopMod L
+      (TopMod L1
+        (MERestrict
+          (MEName K
+            (MTMod (id 3) (val_defs ()) (constr_defs ()) (ty_defs ())
+              (mod_sigs ())
+              (mod_defs
+                ((N
+                   (MTMod (id 4) (val_defs ()) (constr_defs ())
+                     (ty_defs
+                       ((TDAliasI s (TConsI (0 int) ()))
+                         (TDAliasI t (TConsI (0 int) ()))))
+                     (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
+              (owned_mods (4))))
+          (MTMod (id 1) (val_defs ()) (constr_defs ()) (ty_defs ()) (mod_sigs ())
+            (mod_defs
+              ((N
+                 (MTMod (id 2) (val_defs ()) (constr_defs ())
+                   (ty_defs ((TDOpaqueI s ()) (TDOpaqueI t ()))) (mod_sigs ())
+                   (mod_defs ()) (owned_mods ())))))
+            (owned_mods (2)))
+          (MTMod (id 3) (val_defs ()) (constr_defs ()) (ty_defs ()) (mod_sigs ())
+            (mod_defs
+              ((N
+                 (MTMod (id 4) (val_defs ()) (constr_defs ())
+                   (ty_defs ((TDOpaqueI s ()) (TDOpaqueI t ()))) (mod_sigs ())
+                   (mod_defs ()) (owned_mods ())))))
+            (owned_mods ()))))
+      (TopMod L2
         (MERestrict
           (MEName K
             (MTMod (id 3) (val_defs ()) (constr_defs ()) (ty_defs ())
