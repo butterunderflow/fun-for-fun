@@ -1,59 +1,53 @@
 module I = Types_in
 module P = Poly
 
-(* Check if mt0 is more specifc than mt1, return a substituter. This
-   substituter tell us how to replace module id in mt1 with their
-   correspondence in mt0, and how to reolve aliases introduced by mt0 *)
-let check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) : I.mod_ty -> I.mod_ty =
+let build_mod_correspond mt0 mt1 =
   (* a map which correspond mt0 with mt1 *)
-  let map =
-    let mid_map = ref [] in
-    let rec collect_mid_maping mt0 mt1 =
-      match (mt0, mt1) with
-      | ( I.MTMod { id = id0; mod_defs = mds0; _ },
-          I.MTMod { id = id1; mod_defs = mds1; _ } ) ->
-          mid_map := (id1, id0) :: !mid_map;
-          List.iter
-            (fun (name, md1) ->
-              let md0 = List.assoc name mds0 in
-              collect_mid_maping md0 md1)
-            mds1
-      | I.MTFun (argt0, mt0), I.MTFun (argt1, mt1) ->
-          collect_mid_maping argt0 argt1;
-          collect_mid_maping mt0 mt1
-      | _ -> failwith "subtype check error"
-    in
-    collect_mid_maping mt0 mt1;
-    !mid_map
+  let mid_map = ref [] in
+  let rec collect_mid_maping mt0 mt1 =
+    match (mt0, mt1) with
+    | ( I.MTMod { id = id0; mod_defs = mds0; _ },
+        I.MTMod { id = id1; mod_defs = mds1; _ } ) ->
+        mid_map := (id1, id0) :: !mid_map;
+        List.iter
+          (fun (name, md1) ->
+            let md0 = List.assoc name mds0 in
+            collect_mid_maping md0 md1)
+          mds1
+    | I.MTFun (argt0, mt0), I.MTFun (argt1, mt1) ->
+        collect_mid_maping argt0 argt1;
+        collect_mid_maping mt0 mt1
+    | _ -> failwith "subtype check error"
   in
-  (* a substituter substitute module id in mt1 with their correspondence in
-     mt0 *)
-  let subst =
-    let mapper =
-      object
-        (* todo: remove this object *)
-        inherit [_] Types_in.map as super
+  collect_mid_maping mt0 mt1;
+  !mid_map
 
-        method! visit_ty_id () (id, name) =
-          match List.assoc_opt id map with
-          | Some id1 -> (id1, name)
-          | _ -> (id, name)
+(* a substituter substitute module id in mt1 with their correspondence in
+   mt0 *)
+let create_correspond_subst correspond_map =
+  let mapper =
+    object
+      (* todo: remove this object *)
+      inherit [_] Types_in.map as super
 
-        method! visit_tv () tv =
-          match tv with
-          | I.Unbound _ ->
-              failwith
-                "neverreach: every module should have empty inference space"
-          | I.Link _ -> super#visit_tv () tv
-      end
-    in
-    fun mt -> mapper#visit_mod_ty () mt
+      method! visit_ty_id () (id, name) =
+        match List.assoc_opt id correspond_map with
+        | Some id1 -> (id1, name)
+        | _ -> (id, name)
+
+      method! visit_tv () tv =
+        match tv with
+        | I.Unbound _ ->
+            failwith
+              "neverreach: every module should have empty inference space"
+        | I.Link _ -> super#visit_tv () tv
+    end
   in
-  let mt1 = subst mt1 in
-  (* We need a map to keep alias between opaque type to it's coreesponding
-     transparent type alias *)
+  fun mt -> mapper#visit_mod_ty () mt
+
+let compatible mt0 mt1 =
   let alias_map : (I.ty_id * I.ty) list ref = ref [] in
-  let rec compatible mt0 mt1 : unit =
+  let rec compatible_aux mt0 mt1 : unit =
     match (mt0, mt1) with
     | ( I.MTMod
           {
@@ -116,25 +110,37 @@ let check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) : I.mod_ty -> I.mod_ty =
                    name))
           cds1;
         List.iter
-          (fun (name, md1) -> compatible (List.assoc name mds0) md1)
+          (fun (name, md1) -> compatible_aux (List.assoc name mds0) md1)
           mds1;
         List.iter
-          (fun (name, ms1) -> compatible (List.assoc name mds0) ms1)
+          (fun (name, ms1) -> compatible_aux (List.assoc name mds0) ms1)
           ms1
     | I.MTFun (argt0, mt0), I.MTFun (argt1, mt1) ->
-        compatible argt1 argt0;
-        compatible mt0 mt1
+        compatible_aux argt1 argt0;
+        compatible_aux mt0 mt1
     | _ -> failwith "subtype check error"
   in
+  compatible_aux mt0 mt1;
+  !alias_map
+
+(* Check if mt0 is more specifc than mt1, return a substituter. This
+   substituter tell us how to replace module id in mt1 with their
+   correspondence in mt0, and how to reolve aliases introduced by mt0 *)
+let check_subtype (mt0 : I.mod_ty) (mt1 : I.mod_ty) : I.mod_ty -> I.mod_ty =
+  let correspond_map = build_mod_correspond mt0 mt1 in
+  let correspond_subst = create_correspond_subst correspond_map in
+  let mt1 = correspond_subst mt1 in
+  (* We need a map to keep alias between opaque type to it's coreesponding
+     transparent type alias *)
+  let alias_map = compatible mt0 mt1 in
   let dealias =
     object
       (* todo: remove this object *)
       inherit [_] Types_in.map
 
-      method! visit_ty () te = Alias.dealias_te te !alias_map
+      method! visit_ty () te = Alias.dealias_te te alias_map
     end
   in
-  compatible mt0 mt1;
   (* a substituter knows how to replace mt, which depends on mt1, with mt0,
      which is more specific than mt1 *)
-  fun mt -> dealias#visit_mod_ty () (subst mt)
+  fun mt -> mt |> correspond_subst |> dealias#visit_mod_ty ()
