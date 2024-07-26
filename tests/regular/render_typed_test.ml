@@ -6,7 +6,7 @@ let%expect_test "Test: pretty print typed expression" =
   let print_typed str =
     Ident.refresh ();
     let e = parse_string_expr str in
-    let typed = Check.tc_expr e (Env.init ()) in
+    let typed = Check.check_expr e (Env.init ()) in
     let fmt = Format.std_formatter in
     DefaultPP.pp_expr fmt typed;
     Format.pp_print_flush fmt ()

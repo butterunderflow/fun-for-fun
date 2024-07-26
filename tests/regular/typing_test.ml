@@ -12,7 +12,7 @@ let%expect_test "Test: expression typing" =
     Ident.refresh ();
     let e = parse_string_expr str in
     try
-      let typed = Typing.Check.tc_expr e (Typing.Env.init ()) in
+      let typed = Typing.Check.check_expr e (Typing.Env.init ()) in
       typed |> T.sexp_of_expr |> print_sexp
     with
     | Unify.OccurError (tvn, te) ->
@@ -24,7 +24,7 @@ let%expect_test "Test: expression typing" =
   let print_type str =
     Ident.refresh ();
     let e = parse_string_expr str in
-    let typed = Typing.Check.tc_expr e (Typing.Env.init ()) in
+    let typed = Typing.Check.check_expr e (Typing.Env.init ()) in
     typed |> T.get_ty |> Typing.Types_in.sexp_of_ty |> print_sexp
   in
   print_typed "1";

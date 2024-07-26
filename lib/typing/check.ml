@@ -30,51 +30,51 @@ type norm_ctx =
 let check_subtype = Subtype.check_subtype
 
 (* typing expression *)
-let rec tc_expr (e : T.expr) (env : Env.t) : expr =
+let rec check_expr (e : T.expr) (env : Env.t) : expr =
   try
     match e.node with
-    | T.EConst c -> tc_const c
-    | T.EVar x -> tc_var x env
-    | T.ELet (x, e0, e1) -> tc_let x e0 e1 env
-    | T.ELetrec (binds, body) -> tc_letrec binds body env
-    | T.ELam (para, body) -> tc_lambda para body env
-    | T.EIf (c, e0, e1) -> tc_if_else c e0 e1 env
-    | T.ECase (e, bs) -> tc_cases e bs env
-    | T.EApp (e0, e1) -> tc_app e0 e1 env
-    | T.EAnn (e, te) -> tc_ann e te env
-    | T.ETuple es -> tc_tuple es env
-    | T.EField (p, x) -> tc_field p x env
-    | T.ECons c -> tc_cons c env
-    | T.EFieldCons (p, c) -> tc_field_cons p c env
-    | T.ECmp (op, e0, e1) -> tc_cmp op e0 e1 env
-    | T.ESeq (e0, e1) -> tc_seq e0 e1 env
+    | T.EConst c -> check_const c
+    | T.EVar x -> check_var x env
+    | T.ELet (x, e0, e1) -> check_let x e0 e1 env
+    | T.ELetrec (binds, body) -> check_letrec binds body env
+    | T.ELam (para, body) -> check_lambda para body env
+    | T.EIf (c, e0, e1) -> check_if_else c e0 e1 env
+    | T.ECase (e, bs) -> check_cases e bs env
+    | T.EApp (e0, e1) -> check_app e0 e1 env
+    | T.EAnn (e, te) -> check_ann e te env
+    | T.ETuple es -> check_tuple es env
+    | T.EField (p, x) -> check_field p x env
+    | T.ECons c -> check_cons c env
+    | T.EFieldCons (p, c) -> check_field_cons p c env
+    | T.ECmp (op, e0, e1) -> check_cmp op e0 e1 env
+    | T.ESeq (e0, e1) -> check_seq e0 e1 env
   with
   | U.UnificationError (t0, t1) ->
       Report.unification_error t0 t1 e.start_loc e.end_loc
   | U.OccurError (tv, te) -> Report.occur_error tv te e.start_loc e.end_loc
   | e -> raise e
 
-and tc_const c =
+and check_const c =
   match c with
   | T.CBool _ -> EConst (c, I.bool_ty)
   | T.CInt _ -> EConst (c, I.int_ty)
   | T.CString _ -> EConst (c, I.string_ty)
   | T.CUnit -> EConst (c, I.unit_ty)
 
-and tc_var x env =
+and check_var x env =
   (* lookup a binding won't unify anything *)
   let bind = Env.get_value_type x env in
   let t = P.inst bind in
   EVar (x, t)
 
 (* pattern will create bindings under context's type *)
-and tc_pattern p te env : pattern * (string * I.ty) list =
-  let tc_PCons_aux (cons_ty : I.ty) (p (* payload pattern *) : T.pattern) te0
-      =
+and check_pattern p te env : pattern * (string * I.ty) list =
+  let check_PCons_aux (cons_ty : I.ty) (p (* payload pattern *) : T.pattern)
+      te0 =
     match cons_ty with
     | I.TArrowI (pay_ty (* payload type *), te1) ->
         U.unify te1 te0;
-        let p, vars = tc_pattern p pay_ty env in
+        let p, vars = check_pattern p pay_ty env in
         (p, vars)
     | _ -> failwith "payload constructor is not arrow type"
   in
@@ -95,10 +95,10 @@ and tc_pattern p te env : pattern * (string * I.ty) list =
       let cons_ty_gen (* type of constructor *), id =
         Env.get_constr_type c env
       in
-      let p0, binds = tc_PCons_aux (P.inst cons_ty_gen) p0 te in
+      let p0, binds = check_PCons_aux (P.inst cons_ty_gen) p0 te in
       (PCons (c, id, Some p0), binds)
   | T.PFieldCons (me, c, None), te -> (
-      let cons_typed (* constructor *) = tc_field_cons me c env in
+      let cons_typed (* constructor *) = check_field_cons me c env in
       let[@warning "-8"] (EFieldCons (_, _, id, _)) = cons_typed in
       let cons_ty = get_ty cons_typed in
       U.unify cons_ty te;
@@ -107,12 +107,12 @@ and tc_pattern p te env : pattern * (string * I.ty) list =
       | I.TConsI (_, _) -> (PCons (c, id, None), [ (* bind nothing *) ])
       | _ -> failwith "wrong type")
   | T.PFieldCons (p (* path *), c, Some p0), te ->
-      let cons_typed (* typed constructor *) = tc_field_cons p c env in
+      let cons_typed (* typed constructor *) = check_field_cons p c env in
       let[@warning "-8"] (EFieldCons (_, _, id, cons_ty)) = cons_typed in
-      let p0, binds = tc_PCons_aux cons_ty p0 te in
+      let p0, binds = check_PCons_aux cons_ty p0 te in
       (PCons (c, id, Some p0), binds)
   | T.PVal v, te ->
-      let v_typed = tc_const v in
+      let v_typed = check_const v in
       U.unify (get_ty v_typed) te;
       (PVal v, [])
   | T.PTuple pats, te ->
@@ -121,30 +121,30 @@ and tc_pattern p te env : pattern * (string * I.ty) list =
       let pats, vars =
         List.fold_left2
           (fun (pats_acc, vars_acc) pat te ->
-            let pat, vars = tc_pattern pat te env in
+            let pat, vars = check_pattern pat te env in
             (pats_acc @ [ pat ], vars_acc @ vars))
           ([], []) pats payload_tvs
       in
       (PTuple pats, vars)
 
-and tc_let x e0 e1 env =
-  let e0_typed, env = tc_let_binding x e0 env in
-  let e1_typed = tc_expr e1 env in
+and check_let x e0 e1 env =
+  let e0_typed, env = check_let_binding x e0 env in
+  let e1_typed = check_expr e1 env in
   ELet (x, e0_typed, e1_typed, get_ty e1_typed)
 
-and tc_let_binding x e0 env : expr * Env.t =
-  let e_typed = tc_expr e0 env in
+and check_let_binding x e0 env : expr * Env.t =
+  let e_typed = check_expr e0 env in
   let e_ty = get_ty e_typed in
   let gen (* generalized type *) = P.generalize e_ty env in
   let env = Env.add_value x gen env in
   (e_typed, env)
 
-and tc_letrec binds body env : expr =
-  let env, vars, lams_typed = tc_letrec_binding binds env in
-  let body_typed = tc_expr body env in
+and check_letrec binds body env : expr =
+  let env, vars, lams_typed = check_letrec_binding binds env in
+  let body_typed = check_expr body env in
   ELetrec (List.combine vars lams_typed, body_typed, get_ty body_typed)
 
-and tc_letrec_binding binds env =
+and check_letrec_binding binds env =
   let tvs = List.map (fun _ -> ([], P.make_tv ())) binds in
   let origin_env = env in
   let env =
@@ -157,7 +157,7 @@ and tc_letrec_binding binds env =
   let lams_typed =
     List.fold_left2
       (fun acc x (para, body) ->
-        let lam_typed = tc_lambda para body env in
+        let lam_typed = check_lambda para body env in
         let lam_ty = get_ty lam_typed in
         U.unify lam_ty (P.inst (Env.get_value_type x env));
         acc @ [ lam_typed ])
@@ -178,61 +178,61 @@ and tc_letrec_binding binds env =
   in
   (env, vars, lams_typed)
 
-and tc_lambda para body env0 : expr =
+and check_lambda para body env0 : expr =
   match para with
   | T.PAnn (x, t) ->
       let ann = normalize_ty t env0 in
       let env = Env.add_value x ([], ann) env0 in
-      let body0 = tc_expr body env in
+      let body0 = check_expr body env in
       let body_ty0 = get_ty body0 in
       ELam (x, body0, I.TArrowI (ann, body_ty0))
   | T.PBare x ->
       let tv = P.make_tv () in
       let env = Env.add_value x ([], tv) env0 in
-      let body0 = tc_expr body env in
+      let body0 = check_expr body env in
       let body_ty0 = get_ty body0 in
       ELam (x, body0, I.TArrowI (tv, body_ty0))
 
-and tc_if_else c e1 e2 env : expr =
-  let c_typed = tc_expr c env in
+and check_if_else c e1 e2 env : expr =
+  let c_typed = check_expr c env in
   U.unify (get_ty c_typed) I.bool_ty;
-  let e1_typed = tc_expr e1 env in
-  let e2_typed = tc_expr e2 env in
+  let e1_typed = check_expr e1 env in
+  let e2_typed = check_expr e2 env in
   U.unify (get_ty e1_typed) (get_ty e2_typed);
   EIf (c_typed, e1_typed, e2_typed, get_ty e1_typed)
 
-and tc_app op arg env =
-  let op_typed = tc_expr op env in
+and check_app op arg env =
+  let op_typed = check_expr op env in
   let op_ty = get_ty op_typed in
-  let arg_typed = tc_expr arg env in
+  let arg_typed = check_expr arg env in
   let arg_ty = get_ty arg_typed in
   let tv = P.make_tv_of "'ret" in
   U.unify op_ty (I.TArrowI (arg_ty, tv));
 
   EApp (op_typed, arg_typed, tv)
 
-and tc_cmp op e0 e1 env =
-  let e0_typed = tc_expr e0 env in
-  let e1_typed = tc_expr e1 env in
+and check_cmp op e0 e1 env =
+  let e0_typed = check_expr e0 env in
+  let e1_typed = check_expr e1 env in
   U.unify (get_ty e0_typed) (get_ty e1_typed);
   ECmp (op, e0_typed, e1_typed, I.bool_ty)
 
-and tc_seq e0 e1 env =
-  let e0_typed = tc_expr e0 env in
+and check_seq e0 e1 env =
+  let e0_typed = check_expr e0 env in
   U.unify (get_ty e0_typed) I.unit_ty;
-  let e1_typed = tc_expr e1 env in
+  let e1_typed = check_expr e1 env in
   let e1_ty = get_ty e1_typed in
   ESeq (e0_typed, e1_typed, e1_ty)
 
-and tc_cases e bs env =
-  let e_typed = tc_expr e env in
+and check_cases e bs env =
+  let e_typed = check_expr e env in
   let e_ty = get_ty e_typed in
   let res_ty = P.make_tv_of "'res" in
   let bs_typed =
     List.fold_left
       (fun bs_typed ((p : T.pattern) (* pattern *), res) ->
         (* get binding created by pattern *)
-        let p, vars = tc_pattern p e_ty env in
+        let p, vars = check_pattern p e_ty env in
         (* we don't need do some thing like [let res = U.apply_expr_untypd u1
            res], the [res_typed] will get unified result when type variable
            pool being maintained correctly *)
@@ -243,7 +243,7 @@ and tc_cases e bs env =
               Env.add_value v ([], ty (* no generalize here*)) env)
             env vars
         in
-        let res_typed = tc_expr res env in
+        let res_typed = check_expr res env in
         let res_ty' = get_ty res_typed in
         (* unify checked result type with current result type *)
         U.unify res_ty' res_ty;
@@ -252,53 +252,53 @@ and tc_cases e bs env =
   in
   ECase (e_typed, bs_typed, res_ty)
 
-and tc_tuple es env =
+and check_tuple es env =
   let es_typed =
     List.fold_left
       (fun acc e ->
-        let e_typed = tc_expr e env in
+        let e_typed = check_expr e env in
         acc @ [ e_typed ])
       [] es
   in
   let tu_te = I.TTupleI (List.map get_ty es_typed) in
   ETuple (es_typed, tu_te)
 
-and tc_cons c env =
+and check_cons c env =
   let t, id = Env.get_constr_type c env in
   ECons (c, id, P.inst t)
 
-and tc_field_cons me c env =
-  let me_typed = tc_mod me env in
+and check_field_cons me c env =
+  let me_typed = check_mod me env in
   match get_mod_ty me_typed with
   | I.MTMod { constr_defs; _ } ->
       let t, id = List.assoc c constr_defs in
       EFieldCons (me_typed, c, id, P.inst t)
   | I.MTFun _ -> failwith "try get field from functor"
 
-and tc_field me x env =
-  let me_typed = tc_mod me env in
+and check_field me x env =
+  let me_typed = check_mod me env in
   match get_mod_ty me_typed with
   | I.MTMod { val_defs; _ } ->
       EField (me_typed, x, P.inst (List.assoc x val_defs))
   | I.MTFun _ -> failwith "try get field from functor"
 
-and tc_ann e te env =
-  let e_typed = tc_expr e env in
+and check_ann e te env =
+  let e_typed = check_expr e env in
   let te = normalize_ty te env in
   U.unify te (get_ty e_typed);
   e_typed
 
 (* typing top levels *)
-and tc_top_level (top : T.top_level) env : top_level * Env.t =
+and check_top_level (top : T.top_level) env : top_level * Env.t =
   let old_pool = !tv_pool in
   reset_pool ();
   let top_typed =
     match top with
     | T.TopLet (x, e) ->
-        let e_typed0, env = tc_let_binding x e env in
+        let e_typed0, env = check_let_binding x e env in
         (TopLet (x, e_typed0), env)
     | T.TopLetRec binds ->
-        let env, vars, lams = tc_letrec_binding binds env in
+        let env, vars, lams = check_letrec_binding binds env in
         let binds = List.combine vars lams in
         (TopLetRec binds, env)
     | T.TopTypeDef (TDAdt (name, ty_para_names, _) as def_ext) ->
@@ -319,11 +319,11 @@ and tc_top_level (top : T.top_level) env : top_level * Env.t =
         let def = normalize_def def_ext env in
         (TopTypeDef def, Env.add_type_def def env)
     | T.TopMod (name, me) ->
-        let me_typed = tc_mod me env in
+        let me_typed = check_mod me env in
         ( TopMod (name, me_typed),
           Env.add_module name (get_mod_ty me_typed) env )
-    | T.TopModSig (name, emt) ->
-        let mt = normalize_mt emt env in
+    | T.TopModSig (name, ext_mt) ->
+        let mt = normalize_mt ext_mt env in
         (TopModSig (name, mt), Env.add_module_sig name mt env)
     | T.TopExternal (name, e_ty, ext_name) ->
         let te = normalize e_ty Let env in
@@ -356,15 +356,15 @@ and analyze_constructors (tid : I.ty_id) para_names (bs : I.variant list) :
     bs
 
 (* typing program (content of module) *)
-and tc_top_levels (prog : T.top_level list) env : program * Env.t =
+and check_top_levels (prog : T.top_level list) env : program * Env.t =
   match prog with
   | [] -> ([], env)
   | top :: rest ->
-      let top_typed0, env = tc_top_level top env in
-      let rest_typed1, env = tc_top_levels rest env in
+      let top_typed0, env = check_top_level top env in
+      let rest_typed1, env = check_top_levels rest env in
       (top_typed0 :: rest_typed1, env)
 
-and make_scope_mt
+and make_mt_by_scope
     {
       Env.values;
       constrs;
@@ -386,27 +386,27 @@ and make_scope_mt
       owned_mods = !history;
     }
 
-and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
+and check_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
   match me.node with
   | T.MEName name -> MEName (name, Env.get_module_def name env)
   | T.MEStruct body ->
-      let body_typed, env' = tc_top_levels body (Env.enter_env env) in
+      let body_typed, env' = check_top_levels body (Env.enter_env env) in
       let scope = absorb_history env' env in
-      let mt = make_scope_mt scope in
+      let mt = make_mt_by_scope scope in
       MEStruct (body_typed, mt)
-  | T.MEFunctor ((name, emt0), me1) ->
-      let mt0 = normalize_mt emt0 env in
-      let me1_typed = tc_mod me1 (Env.add_module name mt0 env) in
+  | T.MEFunctor ((name, ext_mt0), me1) ->
+      let mt0 = normalize_mt ext_mt0 env in
+      let me1_typed = check_mod me1 (Env.add_module name mt0 env) in
       MEFunctor ((name, mt0), me1_typed)
   | T.MEField (me, name) -> (
-      let me_typed = tc_mod me env in
+      let me_typed = check_mod me env in
       match get_mod_ty me_typed with
       | I.MTMod { mod_defs; _ } ->
           MEField (me_typed, name, List.assoc name mod_defs)
       | I.MTFun _ -> failwith "try get field from functor")
   | T.MEApply (me0, me1) -> (
-      let me0_typed = tc_mod me0 env in
-      let me1_typed = tc_mod me1 env in
+      let me0_typed = check_mod me0 env in
+      let me1_typed = check_mod me1 env in
       let mt0 = get_mod_ty me0_typed in
       let mt1 = get_mod_ty me1_typed in
       match mt0 with
@@ -415,7 +415,7 @@ and tc_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
           MEApply
             (me0_typed, me1_typed, apply_functor para_mt body_mt mt1 env))
   | T.MERestrict (me, mt) ->
-      let me_typed = tc_mod me env in
+      let me_typed = check_mod me env in
       let mt = normalize_mt mt env in
       let _subst = check_subtype (get_mod_ty me_typed) mt in
       MERestrict (me_typed, mt, shift_mt mt env)
@@ -519,7 +519,7 @@ and normalize (t : T.ety) (ctx : norm_ctx) (env : Env.t) : I.ty =
   match t with
   | T.TField (me, n, tes) -> (
       let tes = List.map (fun te -> normalize te ctx env) tes in
-      let me_typed = tc_mod me env in
+      let me_typed = check_mod me env in
       let mod_ty = get_mod_ty me_typed in
       match mod_ty with
       | I.MTMod { id; ty_defs; _ } -> (
@@ -558,7 +558,7 @@ and normalize_mt (me : T.emod_ty) env : I.mod_ty =
   match me with
   | T.MTName name -> Env.get_module_sig name env
   | T.MTField (me, name) -> (
-      let me_typed = tc_mod me env in
+      let me_typed = check_mod me env in
       let mt = get_mod_ty me_typed in
       match mt with
       | I.MTMod mt -> List.assoc name mt.mod_sigs
@@ -566,9 +566,9 @@ and normalize_mt (me : T.emod_ty) env : I.mod_ty =
   | T.MTSig comps ->
       let env' = normalize_msig comps (Env.enter_env env) in
       let scope = absorb_history env' env in
-      make_scope_mt scope
-  | T.MTFunctor (m0, emt0, m1) ->
-      let mt0 = normalize_mt emt0 env in
+      make_mt_by_scope scope
+  | T.MTFunctor (m0, ext_mt0, m1) ->
+      let mt0 = normalize_mt ext_mt0 env in
       let mt1 = normalize_mt m1 (Env.add_module m0 mt0 env) in
       MTFun (mt0, mt1)
 
@@ -584,8 +584,8 @@ and normalize_msig comps env =
         | T.TAbstTySpec (name, paras) ->
             Env.add_type_def (TDOpaqueI (name, paras)) env
         | T.TManiTySpec def -> Env.add_type_def (normalize_def def env) env
-        | T.TModSpec (name, emt) ->
-            let mt = normalize_mt emt env in
+        | T.TModSpec (name, ext_mt) ->
+            let mt = normalize_mt ext_mt env in
             Env.add_module name mt env
       in
       normalize_msig comps env
