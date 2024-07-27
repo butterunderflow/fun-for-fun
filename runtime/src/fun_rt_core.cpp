@@ -9,7 +9,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <vector>
 
 const int64_t FF_PLACEHOLDER_TAG = 0;
 const int64_t FF_INT_TAG = 1;
@@ -63,17 +62,6 @@ ff_obj_t ff_make_str(const char* val) {
     return ret;
 }
 
-ff_obj_t ff_make_tuple(std::vector<ff_obj_t> objs, int64_t size) {
-    assert(objs.size() == size);
-    ff_obj_t ret = {.tag = FF_TUPLE_TAG};
-    ff_tuple_t* tu = GC_alloc_tuple(size);
-    for (size_t i = 0; i < size; i++) {
-        tu->payloads[i] = objs[i];
-    }
-    ret.data = tu;
-    return ret;
-}
-
 ff_obj_t ff_make_constr_no_payload(int64_t id) {
     ff_obj_t ret = {.tag = id + FF_CONSTR_BARRIER, .data = NULL};
     return ret;
@@ -112,42 +100,6 @@ ff_make_closure(const ff_obj_t* fvs, int64_t fvs_n, ff_erased_fptr cfn) {
     closure->cfn = cfn;
     memcpy(closure->fvs, fvs, fvs_n * (sizeof(ff_obj_t)));
     ff_obj_t ret = {.tag = FF_CLOSURE_TAG, .data = closure};
-    return ret;
-}
-
-void ff_fill_letrec_closure(std::vector<ff_obj_t> fvs,
-                            int64_t fvs_n,
-                            std::vector<ff_erased_fptr> cfns,
-                            int64_t self_n,
-                            std::vector<ff_obj_t*> binds) {
-
-    ff_fvs_t fvs_all = GC_alloc_n_objs(fvs_n + self_n);
-
-    for (int64_t i = 0; i < self_n; i++) {
-        ff_closure_t* self_i = GC_alloc_empty_closure();
-        self_i->fvs = fvs_all;
-        self_i->cfn = cfns[i];
-        fvs_all[i].tag = FF_CLOSURE_TAG;
-        fvs_all[i].data = self_i;
-        *binds[i] = fvs_all[i];
-    }
-    std::copy(fvs.begin(), fvs.end(), fvs_all + self_n);
-}
-
-ff_obj_t ff_make_mod_obj(const int64_t size,
-                         std::vector<const char*>&& fields,
-                         std::vector<ff_obj_t> values) {
-    /* todo: reduce memory usage */
-    /* todo: use sequenced memory for module members */
-    ff_obj_member_t* members = NULL;
-    for (int64_t i = 0; i < size; i++) {
-        ff_obj_member_t* new_member = GC_alloc_member();
-        new_member->name = fields[i];
-        new_member->val = values[i];
-        new_member->next = members;
-        members = new_member;
-    }
-    ff_obj_t ret = {.tag = FF_MODOBJ_TAG, .data = members};
     return ret;
 }
 
@@ -197,17 +149,6 @@ bool ff_match_constr(int64_t id, ff_obj_t cond, ff_obj_t* payload) {
         return false;
     }
     *payload = *(reinterpret_cast<const ff_obj_t*>(cond.data));
-    return true;
-}
-
-bool ff_match_tuple(ff_obj_t cond, std::vector<ff_obj_t*> payloads) {
-    if (cond.tag != FF_TUPLE_TAG) {
-        return false;
-    }
-    auto tu_ptr = reinterpret_cast<const ff_tuple_t*>(cond.data);
-    for (size_t i = 0; i < payloads.size(); i++) {
-        *payloads[i] = tu_ptr->payloads[i];
-    }
     return true;
 }
 
