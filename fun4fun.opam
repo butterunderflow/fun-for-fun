@@ -12,6 +12,7 @@ depends: [
   "qcheck"
   "qcheck-alcotest"
   "bisect_ppx"
+  "lwt"
   "odoc" {with-doc}
 ]
 build: [
