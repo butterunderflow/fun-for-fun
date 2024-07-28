@@ -1,5 +1,4 @@
 open Types_in
-module E = Types_ext
 module SMap = Map.Make (Ident)
 module Tree = Syntax.Parsetree
 
