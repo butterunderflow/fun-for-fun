@@ -66,7 +66,7 @@ Hello World!
 ```
 
 ### Use Compiler Wrapper
-Alternatively, you can use the compiler wrapper `ffw` to automatically call g++:
+Alternatively, you can use the compiler wrapper `ffw` to automatically call `g++`:
 
 ```sh
 ffw hello.fun
@@ -75,9 +75,14 @@ ffw hello.fun
 This will generate an executable program `hello.fun.out` in current directly. 
 
 
-Run it to see the output:
+Run it:
 
 ```
 ./hello.fun.out
+```
+
+and check the output:
+
+```
 Hello World!
 ```
