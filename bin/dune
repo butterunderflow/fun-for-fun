@@ -5,3 +5,7 @@
  (preprocess
   (action
    (run ./watermark.sh %{input-file}))))
+
+(install
+ (section bin)
+ (files ffw))

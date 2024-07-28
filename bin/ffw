@@ -1,0 +1,7 @@
+#!/bin/sh
+RUNTIME=$(opam var share)/fun4fun
+
+ff $1 -o $1.cpp
+
+g++ $1.cpp -o $1.out -I $RUNTIME $RUNTIME/libfun_rt.a
+
