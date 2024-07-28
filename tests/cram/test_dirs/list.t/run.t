@@ -182,7 +182,6 @@
   $ $FF test_list.fun
 
   $ ./test_list.fun.out
-  Hello Runtime
   3
   2
   1

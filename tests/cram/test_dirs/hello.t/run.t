@@ -2,7 +2,6 @@
   $ $FF hello.fun
 
   $ ./hello.fun.out
-  Hello Runtime
   Hello World
   I'm FF
 
@@ -34,6 +33,5 @@
   
   int main()
   {
-    test_rt();
     main_1__fn(nullptr);
   }

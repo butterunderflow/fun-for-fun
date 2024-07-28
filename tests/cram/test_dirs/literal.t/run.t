@@ -34,7 +34,6 @@
   
   int main()
   {
-    test_rt();
     main_1__fn(nullptr);
   }
 

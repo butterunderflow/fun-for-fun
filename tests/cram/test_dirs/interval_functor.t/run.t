@@ -555,13 +555,11 @@
   
   int main()
   {
-    test_rt();
     main_1__fn(nullptr);
   }
 
   $ $FF test_interval.fun
   $ ./test_interval.fun.out
-  Hello Runtime
   low
   0
   high

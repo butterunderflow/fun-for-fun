@@ -76,7 +76,6 @@
   
   int main()
   {
-    test_rt();
     main_1__fn(nullptr);
   }
 
@@ -216,6 +215,5 @@
   $ $FF fib.fun
 
   $ ./fib.fun.out
-  Hello Runtime
   89
 

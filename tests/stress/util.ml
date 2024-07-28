@@ -15,7 +15,6 @@ let call_ff_int_to_int ~(case : string) i =
   Stdlib.flush wrapped_in;
   ignore (Unix.wait ());
   let wrapped_out = Unix.in_channel_of_descr pr2 in
-  let _line (* ignore first line *) = input_line wrapped_out in
   let line = input_line wrapped_out in
   close_in wrapped_out;
   int_of_string line
@@ -45,7 +44,7 @@ let call_ff_on_prog_to_int_list ~(prog : string) : int list =
   Printf.printf "Dumped exe file path: %s\n" exe;
   Lwt_main.run
     (let* out = Lwt_process.pread (exe, [| exe |]) in
-     let[@warning "-8"] (_ :: lines) = String.split_on_char '\n' out in
+     let lines = String.split_on_char '\n' out in
      let ints =
        List.(lines |> filter (fun s -> s <> "") |> map int_of_string)
      in

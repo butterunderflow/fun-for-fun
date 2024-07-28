@@ -33,12 +33,10 @@
   
   int main()
   {
-    test_rt();
     main_1__fn(nullptr);
   }
 
   $ ./test_wildcard.fun.out
-  Hello Runtime
   Hello I'm here
   Good bye
 

@@ -518,7 +518,6 @@ let translate (main, (fns : func list)) =
     Printf.sprintf {|
 int main()
 {
-  test_rt();
   %s(nullptr);
 }
 |} main_name

@@ -3,7 +3,6 @@
   $ $FF test_increment_functor.fun
 
   $ ./test_increment_functor.fun.out
-  Hello Runtime
   1
   2
   3
@@ -125,6 +124,5 @@
   
   int main()
   {
-    test_rt();
     main_1__fn(nullptr);
   }

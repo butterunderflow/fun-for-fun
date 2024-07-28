@@ -151,10 +151,8 @@
   
   int main()
   {
-    test_rt();
     main_1__fn(nullptr);
   }
 
   $ ./test_match.fun.out
-  Hello Runtime
   19981022

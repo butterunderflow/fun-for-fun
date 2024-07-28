@@ -18,7 +18,6 @@
   
   int main()
   {
-    test_rt();
     main_1__fn(nullptr);
   }
 
@@ -61,11 +60,9 @@
   
   int main()
   {
-    test_rt();
     main_1__fn(nullptr);
   }
 
   $ ./test_add_external.fun.out
-  Hello Runtime
   3
 

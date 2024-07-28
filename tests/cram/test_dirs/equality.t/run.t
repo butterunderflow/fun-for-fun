@@ -84,11 +84,9 @@
   
   int main()
   {
-    test_rt();
     main_1__fn(nullptr);
   }
 
   $ ./test_equality.fun.out
-  Hello Runtime
   truefalsetruefalse
 
