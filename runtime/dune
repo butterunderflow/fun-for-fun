@@ -2,6 +2,7 @@
  (name runtime))
 
 (rule
+ (alias runtime)
  (targets fun_rt.hpp fun_rt_core.hpp fun_rt_lib.hpp libfun_rt.a)
  (deps
   (source_tree include)
