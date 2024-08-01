@@ -26,7 +26,8 @@ let%expect_test "Error reporting syntax error test" =
                     
                     let 3 = 2
 |};
-  [%expect {|
+  [%expect
+    {|
     File "*test*", line 6, characters 24-25:
     Syntax error after 'let' and before '3'.
     (Curated message for this state is not supported)!

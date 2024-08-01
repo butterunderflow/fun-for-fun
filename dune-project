@@ -17,7 +17,8 @@
    qcheck
    qcheck-alcotest
    bisect_ppx
-   lwt))
+   lwt
+   ocamlformat))
 
 (generate_opam_files)
 
