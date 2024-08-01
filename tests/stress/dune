@@ -8,4 +8,8 @@
  (deps
   %{bin:ff}
   %{bin:ff_wrapper}
-  (glob_files *.fun)))
+  (glob_files *.fun)
+  %{lib-private:runtime:libfun_rt.a}
+  %{lib-private:runtime:fun_rt.hpp}
+  %{lib-private:runtime:fun_rt_core.hpp}
+  %{lib-private:runtime:fun_rt_lib.hpp}))
