@@ -11,7 +11,6 @@
  (modules parser)
  (flags --explain --inspection --table --dump))
 
-
 ;; -----------------------------------------------------------------------------
 
 ;; This section deals with the .messages file.
@@ -21,10 +20,11 @@
 ;; performed first. (If desired, this check could be disabled.)
 
 (rule
-  (action (with-stdout-to parserMessages.ml
-    (run menhir
-      %{dep:parser.mly}
-      --compile-errors %{dep:parserMessages.messages}
-    )
-  ))
-)
+ (action
+  (with-stdout-to
+   parserMessages.ml
+   (run
+    menhir
+    %{dep:parser.mly}
+    --compile-errors
+    %{dep:parserMessages.messages}))))

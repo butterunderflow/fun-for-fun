@@ -1490,7 +1490,7 @@ module L2 = (K: M)
              (TVarI (Link (TConsI (0 string) ()))))))))
     |}];
 
-print_typed {|
+  print_typed {|
              let _ = 1
 
              let result = _

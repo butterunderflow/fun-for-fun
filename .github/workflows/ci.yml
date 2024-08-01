@@ -7,11 +7,14 @@ on:
   # Triggers the workflow on push or pull request events but only for the "master" branch
   push:
     branches: [ "**" ]
-  pull_request:
-    branches: [ "**" ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+
+# Make sure there's only one ci triggerd for a non-master branch
+concurrency:
+  group: ${{ github.ref }} 
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -48,11 +51,13 @@ jobs:
         run: opam install menhir
 
       - name: "Install OPAM dependencies"
-        run: opam install . --deps-only
-          
+        run: opam install . --deps-only          
 
       - name: "Build whole project"
         run: opam exec -- dune build
+
+      - name: "Check format"
+        run: opam exec -- dune build @fmt
 
       - name: Run tests
         run: opam exec -- dune runtest

@@ -7,9 +7,9 @@
 (cram
  (applies_to :whole_subtree)
  (deps
-   %{bin:ff}
-   %{bin:ff_wrapper}
-   %{lib-private:runtime:libfun_rt.a}
-   %{lib-private:runtime:fun_rt.hpp}
-   %{lib-private:runtime:fun_rt_core.hpp}
-   %{lib-private:runtime:fun_rt_lib.hpp}))
+  %{bin:ff}
+  %{bin:ff_wrapper}
+  %{lib-private:runtime:libfun_rt.a}
+  %{lib-private:runtime:fun_rt.hpp}
+  %{lib-private:runtime:fun_rt_core.hpp}
+  %{lib-private:runtime:fun_rt_lib.hpp}))

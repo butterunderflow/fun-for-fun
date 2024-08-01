@@ -13,6 +13,7 @@ depends: [
   "qcheck-alcotest"
   "bisect_ppx"
   "lwt"
+  "ocamlformat"
   "odoc" {with-doc}
 ]
 build: [
