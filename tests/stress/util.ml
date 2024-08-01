@@ -32,18 +32,15 @@ let call_ff_on_prog_to_int_list ~(prog : string) : int list =
   let oc = open_out temp_file in
   Printf.fprintf oc "%s" prog;
   close_out oc;
-  (* compiling *)
-  Printf.printf "Call ff_wraper on tempfile %s\n" temp_file;
-  let _pid =
-    Unix.create_process "ff_wrapper"
-      [| "ff_wrapper"; temp_file |]
-      Unix.stdin Unix.stdout Unix.stderr
-  in
-  ignore (Unix.wait ());
-  let exe = Printf.sprintf "%s.out" temp_file in
-  Printf.printf "Dumped exe file path: %s\n" exe;
   Lwt_main.run
-    (let* out = Lwt_process.pread (exe, [| exe |]) in
+    ((* compiling *)
+     Printf.printf "Call ff_wraper on tempfile %s\n" temp_file;
+     let* ret =
+       Lwt_process.exec ("ff_wrapper", [| "ff_wrapper"; temp_file |])
+     in
+     let exe = Printf.sprintf "%s.out" temp_file in
+     Printf.printf "Dumped exe file path: %s\n" exe;
+     let* out = Lwt_process.pread (exe, [| exe |]) in
      let lines = String.split_on_char '\n' out in
      let ints =
        List.(lines |> filter (fun s -> s <> "") |> map int_of_string)
