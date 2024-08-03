@@ -2,8 +2,6 @@ open Sexplib.Conv
 open Types_in
 module T = Syntax.Parsetree
 
-[@@@warning "-17"]
-
 type constant = T.constant [@@deriving sexp]
 
 type expr =

@@ -1,5 +1,3 @@
-[@@@warning "-32"]
-
 module S = Syntax
 module C = Typing.Check
 module Lo = Lam.Compile
@@ -44,9 +42,6 @@ let read_file filename =
     close_in ch;
     Some s)
   else None
-
-let out_sexp oc s =
-  Printf.fprintf oc "%s\n" (Sexplib.Sexp.to_string_hum ?indent:(Some 2) s)
 
 let default_output_file = "a.out"
 
