@@ -51,20 +51,20 @@ let get_top_history (env : t) =
   | [] -> failwith "neverreach"
   | s :: _ -> !(s.history)
 
-let rec get_value_type x (env : t) =
+let rec lookup_var_type x (env : t) =
   match env with
   | [] -> failwith (Printf.sprintf "name `%s` not found" x)
   | s :: env' -> (
       match List.assoc_opt x s.values with
-      | None -> get_value_type x env'
+      | None -> lookup_var_type x env'
       | Some te -> te)
 
-let rec get_constr_type x (env : t) : I.bind_ty * int =
+let rec lookup_constr_type x (env : t) : I.bind_ty * int =
   match env with
   | [] -> failwith (Printf.sprintf "constructor `%s` not found" x)
   | s :: env' -> (
       match List.assoc_opt x s.constrs with
-      | None -> get_constr_type x env'
+      | None -> lookup_constr_type x env'
       | Some te -> te)
 
 let record_history id (env : t) =
@@ -77,20 +77,20 @@ let record_all_history ids (env : t) =
   | [] -> failwith "neverreach"
   | s :: _ -> s.history := ids @ !(s.history)
 
-let rec get_module_def m (env : t) =
+let rec lookup_module_def m (env : t) =
   match env with
   | [] -> failwith (Printf.sprintf "name `%s` not found" m)
   | s :: env' -> (
       match List.assoc_opt m s.modules with
-      | None -> get_module_def m env'
+      | None -> lookup_module_def m env'
       | Some te -> te)
 
-let rec get_module_sig m (env : t) =
+let rec lookup_module_sig m (env : t) =
   match env with
   | [] -> failwith (Printf.sprintf "name `%s` not found" m)
   | s :: env' -> (
       match List.assoc_opt m s.module_sigs with
-      | None -> get_module_sig m env'
+      | None -> lookup_module_sig m env'
       | Some te -> te)
 
 let get_root_def tn =
@@ -102,7 +102,7 @@ let get_root_def tn =
     | "unit" -> I.TDAdtI ("unit", [], [])
     | tn -> failwith (Printf.sprintf "cant get type `%s`" tn) )
 
-let rec get_type_def tn env =
+let rec lookup_type_def tn env =
   match env with
   | [] -> get_root_def tn
   | s :: env' -> (
@@ -117,14 +117,12 @@ let rec get_type_def tn env =
           s.types
       with
       | Some def -> (s.curr, def)
-      | None -> get_type_def tn env')
+      | None -> lookup_type_def tn env')
 
 let get_curr env =
   match env with
   | s :: _ -> s.curr
   | _ -> failwith "neverreach"
-
-let get_module_by_id i env = List.assoc i env.module_dict
 
 let init_scope () =
   {

@@ -63,7 +63,7 @@ and check_const c =
 
 and check_var x env =
   (* lookup a binding won't unify anything *)
-  let bind = Env.get_value_type x env in
+  let bind = Env.lookup_var_type x env in
   let t = P.inst bind in
   EVar (x, t)
 
@@ -82,7 +82,7 @@ and check_pattern p te env : pattern * (string * I.ty) list =
   | T.PVar x, te -> (PVar (x, te), [ (x, te) ])
   | T.PCons (c, None), te -> (
       let cons_ty_gen (* type of constructor *), id =
-        Env.get_constr_type c env
+        Env.lookup_constr_type c env
       in
       let cons_ty = P.inst cons_ty_gen in
       U.unify cons_ty te;
@@ -93,7 +93,7 @@ and check_pattern p te env : pattern * (string * I.ty) list =
             (Printf.sprintf "wrong no-payload constructor pattern %s" c))
   | T.PCons (c, Some p0 (* pattern *)), te ->
       let cons_ty_gen (* type of constructor *), id =
-        Env.get_constr_type c env
+        Env.lookup_constr_type c env
       in
       let p0, binds = check_PCons_aux (P.inst cons_ty_gen) p0 te in
       (PCons (c, id, Some p0), binds)
@@ -159,7 +159,7 @@ and check_letrec_binding binds env =
       (fun acc x (para, body) ->
         let lam_typed = check_lambda para body env in
         let lam_ty = get_ty lam_typed in
-        U.unify lam_ty (P.inst (Env.get_value_type x env));
+        U.unify lam_ty (P.inst (Env.lookup_var_type x env));
         acc @ [ lam_typed ])
       [] vars lams
   in
@@ -264,7 +264,7 @@ and check_tuple es env =
   ETuple (es_typed, tu_te)
 
 and check_cons c env =
-  let t, id = Env.get_constr_type c env in
+  let t, id = Env.lookup_constr_type c env in
   ECons (c, id, P.inst t)
 
 and check_field_cons me c env =
@@ -388,7 +388,7 @@ and make_mt_by_scope
 
 and check_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
   match me.node with
-  | T.MEName name -> MEName (name, Env.get_module_def name env)
+  | T.MEName name -> MEName (name, Env.lookup_module_def name env)
   | T.MEStruct body ->
       let body_typed, env' = check_top_levels body (Env.enter_env env) in
       let scope = absorb_history env' env in
@@ -535,7 +535,7 @@ and normalize (t : T.ety) (ctx : norm_ctx) (env : Env.t) : I.ty =
                   failwith "try to provide type parameter to a type alias"))
       | I.MTFun _ -> failwith "try get a field from functor")
   | T.TCons (c, tes) -> (
-      let id, def = Env.get_type_def c env in
+      let id, def = Env.lookup_type_def c env in
       match def with
       | I.TDOpaqueI (_, _)
       | I.TDAdtI (_, _, _)
@@ -556,7 +556,7 @@ and normalize (t : T.ety) (ctx : norm_ctx) (env : Env.t) : I.ty =
 
 and normalize_mt (me : T.emod_ty) env : I.mod_ty =
   match me with
-  | T.MTName name -> Env.get_module_sig name env
+  | T.MTName name -> Env.lookup_module_sig name env
   | T.MTField (me, name) -> (
       let me_typed = check_mod me env in
       let mt = get_mod_ty me_typed in
