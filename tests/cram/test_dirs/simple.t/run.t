@@ -196,19 +196,19 @@
   $ cat simple1.typed
   
   
-  let x = (1 is () 0.int)
+  let x = (1 is () int)
   
-  let y = (1 is () 0.int)
+  let y = (1 is () int)
   
   let z = fun x ->
-    (y is () 0.int)
+    (y is () int)
   
   let w = fun x ->
-    (0 is () 0.int)
+    (0 is () int)
   
   let m = fun x ->
-    (w is ({() 0.int}
-            ->() 0.int)) (1 is () 0.int)
+    (w is ({() int}
+            ->() int)) (1 is () int)
 
   $ $FF simple.fun
 

@@ -174,7 +174,7 @@ module MakePP (Config : PPConfig) = struct
       Fmt.fprintf fmt "@]@])")
     else content_printer ()
 
-  and pp_mod fmt me =
+  and pp_mod fmt ?(env : Env.t option) me =
     match me with
     | MEName (name, _) -> Fmt.pp_print_string fmt name
     | MEStruct (tops, mt) ->
@@ -192,19 +192,19 @@ module MakePP (Config : PPConfig) = struct
         Fmt.fprintf fmt "@[<v 2>functor (%s : " name;
         pp_mod_ty fmt mt;
         Fmt.fprintf fmt ")@\n-> @\n";
-        pp_mod fmt me;
+        pp_mod fmt ?env me;
         Fmt.fprintf fmt "@]"
     | MEField (me, name, _) ->
         Fmt.fprintf fmt "@[";
-        pp_mod fmt me;
+        pp_mod fmt ?env me;
         Fmt.fprintf fmt ".%s" name;
         Fmt.fprintf fmt "@]"
     | MEApply (me0, me1, mt) ->
         pp_is_mod_ty fmt Config.show_mod_ty
           (fun _ ->
-            pp_mod fmt me0;
+            pp_mod fmt ?env me0;
             Fmt.fprintf fmt "(";
-            pp_mod fmt me1;
+            pp_mod fmt ?env me1;
             Fmt.fprintf fmt ")")
           mt
     | MERestrict (me, mt, mt') ->
@@ -212,7 +212,7 @@ module MakePP (Config : PPConfig) = struct
           (fun _ ->
             Fmt.fprintf fmt "(";
             Fmt.fprintf fmt "@[";
-            pp_mod fmt me;
+            pp_mod fmt ?env me;
             Fmt.fprintf fmt " : ";
             Fmt.fprintf fmt "@[";
             pp_mod_ty fmt mt;
@@ -298,12 +298,12 @@ module MakePP (Config : PPConfig) = struct
         pp_ty fmt te;
         Fmt.fprintf fmt "@]"
 
-  and pp_ty fmt te =
+  and pp_ty fmt ?env te =
     match te with
     | I.TConsI ((id, name), tes) ->
         Fmt.fprintf fmt "@[";
         (match tes with
-        | [] -> Fmt.fprintf fmt "()"
+        | [] -> Fmt.fprintf fmt "()@ "
         | te0 :: tes ->
             Fmt.fprintf fmt "(";
             pp_ty fmt te0;
@@ -312,8 +312,14 @@ module MakePP (Config : PPConfig) = struct
                 Fmt.fprintf fmt ",@ ";
                 pp_ty fmt te)
               tes;
-            Fmt.fprintf fmt ")");
-        Fmt.fprintf fmt "@ %d.%s" id name;
+            Fmt.fprintf fmt ")@ ");
+        (match (Option.bind env (Env.lookup_hint id), id) with
+        | Some me, _ ->
+            pp_mod fmt ?env me;
+            Fmt.fprintf fmt "."
+        | None, 0 (* 0 is default root module's structure type id *) -> ()
+        | None, _ -> Fmt.fprintf fmt "%d." id);
+        Fmt.fprintf fmt "%s" name;
         Fmt.fprintf fmt "@]"
     | I.TVarI { contents = I.Unbound tv } ->
         Fmt.fprintf fmt "{%s}" (Ident.show_ident tv)
@@ -455,10 +461,10 @@ module MakePP (Config : PPConfig) = struct
       prog;
     Format.pp_print_flush fmt ()
 
-  let pp_str_of_ty ty =
+  let pp_str_of_ty ?env ty =
     let buf = Buffer.create 10 in
     let formatter = Fmt.formatter_of_buffer buf in
-    pp_ty formatter ty;
+    pp_ty formatter ?env ty;
     Fmt.pp_print_flush formatter ();
     Buffer.contents buf
 end
@@ -471,7 +477,16 @@ module ShowAllConfig : PPConfig = struct
   let show_mod_ty = true
 end
 
+module ShowNothingConfig : PPConfig = struct
+  let show_const_ty = false
+
+  let show_bind_ty = false
+
+  let show_mod_ty = false
+end
+
 module DefaultPP = MakePP (ShowAllConfig)
+module NoTypeHintPP = MakePP (ShowNothingConfig)
 
 let default_dbg prog =
   let buf = Buffer.create 50 in

@@ -50,7 +50,7 @@ let rec check_expr (e : T.expr) (env : Env.t) : expr =
     | T.ESeq (e0, e1) -> check_seq e0 e1 env
   with
   | U.UnificationError (t0, t1) ->
-      Report.unification_error t0 t1 e.start_loc e.end_loc
+      Report.unification_error t0 t1 e.start_loc e.end_loc env
   | U.OccurError (tv, te) -> Report.occur_error tv te e.start_loc e.end_loc
   | e -> raise e
 
@@ -374,6 +374,7 @@ and make_mt_by_scope
       module_dict = _;
       curr;
       history;
+      hints = _;
     } =
   I.MTMod
     {
@@ -387,38 +388,42 @@ and make_mt_by_scope
     }
 
 and check_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
-  match me.node with
-  | T.MEName name -> MEName (name, Env.lookup_module_def name env)
-  | T.MEStruct body ->
-      let body_typed, env' = check_top_levels body (Env.enter_env env) in
-      let scope = absorb_history env' env in
-      let mt = make_mt_by_scope scope in
-      MEStruct (body_typed, mt)
-  | T.MEFunctor ((name, ext_mt0), me1) ->
-      let mt0 = normalize_mt ext_mt0 env in
-      let me1_typed = check_mod me1 (Env.add_module name mt0 env) in
-      MEFunctor ((name, mt0), me1_typed)
-  | T.MEField (me, name) -> (
-      let me_typed = check_mod me env in
-      match get_mod_ty me_typed with
-      | I.MTMod { mod_defs; _ } ->
-          MEField (me_typed, name, List.assoc name mod_defs)
-      | I.MTFun _ -> failwith "try get field from functor")
-  | T.MEApply (me0, me1) -> (
-      let me0_typed = check_mod me0 env in
-      let me1_typed = check_mod me1 env in
-      let mt0 = get_mod_ty me0_typed in
-      let mt1 = get_mod_ty me1_typed in
-      match mt0 with
-      | I.MTMod _ -> failwith "try apply a structure"
-      | I.MTFun (para_mt, body_mt) ->
-          MEApply
-            (me0_typed, me1_typed, apply_functor para_mt body_mt mt1 env))
-  | T.MERestrict (me, mt) ->
-      let me_typed = check_mod me env in
-      let mt = normalize_mt mt env in
-      let _subst = check_subtype (get_mod_ty me_typed) mt in
-      MERestrict (me_typed, mt, shift_mt mt env)
+  let me_typed =
+    match me.node with
+    | T.MEName name -> MEName (name, Env.lookup_module_def name env)
+    | T.MEStruct body ->
+        let body_typed, env' = check_top_levels body (Env.enter_env env) in
+        let scope = absorb_history env' env in
+        let mt = make_mt_by_scope scope in
+        MEStruct (body_typed, mt)
+    | T.MEFunctor ((name, ext_mt0), me1) ->
+        let mt0 = normalize_mt ext_mt0 env in
+        let me1_typed = check_mod me1 (Env.add_module name mt0 env) in
+        MEFunctor ((name, mt0), me1_typed)
+    | T.MEField (me, name) -> (
+        let me_typed = check_mod me env in
+        match get_mod_ty me_typed with
+        | I.MTMod { mod_defs; _ } ->
+            MEField (me_typed, name, List.assoc name mod_defs)
+        | I.MTFun _ -> failwith "try get field from functor")
+    | T.MEApply (me0, me1) -> (
+        let me0_typed = check_mod me0 env in
+        let me1_typed = check_mod me1 env in
+        let mt0 = get_mod_ty me0_typed in
+        let mt1 = get_mod_ty me1_typed in
+        match mt0 with
+        | I.MTMod _ -> failwith "try apply a structure"
+        | I.MTFun (para_mt, body_mt) ->
+            MEApply
+              (me0_typed, me1_typed, apply_functor para_mt body_mt mt1 env))
+    | T.MERestrict (me, mt) ->
+        let me_typed = check_mod me env in
+        let mt = normalize_mt mt env in
+        let _subst = check_subtype (get_mod_ty me_typed) mt in
+        MERestrict (me_typed, mt, shift_mt mt env)
+  in
+  Env.try_record_hint me_typed env;
+  me_typed
 
 (* apply a functor, add returned module type's id into environment *)
 and apply_functor para_mt body_mt arg_mt env =
