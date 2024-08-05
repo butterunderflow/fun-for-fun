@@ -1,15 +1,16 @@
 module T = Types_in
-module PP = Render.DefaultPP
+module PP = Render.NoTypeHintPP
 
 type err =
   | UnificationError of (T.ty * T.ty * Lexing.position * Lexing.position)
 
 (* error reportings *)
 (* todo: support error tolerable type checking *)
-exception UnificationError of T.ty * T.ty * Lexing.position * Lexing.position
+exception
+  UnificationError of T.ty * T.ty * Lexing.position * Lexing.position * Env.t
 
-let unification_error t0 t1 loc1 loc2 =
-  raise (UnificationError (t0, t1, loc1, loc2))
+let unification_error t0 t1 loc1 loc2 env =
+  raise (UnificationError (t0, t1, loc1, loc2, env))
 
 exception ComponentInCompatible of string * T.bind_ty * T.bind_ty
 
@@ -33,10 +34,10 @@ let unknown_location () = Printf.printf "At some unknown location: "
 
 let wrap_with_error_report f =
   try Some (f ()) with
-  | UnificationError (t0, t1, start, last) ->
+  | UnificationError (t0, t1, start, last, env) ->
       print_code_range start last;
-      Printf.printf "Can't unify `%s` with `%s`" (PP.pp_str_of_ty t0)
-        (PP.pp_str_of_ty t1);
+      Printf.printf "Can't unify `%s` with `%s`" (PP.pp_str_of_ty ~env t0)
+        (PP.pp_str_of_ty ~env t1);
       None
   | OccurError (tv, te, start, last) ->
       print_code_range start last;

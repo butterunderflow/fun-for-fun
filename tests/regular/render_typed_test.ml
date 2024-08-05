@@ -12,11 +12,12 @@ let%expect_test "Test: pretty print typed expression" =
     Format.pp_print_flush fmt ()
   in
   print_typed "1";
-  [%expect {| (1 is () 0.int) |}];
+  [%expect {| (1 is () int) |}];
   print_typed {|let x = 1 in x|};
   [%expect {|
-    let x = (1 is () 0.int)
-    in (x is () 0.int) |}];
+    let x = (1 is () int)
+    in (x is () int)
+    |}];
 
   print_typed {|fun x -> let y = x in y |};
   [%expect
@@ -30,16 +31,16 @@ let%expect_test "Test: pretty print typed expression" =
   [%expect
     {|
     if
-      (true is () 0.bool)
+      (true is () bool)
     then
-      (1 is () 0.int)
+      (1 is () int)
     else
-      (2 is () 0.int) |}];
+      (2 is () int)
+    |}];
 
   print_typed {| (1, 2, 3,4) |};
   [%expect
-    {|
-    ((1 is () 0.int), (2 is () 0.int), (3 is () 0.int), (4 is () 0.int)) |}];
+    {| ((1 is () int), (2 is () int), (3 is () int), (4 is () int)) |}];
 
   print_typed
     {|
@@ -50,12 +51,13 @@ let%expect_test "Test: pretty print typed expression" =
   [%expect
     {|
     let rec f = fun x ->
-                  (x is {() 0.int})
+                  (x is {() int})
     and y = fun x ->
-              (f is ({() 0.int}
-                      ->{() 0.int})) (1 is () 0.int)
-    in (f is (() 0.int
-               ->() 0.int)) (1 is () 0.int) |}]
+              (f is ({() int}
+                      ->{() int})) (1 is () int)
+    in (f is (() int
+               ->() int)) (1 is () int)
+    |}]
 
 let%expect_test "Test: pretty print typed program" =
   let print_typed str =
@@ -84,17 +86,18 @@ let%expect_test "Test: pretty print typed program" =
   [%expect
     {|
     type () int_l =
-    | Cons of () 0.int
+    | Cons of () int
     | Nil
 
-    let co = (Cons[0] is (() 0.int
-                           ->() 0.int_l)) (1 is () 0.int)
+    let co = (Cons[0] is (() int
+                           ->() int_l)) (1 is () int)
 
-    let c = (Nil[1] is () 0.int_l)
+    let c = (Nil[1] is () int_l)
 
-    let f = match (c is () 0.int_l) with
-            | (Cons[0] (x is () 0.int)) -> (x is () 0.int)
-            | Nil -> (0 is () 0.int) |}];
+    let f = match (c is () int_l) with
+            | (Cons[0] (x is () int)) -> (x is () int)
+            | Nil -> (0 is () int)
+    |}];
 
   print_typed
     {|
@@ -331,7 +334,7 @@ let%expect_test "Test: pretty print typed program" =
            type () t =
            | Nil
 
-           let z = (1 is () 0.int)
+           let z = (1 is () int)
 
            let x = (Nil[0] is () 2.t)
 
@@ -341,7 +344,7 @@ let%expect_test "Test: pretty print typed program" =
 
                   val x : () 2.t
 
-                  val z : () 0.int
+                  val z : () int
 
                   constr Nil[0] : () 2.t
 
@@ -442,9 +445,9 @@ module MMM = (M(F).K : I)
 
         id = 1
 
-        val y : () 0.int
+        val y : () int
 
-        val x : () 0.int
+        val x : () int
 
         Owned Modules = {
         }
@@ -456,11 +459,11 @@ module MMM = (M(F).K : I)
 
         id = 2
 
-        val z : () 0.int
+        val z : () int
 
-        val y : () 0.int
+        val y : () int
 
-        val x : () 0.int
+        val x : () int
 
         Owned Modules = {
         }
@@ -470,21 +473,21 @@ module MMM = (M(F).K : I)
     module MJ =
       (struct
 
-         let x = (1 is () 0.int)
+         let x = (1 is () int)
 
-         let y = (1 is () 0.int)
+         let y = (1 is () int)
 
-         let z = (1 is () 0.int)
+         let z = (1 is () int)
 
        end is sig
 
                 id = 3
 
-                val z : () 0.int
+                val z : () int
 
-                val y : () 0.int
+                val y : () int
 
-                val x : () 0.int
+                val x : () int
 
                 Owned Modules = {
                 }
@@ -494,17 +497,17 @@ module MMM = (M(F).K : I)
     module Simple =
       (struct
 
-         let x = (1 is () 0.int)
+         let x = (1 is () int)
 
-         let y = (2 is () 0.int)
+         let y = (2 is () int)
 
        end is sig
 
                 id = 4
 
-                val y : () 0.int
+                val y : () int
 
-                val x : () 0.int
+                val x : () int
 
                 Owned Modules = {
                 }
@@ -516,9 +519,9 @@ module MMM = (M(F).K : I)
 
                                    id = 1
 
-                                   val y : () 0.int
+                                   val y : () int
 
-                                   val x : () 0.int
+                                   val x : () int
 
                                    Owned Modules = {
                                    }
@@ -529,9 +532,9 @@ module MMM = (M(F).K : I)
 
                         id = 1
 
-                        val y : () 0.int
+                        val y : () int
 
-                        val x : () 0.int
+                        val x : () int
 
                         Owned Modules = {
                         }
@@ -545,9 +548,9 @@ module MMM = (M(F).K : I)
 
                                             id = 6
 
-                                            val y : () 0.int
+                                            val y : () int
 
-                                            val x : () 0.int
+                                            val x : () int
 
                                             Owned Modules = {
                                             }
@@ -559,9 +562,9 @@ module MMM = (M(F).K : I)
 
                                         id = 7
 
-                                        val y : () 0.int
+                                        val y : () int
 
-                                        val x : () 0.int
+                                        val x : () int
 
                                         Owned Modules = {
                                         }
@@ -576,9 +579,9 @@ module MMM = (M(F).K : I)
 
                                               id = 7
 
-                                              val y : () 0.int
+                                              val y : () int
 
-                                              val x : () 0.int
+                                              val x : () int
 
                                               Owned Modules = {
                                               }
@@ -589,9 +592,9 @@ module MMM = (M(F).K : I)
 
                                              id = 6
 
-                                             val y : () 0.int
+                                             val y : () int
 
-                                             val x : () 0.int
+                                             val x : () int
 
                                              Owned Modules = {
                                              }
@@ -610,9 +613,9 @@ module MMM = (M(F).K : I)
 
                         id = 1
 
-                        val y : () 0.int
+                        val y : () int
 
-                        val x : () 0.int
+                        val x : () int
 
                         Owned Modules = {
                         }
@@ -621,25 +624,25 @@ module MMM = (M(F).K : I)
           ->
           (((struct
 
-               let x = (1 is () 0.int)
+               let x = (1 is () int)
 
-               let y = (1 is () 0.int)
+               let y = (1 is () int)
 
-               let z = (1 is () 0.int)
+               let z = (1 is () int)
 
-               let w = (2 is () 0.int)
+               let w = (2 is () int)
 
              end is sig
 
                       id = 8
 
-                      val w : () 0.int
+                      val w : () int
 
-                      val z : () 0.int
+                      val z : () int
 
-                      val y : () 0.int
+                      val y : () int
 
-                      val x : () 0.int
+                      val x : () int
 
                       Owned Modules = {
                       }
@@ -648,11 +651,11 @@ module MMM = (M(F).K : I)
 
                              id = 2
 
-                             val z : () 0.int
+                             val z : () int
 
-                             val y : () 0.int
+                             val y : () int
 
-                             val x : () 0.int
+                             val x : () int
 
                              Owned Modules = {
                              }
@@ -661,11 +664,11 @@ module MMM = (M(F).K : I)
 
                                      id = 9
 
-                                     val z : () 0.int
+                                     val z : () int
 
-                                     val y : () 0.int
+                                     val y : () int
 
-                                     val x : () 0.int
+                                     val x : () int
 
                                      Owned Modules = {
                                      }
@@ -681,9 +684,9 @@ module MMM = (M(F).K : I)
 
                                    id = 11
 
-                                   val y : () 0.int
+                                   val y : () int
 
-                                   val x : () 0.int
+                                   val x : () int
 
                                    Owned Modules = {
                                    }
@@ -694,9 +697,9 @@ module MMM = (M(F).K : I)
 
                                   id = 12
 
-                                  val y : () 0.int
+                                  val y : () int
 
-                                  val x : () 0.int
+                                  val x : () int
 
                                   Owned Modules = {
                                   }
@@ -712,9 +715,9 @@ module MMM = (M(F).K : I)
 
                               id = 1
 
-                              val y : () 0.int
+                              val y : () int
 
-                              val x : () 0.int
+                              val x : () int
 
                               Owned Modules = {
                               }
@@ -723,9 +726,9 @@ module MMM = (M(F).K : I)
 
                                       id = 13
 
-                                      val y : () 0.int
+                                      val y : () int
 
-                                      val x : () 0.int
+                                      val x : () int
 
                                       Owned Modules = {
                                       }
@@ -795,10 +798,10 @@ module MMM = (M(F).K : I)
   print_typed {| let x = ();();();1 |};
   [%expect
     {|
-    let x = (() is () 0.unit) ;
-            (() is () 0.unit) ;
-            (() is () 0.unit) ;
-            (1 is () 0.int)
+    let x = (() is () unit) ;
+            (() is () unit) ;
+            (() is () unit) ;
+            (1 is () int)
     |}];
 
   (* constructor accessed by path *)
@@ -824,7 +827,7 @@ module MMM = (M(F).K : I)
 
          type () t =
          | Nil
-         | Integer of () 0.int
+         | Integer of () int
 
        end is sig
 
@@ -832,12 +835,12 @@ module MMM = (M(F).K : I)
 
                 constr Nil[0] : () 1.t
 
-                constr Integer[1] : (() 0.int
+                constr Integer[1] : (() int
                                       ->() 1.t)
 
                 type () t =
                 | Nil
-                | Integer of () 0.int
+                | Integer of () int
 
                 Owned Modules = {
                 }
@@ -847,8 +850,8 @@ module MMM = (M(F).K : I)
     let c = (C.Nil[0] is () 1.t)
 
     let result = match (c is () 1.t) with
-                 | Nil -> (() is () 0.unit)
-                 | (Integer[1] (i is () 0.int)) -> (() is () 0.unit)
+                 | Nil -> (() is () unit)
+                 | (Integer[1] (i is () int)) -> (() is () unit)
     |}];
 
   print_typed
@@ -872,25 +875,25 @@ module MMM = (M(F).K : I)
     {|
     type () list =
     | Nil
-    | Cons of (() 0.int
-                * (() 0.int) 0.list)
+    | Cons of (() int
+                * (() int) list)
 
     type ('a/0, 'b/0) tu =
     | Tu of (['b/0]
               * ['a/0])
 
-    let x = (Tu[0] is (({() 0.int}
-                         * {() 0.string})
-                        ->({() 0.string}, {() 0.int}) 0.tu)) ((1 is () 0.int), (
-    ""c"" is () 0.string))
+    let x = (Tu[0] is (({() int}
+                         * {() string})
+                        ->({() string}, {() int}) tu)) ((1 is () int), (""c"" is
+                                                                        () string))
 
-    let result1 = match (x is (() 0.string, () 0.int) 0.tu) with
-                  | (Tu[0] ((a is {() 0.int})
-                             * (b is {() 0.string}))) -> (a is () 0.int)
+    let result1 = match (x is (() string, () int) tu) with
+                  | (Tu[0] ((a is {() int})
+                             * (b is {() string}))) -> (a is () int)
 
-    let result2 = match (x is (() 0.string, () 0.int) 0.tu) with
-                  | (Tu[0] ((a is {() 0.int})
-                             * (b is {() 0.string}))) -> (b is () 0.string)
+    let result2 = match (x is (() string, () int) tu) with
+                  | (Tu[0] ((a is {() int})
+                             * (b is {() string}))) -> (b is () string)
     |}];
 
   print_typed
@@ -1009,21 +1012,21 @@ module MMM = (M(F).K : I)
           ->
           (struct
 
-             type t = () 0.int
+             type t = () int
 
-             type s = () 0.int
+             type s = () int
 
-             let x = (1 is () 0.int)
+             let x = (1 is () int)
 
            end is sig
 
                     id = 4
 
-                    val x : () 0.int
+                    val x : () int
 
-                    type s = () 0.int
+                    type s = () int
 
-                    type t = () 0.int
+                    type t = () int
 
                     Owned Modules = {
                     }

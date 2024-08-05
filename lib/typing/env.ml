@@ -1,4 +1,5 @@
 module I = Types_in
+module T = Typedtree
 
 type scope = {
   values : (string * I.bind_ty) list;
@@ -9,7 +10,8 @@ type scope = {
   module_dict : (int * I.mod_ty) list;
       (* UNUSED FIELD: designed for caching module id to their definition *)
   curr : int;
-  history : int list ref;
+  history : int list ref; (* module ids created in this scope *)
+  hints : (int * T.mod_expr) list ref;
 }
 
 type t = scope list
@@ -72,6 +74,15 @@ let record_history id (env : t) =
   | [] -> failwith "neverreach"
   | s :: _ -> s.history := id :: !(s.history)
 
+let try_record_hint me_typed (env : t) =
+  match env with
+  | [] -> failwith "neverreach"
+  | s :: _ -> (
+      let mt = T.get_mod_ty me_typed in
+      match mt with
+      | I.MTMod { id; _ } -> s.hints := (id, me_typed) :: !(s.hints)
+      | _ -> ())
+
 let record_all_history ids (env : t) =
   match env with
   | [] -> failwith "neverreach"
@@ -119,6 +130,14 @@ let rec lookup_type_def tn env =
       | Some def -> (s.curr, def)
       | None -> lookup_type_def tn env')
 
+let rec lookup_hint id env =
+  match env with
+  | [] -> None
+  | s :: env' -> (
+      match List.assoc_opt id !(s.hints) with
+      | None -> lookup_hint id env'
+      | Some me -> Some me)
+
 let get_curr env =
   match env with
   | s :: _ -> s.curr
@@ -134,6 +153,7 @@ let init_scope () =
     module_dict = [];
     curr = 0;
     history = ref [];
+    hints = ref [];
   }
 
 let init () = [ init_scope () ]
