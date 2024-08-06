@@ -1174,4 +1174,224 @@ module MMM = (M(F).K : I)
                               }
 
                    end)
+    |}];
+  print_typed
+    {|
+     module type M = sig
+       type () t
+     end
+
+     module F = functor (X: M) -> struct
+       type k = X.t
+       type t = k
+     end
+
+     module N = F(struct type t = int end)
+     |};
+  [%expect
+    {|
+    module type M =
+      sig
+
+        id = 1
+
+        type () t
+
+        Owned Modules = {
+        }
+
+      end
+
+    module F =
+      functor (X : sig
+
+                     id = 1
+
+                     type () t
+
+                     Owned Modules = {
+                     }
+
+        end)
+        ->
+        (struct
+
+           type k = () 1.t
+
+           type t = () 1.t
+
+         end is sig
+
+                  id = 2
+
+                  type t = () 1.t
+
+                  type k = () 1.t
+
+                  Owned Modules = {
+                  }
+
+                end)
+
+    module N =
+      (F((struct
+
+            type t = () int
+
+          end is sig
+
+                   id = 3
+
+                   type t = () int
+
+                   Owned Modules = {
+                   }
+
+                 end)) is sig
+
+                            id = 4
+
+                            type t = () int
+
+                            type k = () int
+
+                            Owned Modules = {
+                            }
+
+                          end)
+     |}];
+  print_typed
+    {|
+     module type M = sig
+       type () t
+     end
+
+
+     module F = functor (X: M) -> (struct
+       type t = X.t
+
+       type m = t
+
+       type n = | Nil of X.t
+     end : sig
+       type () t
+
+       type m = X.t
+
+       type n = | Nil of X.t
+     end)
+        
+     module N = F(struct type t = int end)
+     |};
+  [%expect {|
+    module type M =
+      sig
+
+        id = 1
+
+        type () t
+
+        Owned Modules = {
+        }
+
+      end
+
+    module F =
+      functor (X : sig
+
+                     id = 1
+
+                     type () t
+
+                     Owned Modules = {
+                     }
+
+        end)
+        ->
+        (((struct
+
+             type t = () 1.t
+
+             type m = () 1.t
+
+             type () n =
+             | Nil of () 1.t
+
+           end is sig
+
+                    id = 2
+
+                    constr Nil[0] : (() 1.t
+                                      ->() 2.n)
+
+                    type () n =
+                    | Nil of () 1.t
+
+                    type m = () 1.t
+
+                    type t = () 1.t
+
+                    Owned Modules = {
+                    }
+
+                  end) : sig
+
+                           id = 3
+
+                           type () n =
+                           | Nil of () 1.t
+
+                           type m = () 1.t
+
+                           type () t
+
+                           Owned Modules = {
+                           }
+
+                         end) is sig
+
+                                   id = 4
+
+                                   type () n =
+                                   | Nil of () 1.t
+
+                                   type m = () 1.t
+
+                                   type () t
+
+                                   Owned Modules = {
+                                   }
+
+                                 end)
+
+    module N =
+      (F((struct
+
+            type t = () int
+
+          end is sig
+
+                   id = 5
+
+                   type t = () int
+
+                   Owned Modules = {
+                   }
+
+                 end)) is sig
+
+                            id = 6
+
+                            type () n =
+                            | Nil of () int
+
+                            type m = () int
+
+                            type () t
+
+                            Owned Modules = {
+                            }
+
+                          end)
     |}]
+

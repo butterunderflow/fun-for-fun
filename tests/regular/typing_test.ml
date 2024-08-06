@@ -1125,6 +1125,36 @@ external print_int : int ->  int = "ff_builtin_print_int"
     ++++++++++++++++++Scope Debug Info Begin++++++++++++++++++
 
     ------------------Envirment Debug Info End--------------------------
+     |}];
+  print_typed
+    {|
+     module M = struct
+       module type N = sig
+       end
+     end
+
+     module F = functor (X:M.N) -> struct end
+     |};
+  [%expect {|
+    ((TopMod M
+       (MEStruct
+         ((TopModSig N
+            (MTMod (id 2) (val_defs ()) (constr_defs ()) (ty_defs ())
+              (mod_sigs ()) (mod_defs ()) (owned_mods ()))))
+         (MTMod (id 1) (val_defs ()) (constr_defs ()) (ty_defs ())
+           (mod_sigs
+             ((N
+                (MTMod (id 2) (val_defs ()) (constr_defs ()) (ty_defs ())
+                  (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
+           (mod_defs ()) (owned_mods (2)))))
+      (TopMod F
+        (MEFunctor
+          (X
+            (MTMod (id 2) (val_defs ()) (constr_defs ()) (ty_defs ())
+              (mod_sigs ()) (mod_defs ()) (owned_mods ())))
+          (MEStruct ()
+            (MTMod (id 3) (val_defs ()) (constr_defs ()) (ty_defs ())
+              (mod_sigs ()) (mod_defs ()) (owned_mods ()))))))
     |}]
 
 let%expect_test "Error reporting test" =
@@ -1495,4 +1525,26 @@ module L2 = (K: M)
 
              let result = _
 |};
-  [%expect {| name `_` not found |}]
+  [%expect {| name `_` not found |}];
+  print_typed
+    {|
+     module M = struct end
+     module X = M
+     module Bad = M(M)
+     |};
+  [%expect {| try apply a structure |}];
+  print_typed
+    {|
+     module type M = sig end
+     module F = functor (X:M) -> struct end
+     let x = F.x
+     |};
+  [%expect {| try get field from functor |}];
+  print_typed
+    {|
+     module M = functor(X:sig end) -> struct
+     end
+ 
+     module F = M.N
+     |};
+  [%expect {| try get field from functor |}]
