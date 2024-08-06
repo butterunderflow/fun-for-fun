@@ -1135,7 +1135,8 @@ external print_int : int ->  int = "ff_builtin_print_int"
 
      module F = functor (X:M.N) -> struct end
      |};
-  [%expect {|
+  [%expect
+    {|
     ((TopMod M
        (MEStruct
          ((TopModSig N
@@ -1155,6 +1156,37 @@ external print_int : int ->  int = "ff_builtin_print_int"
           (MEStruct ()
             (MTMod (id 3) (val_defs ()) (constr_defs ()) (ty_defs ())
               (mod_sigs ()) (mod_defs ()) (owned_mods ()))))))
+    |}];
+  print_typed
+    {|
+     module F = ((struct
+       type t = int
+     end : sig
+       type () t
+     end) : sig
+       type () t
+     end)
+     |};
+  [%expect {|
+    ((TopMod F
+       (MERestrict
+         (MERestrict
+           (MEStruct ((TopTypeDef (TDAliasI t (TConsI (0 int) ()))))
+             (MTMod (id 1) (val_defs ()) (constr_defs ())
+               (ty_defs ((TDAliasI t (TConsI (0 int) ())))) (mod_sigs ())
+               (mod_defs ()) (owned_mods ())))
+           (MTMod (id 2) (val_defs ()) (constr_defs ())
+             (ty_defs ((TDOpaqueI t ()))) (mod_sigs ()) (mod_defs ())
+             (owned_mods ()))
+           (MTMod (id 3) (val_defs ()) (constr_defs ())
+             (ty_defs ((TDOpaqueI t ()))) (mod_sigs ()) (mod_defs ())
+             (owned_mods ())))
+         (MTMod (id 4) (val_defs ()) (constr_defs ())
+           (ty_defs ((TDOpaqueI t ()))) (mod_sigs ()) (mod_defs ())
+           (owned_mods ()))
+         (MTMod (id 5) (val_defs ()) (constr_defs ())
+           (ty_defs ((TDOpaqueI t ()))) (mod_sigs ()) (mod_defs ())
+           (owned_mods ())))))
     |}]
 
 let%expect_test "Error reporting test" =
