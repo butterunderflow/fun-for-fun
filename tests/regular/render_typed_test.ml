@@ -1283,7 +1283,8 @@ module MMM = (M(F).K : I)
         
      module N = F(struct type t = int end)
      |};
-  [%expect {|
+  [%expect
+    {|
     module type M =
       sig
 
@@ -1393,5 +1394,67 @@ module MMM = (M(F).K : I)
                             }
 
                           end)
-    |}]
+    |}];
+  print_typed
+    {|
+     module type T =  sig
+       val id : 'b -> 'b
+     end
 
+     module F = (struct
+       let id = fun x -> x
+     end : T)
+     |};
+  [%expect
+    {|
+    module type T =
+      sig
+
+        id = 1
+
+        val id : forall '_t/1 . (['_t/1]
+                                  ->['_t/1])
+
+        Owned Modules = {
+        }
+
+      end
+
+    module F =
+      (((struct
+
+           let id = fun x ->
+             (x is {'_t/2})
+
+         end is sig
+
+                  id = 2
+
+                  val id : forall '_t/2 . (['_t/2]
+                                            ->['_t/2])
+
+                  Owned Modules = {
+                  }
+
+                end) : sig
+
+                         id = 1
+
+                         val id : forall '_t/1 . (['_t/1]
+                                                   ->['_t/1])
+
+                         Owned Modules = {
+                         }
+
+                       end) is sig
+
+                                 id = 3
+
+                                 val id : forall '_t/1 . (['_t/1]
+                                                           ->['_t/1])
+
+                                 Owned Modules = {
+                                 }
+
+                               end)
+    |}]

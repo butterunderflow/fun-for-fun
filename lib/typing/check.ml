@@ -10,12 +10,14 @@ let tv_pool = ref IdMap.empty
 
 let reset_pool () = tv_pool := IdMap.empty
 
-let recover_pool pool = tv_pool := pool
-
 let pool_make_tv n =
-  match IdMap.find_opt n !tv_pool with
-  | Some tpv -> tpv
-  | None -> P.make_tv ()
+  let tv =
+    match IdMap.find_opt n !tv_pool with
+    | Some tpv -> tpv
+    | None -> P.make_tv ()
+  in
+  tv_pool := IdMap.add n tv !tv_pool;
+  tv
 
 (* record top history of env0 to env1 *)
 let absorb_history (env0 : Env.t) (env1 : Env.t) =
@@ -330,7 +332,6 @@ and check_top_level (top : T.top_level) env : top_level * Env.t =
         let gen = P.generalize te env in
         (TopExternal (name, te, ext_name), Env.add_value name gen env)
   in
-
   tv_pool := old_pool;
   top_typed
 
