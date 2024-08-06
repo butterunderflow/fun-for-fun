@@ -1339,6 +1339,9 @@ module MMM = (M(F).K : I)
 
                            id = 3
 
+                           constr Nil[0] : (() 1.t
+                                             ->() 3.n)
+
                            type () n =
                            | Nil of () 1.t
 
@@ -1352,6 +1355,9 @@ module MMM = (M(F).K : I)
                          end) is sig
 
                                    id = 4
+
+                                   constr Nil[0] : (() 1.t
+                                                     ->() 4.n)
 
                                    type () n =
                                    | Nil of () 1.t
@@ -1382,6 +1388,9 @@ module MMM = (M(F).K : I)
                  end)) is sig
 
                             id = 6
+
+                            constr Nil[0] : (() int
+                                              ->() 6.n)
 
                             type () n =
                             | Nil of () int

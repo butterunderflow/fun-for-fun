@@ -586,9 +586,11 @@ let%expect_test "Test: full program typing" =
   [%expect
     {|
     ((TopModSig MIntf
-       (MTMod (id 1) (val_defs ((x (() (TConsI (1 t) ()))))) (constr_defs ())
+       (MTMod (id 1) (val_defs ((x (() (TConsI (1 t) ())))))
+         (constr_defs ((Nil ((() (TConsI (1 t) ())) 0))))
          (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())
-         (owned_mods ()))))|}];
+         (owned_mods ()))))
+    |}];
 
   print_effect
     {|
@@ -611,7 +613,8 @@ let%expect_test "Test: full program typing" =
     Module Definitions:
 
     Module Types:
-      MIntf |-> (MTMod (id 1) (val_defs ((x (() (TConsI (1 t) ()))))) (constr_defs ())
+      MIntf |-> (MTMod (id 1) (val_defs ((x (() (TConsI (1 t) ())))))
+      (constr_defs ((Nil ((() (TConsI (1 t) ())) 0))))
       (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())
       (owned_mods ()))
     Module Creation History:
@@ -620,7 +623,8 @@ let%expect_test "Test: full program typing" =
       0
     ++++++++++++++++++Scope Debug Info Begin++++++++++++++++++
 
-    ------------------Envirment Debug Info End-------------------------- |}];
+    ------------------Envirment Debug Info End--------------------------
+    |}];
 
   print_typed
     {|
@@ -1167,7 +1171,8 @@ external print_int : int ->  int = "ff_builtin_print_int"
        type () t
      end)
      |};
-  [%expect {|
+  [%expect
+    {|
     ((TopMod F
        (MERestrict
          (MERestrict
@@ -1579,4 +1584,38 @@ module L2 = (K: M)
  
      module F = M.N
      |};
-  [%expect {| try get field from functor |}]
+  [%expect {| try get field from functor |}];
+  print_typed
+    {|
+               module type MT = sig
+                 type t = | Nil
+               end
+               
+               module M = (struct
+                 type t = | Nil
+               end : MT)
+
+               |};
+  [%expect
+    {|
+    ((TopModSig MT
+       (MTMod (id 1) (val_defs ())
+         (constr_defs ((Nil ((() (TConsI (1 t) ())) 0))))
+         (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())
+         (owned_mods ())))
+      (TopMod M
+        (MERestrict
+          (MEStruct ((TopTypeDef (TDAdtI t () ((Nil ())))))
+            (MTMod (id 2) (val_defs ())
+              (constr_defs ((Nil ((() (TConsI (2 t) ())) 0))))
+              (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())
+              (owned_mods ())))
+          (MTMod (id 1) (val_defs ())
+            (constr_defs ((Nil ((() (TConsI (1 t) ())) 0))))
+            (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())
+            (owned_mods ()))
+          (MTMod (id 3) (val_defs ())
+            (constr_defs ((Nil ((() (TConsI (3 t) ())) 0))))
+            (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())
+            (owned_mods ())))))
+    |}]

@@ -601,7 +601,9 @@ and normalize_msig comps env =
             Env.add_value name (P.generalize (normalize_ty te env) env) env
         | T.TAbstTySpec (name, paras) ->
             Env.add_type_def (TDOpaqueI (name, paras)) env
-        | T.TManiTySpec def -> Env.add_type_def (normalize_def def env) env
+        | T.TManiTySpec def ->
+            let _, env = check_top_level (T.TopTypeDef def) env in
+            env
         | T.TModSpec (name, ext_mt) ->
             let mt = normalize_mt ext_mt env in
             Env.add_module name mt env
