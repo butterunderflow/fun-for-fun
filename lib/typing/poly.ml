@@ -1,25 +1,5 @@
 module I = Types_in
 
-let get_all_tvs (te : I.ty) : I.tv ref list =
-  let tvs = ref [] in
-  let rec go te =
-    match te with
-    | I.TConsI (_, tes)
-    | I.TTupleI tes ->
-        List.iter go tes
-    | I.TVarI ({ contents = I.Unbound _ } as tv) ->
-        (* only collect unbound type variable *)
-        tvs := tv :: !tvs
-    | I.TVarI { contents = I.Link te } -> go te
-    | I.TQVarI _ -> assert false
-    | I.TArrowI (te0, te1) ->
-        go te0;
-        go te1
-    | I.TRecordI fields -> List.iter (fun (_, te) -> go te) fields
-  in
-  go te;
-  List_utils.remove_from_left !tvs
-
 let make_tv () =
   let name = "'_t" in
   I.TVarI (ref (I.Unbound (Ident.create ~hint:name)))

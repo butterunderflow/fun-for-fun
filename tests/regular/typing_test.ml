@@ -586,9 +586,11 @@ let%expect_test "Test: full program typing" =
   [%expect
     {|
     ((TopModSig MIntf
-       (MTMod (id 1) (val_defs ((x (() (TConsI (1 t) ()))))) (constr_defs ())
+       (MTMod (id 1) (val_defs ((x (() (TConsI (1 t) ())))))
+         (constr_defs ((Nil ((() (TConsI (1 t) ())) 0))))
          (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())
-         (owned_mods ()))))|}];
+         (owned_mods ()))))
+    |}];
 
   print_effect
     {|
@@ -611,7 +613,8 @@ let%expect_test "Test: full program typing" =
     Module Definitions:
 
     Module Types:
-      MIntf |-> (MTMod (id 1) (val_defs ((x (() (TConsI (1 t) ()))))) (constr_defs ())
+      MIntf |-> (MTMod (id 1) (val_defs ((x (() (TConsI (1 t) ())))))
+      (constr_defs ((Nil ((() (TConsI (1 t) ())) 0))))
       (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())
       (owned_mods ()))
     Module Creation History:
@@ -620,7 +623,8 @@ let%expect_test "Test: full program typing" =
       0
     ++++++++++++++++++Scope Debug Info Begin++++++++++++++++++
 
-    ------------------Envirment Debug Info End-------------------------- |}];
+    ------------------Envirment Debug Info End--------------------------
+    |}];
 
   print_typed
     {|
@@ -1125,6 +1129,69 @@ external print_int : int ->  int = "ff_builtin_print_int"
     ++++++++++++++++++Scope Debug Info Begin++++++++++++++++++
 
     ------------------Envirment Debug Info End--------------------------
+     |}];
+  print_typed
+    {|
+     module M = struct
+       module type N = sig
+       end
+     end
+
+     module F = functor (X:M.N) -> struct end
+     |};
+  [%expect
+    {|
+    ((TopMod M
+       (MEStruct
+         ((TopModSig N
+            (MTMod (id 2) (val_defs ()) (constr_defs ()) (ty_defs ())
+              (mod_sigs ()) (mod_defs ()) (owned_mods ()))))
+         (MTMod (id 1) (val_defs ()) (constr_defs ()) (ty_defs ())
+           (mod_sigs
+             ((N
+                (MTMod (id 2) (val_defs ()) (constr_defs ()) (ty_defs ())
+                  (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
+           (mod_defs ()) (owned_mods (2)))))
+      (TopMod F
+        (MEFunctor
+          (X
+            (MTMod (id 2) (val_defs ()) (constr_defs ()) (ty_defs ())
+              (mod_sigs ()) (mod_defs ()) (owned_mods ())))
+          (MEStruct ()
+            (MTMod (id 3) (val_defs ()) (constr_defs ()) (ty_defs ())
+              (mod_sigs ()) (mod_defs ()) (owned_mods ()))))))
+    |}];
+  print_typed
+    {|
+     module F = ((struct
+       type t = int
+     end : sig
+       type () t
+     end) : sig
+       type () t
+     end)
+     |};
+  [%expect
+    {|
+    ((TopMod F
+       (MERestrict
+         (MERestrict
+           (MEStruct ((TopTypeDef (TDAliasI t (TConsI (0 int) ()))))
+             (MTMod (id 1) (val_defs ()) (constr_defs ())
+               (ty_defs ((TDAliasI t (TConsI (0 int) ())))) (mod_sigs ())
+               (mod_defs ()) (owned_mods ())))
+           (MTMod (id 2) (val_defs ()) (constr_defs ())
+             (ty_defs ((TDOpaqueI t ()))) (mod_sigs ()) (mod_defs ())
+             (owned_mods ()))
+           (MTMod (id 3) (val_defs ()) (constr_defs ())
+             (ty_defs ((TDOpaqueI t ()))) (mod_sigs ()) (mod_defs ())
+             (owned_mods ())))
+         (MTMod (id 4) (val_defs ()) (constr_defs ())
+           (ty_defs ((TDOpaqueI t ()))) (mod_sigs ()) (mod_defs ())
+           (owned_mods ()))
+         (MTMod (id 5) (val_defs ()) (constr_defs ())
+           (ty_defs ((TDOpaqueI t ()))) (mod_sigs ()) (mod_defs ())
+           (owned_mods ())))))
     |}]
 
 let%expect_test "Error reporting test" =
@@ -1495,4 +1562,60 @@ module L2 = (K: M)
 
              let result = _
 |};
-  [%expect {| name `_` not found |}]
+  [%expect {| name `_` not found |}];
+  print_typed
+    {|
+     module M = struct end
+     module X = M
+     module Bad = M(M)
+     |};
+  [%expect {| try apply a structure |}];
+  print_typed
+    {|
+     module type M = sig end
+     module F = functor (X:M) -> struct end
+     let x = F.x
+     |};
+  [%expect {| try get field from functor |}];
+  print_typed
+    {|
+     module M = functor(X:sig end) -> struct
+     end
+ 
+     module F = M.N
+     |};
+  [%expect {| try get field from functor |}];
+  print_typed
+    {|
+               module type MT = sig
+                 type t = | Nil
+               end
+               
+               module M = (struct
+                 type t = | Nil
+               end : MT)
+
+               |};
+  [%expect
+    {|
+    ((TopModSig MT
+       (MTMod (id 1) (val_defs ())
+         (constr_defs ((Nil ((() (TConsI (1 t) ())) 0))))
+         (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())
+         (owned_mods ())))
+      (TopMod M
+        (MERestrict
+          (MEStruct ((TopTypeDef (TDAdtI t () ((Nil ())))))
+            (MTMod (id 2) (val_defs ())
+              (constr_defs ((Nil ((() (TConsI (2 t) ())) 0))))
+              (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())
+              (owned_mods ())))
+          (MTMod (id 1) (val_defs ())
+            (constr_defs ((Nil ((() (TConsI (1 t) ())) 0))))
+            (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())
+            (owned_mods ()))
+          (MTMod (id 3) (val_defs ())
+            (constr_defs ((Nil ((() (TConsI (3 t) ())) 0))))
+            (ty_defs ((TDAdtI t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())
+            (owned_mods ())))))
+    |}]

@@ -13,7 +13,11 @@ let dealias_te (te : I.ty) alias_map =
             | _ -> if paras = [] then t' else failwith "ill form alias")
         | None -> t)
     | I.TVarI { contents = I.Unbound _ } ->
-        t (* it's not a neverreach branch *)
+        (* It's a 'never reach' when local module is not supported(that's the
+           current implementation), because every normalized module type
+           should only capture module level entities, which should have
+           normalized and fully inferenced already. *)
+        failwith "never reach: deliasing a type not fully inferenced"
     | I.TVarI { contents = I.Link t' } -> go t'
     | I.TQVarI _ -> t
     | I.TArrowI (t0, t1) -> I.TArrowI (go t0, go t1)
