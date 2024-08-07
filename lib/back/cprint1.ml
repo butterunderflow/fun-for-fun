@@ -627,3 +627,5 @@ let print (result : Buffer.t) (defs : definition list) =
 let set_tab t = tab := t
 
 let set_width w = width := w
+
+[@@@coverage exclude_file]
