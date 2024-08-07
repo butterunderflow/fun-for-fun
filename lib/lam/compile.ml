@@ -103,7 +103,8 @@ let rec fva_expr e vars =
           | L.FLetRec binds ->
               let xs, _ = List.split binds in
               capture_vars := xs @ !capture_vars;
-              let fvs = capture (fva_letrec binds !vars) !capture_vars in
+              let fvs_in_binds = fva_letrec binds !vars in
+              let fvs = capture fvs_in_binds !capture_vars in
               vars := xs @ !vars;
               fvs @ acc)
         [] mems
@@ -137,8 +138,8 @@ let rec fva_expr e vars =
       fvs'
   | L.ELetRec (binds, e) ->
       let xs, _ = List.split binds in
-      let fv_binds = fva_letrec binds vars in
-      fv_binds @ capture (fva_expr e (xs @ vars)) xs
+      let fvs_in_binds = fva_letrec binds vars in
+      capture fvs_in_binds xs @ capture (fva_expr e (xs @ vars)) xs
   | L.EField (e, _) -> fva_expr e vars
 
 and fva_lambda x e vars =

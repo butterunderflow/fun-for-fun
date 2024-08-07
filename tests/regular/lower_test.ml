@@ -271,4 +271,21 @@ let z = x = y
     (EModObject
       ((FSimple x (EConst (CInt 1))) (FSimple y (EConst (CInt 2)))
         (FSimple z (ECmp Eq (EVar x) (EVar y)))))
+    |}];
+  print_lowered
+    {|
+     let even =
+      let rec even = fun x -> odd 1
+      and odd = fun x -> even 1
+     in
+     even
+     |};
+  [%expect
+    {|
+    (EModObject
+      ((FSimple even
+         (ELetRec
+           ((even ((x) (EApp (EVar odd) ((EConst (CInt 1)))) (odd)))
+             (odd ((x) (EApp (EVar even) ((EConst (CInt 1)))) (even))))
+           (EVar even)))))
     |}]
