@@ -1,5 +1,6 @@
 # Fun for Fun
 ![GitHub CI](https://github.com/butterunderflow/fun-for-fun/actions/workflows/ci.yml/badge.svg)
+[![Coverage Status](https://coveralls.io/repos/github/butterunderflow/fun-for-fun/badge.svg?branch=dev/more-message-in-ci)](https://coveralls.io/github/butterunderflow/fun-for-fun?branch=dev/more-message-in-ci)
 
 Welcome to **fun for fun**, a functional programming language compiler made for fun! 
 
