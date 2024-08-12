@@ -1466,4 +1466,142 @@ module MMM = (M(F).K : I)
                                  }
 
                                end)
+    |}];
+  print_typed
+    {|
+
+external greater : int -> int -> bool = "ff_builtin_greater"
+
+module type Cmp = sig
+  type () t
+
+  val compare : t -> t -> bool
+end
+
+type 'a lst =
+  | Cons of ('a * 'a lst)
+  | Nil
+
+module Sorting = functor (C : Cmp) -> struct
+   let cmp = fun l -> fun r ->
+     match (l, r) with
+     | (Cons (h1, _), Cons (h2, _)) -> 
+       C.compare h1 h2
+end
+
+module Int = struct
+  type t = int
+
+  let compare = greater
+end
+
+module ListIntSorting = Sorting (Int)
+              |};
+  [%expect {|
+    external greater : (() int
+                         ->(() int
+                             ->() bool))= "ff_builtin_greater"
+
+    module type Cmp =
+      sig
+
+        id = 1
+
+        val compare : (() 1.t
+                        ->(() 1.t
+                            ->() bool))
+
+        type () t
+
+        Owned Modules = {
+        }
+
+      end
+
+    type ('a/0) lst =
+    | Cons of (['a/0]
+                * (['a/0]) lst)
+    | Nil
+
+    module Sorting =
+      functor (C : sig
+
+                     id = 1
+
+                     val compare : (() 1.t
+                                     ->(() 1.t
+                                         ->() bool))
+
+                     type () t
+
+                     Owned Modules = {
+                     }
+
+        end)
+        ->
+        (struct
+
+           let cmp = fun l ->
+             fun r ->
+               match ((l is {{({{() 1.t}}) lst}}), (r is {{({{() 1.t}}) lst}})) with
+               | ((Cons[0]
+                   ((h1 is {() 1.t})
+                     * (_ is {({{() 1.t}}) lst})))
+                   * (Cons[0]
+                   ((h2 is {() 1.t})
+                     * (_ is {({{() 1.t}}) lst})))) ->
+               (C.compare is (() 1.t
+                               ->(() 1.t
+                                   ->() bool))) (h1 is {() 1.t}) (h2 is {() 1.t})
+
+         end is sig
+
+                  id = 2
+
+                  val cmp : ((() 1.t) lst
+                              ->((() 1.t) lst
+                                  ->() bool))
+
+                  Owned Modules = {
+                  }
+
+                end)
+
+    module Int =
+      (struct
+
+         type t = () int
+
+         let compare = (greater is (() int
+                                     ->(() int
+                                         ->() bool)))
+
+       end is sig
+
+                id = 3
+
+                val compare : (() int
+                                ->(() int
+                                    ->() bool))
+
+                type t = () int
+
+                Owned Modules = {
+                }
+
+              end)
+
+    module ListIntSorting =
+      (Sorting(Int) is sig
+
+                         id = 4
+
+                         val cmp : ((() 3.t) lst
+                                     ->((() 3.t) lst
+                                         ->() bool))
+
+                         Owned Modules = {
+                         }
+
+                       end)
     |}]
