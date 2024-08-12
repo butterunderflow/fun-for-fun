@@ -5,13 +5,17 @@ module I = Types_in
 let dealias_te (te : I.ty) alias_map =
   let rec go (t : I.ty) =
     match t with
-    | I.TConsI (id, paras) -> (
+    | I.TConsI (id, []) -> (
         match List.assoc_opt id alias_map with
         | Some t' -> (
             match t' with
-            | I.TConsI (id', []) -> I.TConsI (id', paras)
-            | _ -> if paras = [] then t' else failwith "ill form alias")
+            | I.TConsI (id', []) -> I.TConsI (id', [])
+            | _ -> failwith "ill form alias")
         | None -> t)
+    | I.TConsI (id, args) -> (
+        match List.assoc_opt id alias_map with
+        | Some _t' -> failwith "parameterized type alias is not supported"
+        | None -> I.TConsI (id, List.map go args))
     | I.TVarI { contents = I.Unbound _ } ->
         (* It's a 'never reach' when local module is not supported(that's the
            current implementation), because every normalized module type

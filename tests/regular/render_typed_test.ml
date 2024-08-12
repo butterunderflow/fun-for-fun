@@ -1497,7 +1497,8 @@ end
 
 module ListIntSorting = Sorting (Int)
               |};
-  [%expect {|
+  [%expect
+    {|
     external greater : (() int
                          ->(() int
                              ->() bool))= "ff_builtin_greater"
@@ -1596,8 +1597,8 @@ module ListIntSorting = Sorting (Int)
 
                          id = 4
 
-                         val cmp : ((() 3.t) lst
-                                     ->((() 3.t) lst
+                         val cmp : ((() int) lst
+                                     ->((() int) lst
                                          ->() bool))
 
                          Owned Modules = {
