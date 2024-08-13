@@ -677,9 +677,18 @@ let%expect_test "Test: pattern parsing" =
   [%expect {| (PCons Cons ((PTuple ((PVar x) (PVar y) (PVar z))))) |}]
 
 let%expect_test "Test: full program parsing" =
+  print_parsed_program
+    {|
+     (* xyz"abcde\n\\\de" in*) let (* xyz *) x (* xyz *) = (* xyz *) 1 (* xyz *)
+     |};
   print_parsed_program {|let x = 1|};
   [%expect
     {|
+    ((TopLet x
+       ((node (EConst (CInt 1)))
+         (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 70)))
+         (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 71)))
+         (attrs ()))))
     ((TopLet x
        ((node (EConst (CInt 1)))
          (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 8)))

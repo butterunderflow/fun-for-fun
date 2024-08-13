@@ -8,11 +8,10 @@ let lower_case = ['a' - 'z']
 let digit = ['0' - '9']
 let atom_quote = '''
 let string_quote = '"'
-let line_comment = '%' [^ '\n'] *
 let white = [' ' '\t']+
 let newline = '\r' | '\n' | "\r\n"
-let open_comment = "/*"
-let close_comment = "*/"
+let open_comment = "(*"
+let close_comment = "*)"
 let escape = '\\' ('t'|'n'|'\"'|'\''|'\\')
 let sign = ['+' '-']
 
@@ -39,6 +38,7 @@ rule token = parse
     (* Meta-characters *)
     | white             { token lexbuf}
     | newline           { Lexing.new_line lexbuf; token lexbuf }
+    | open_comment      { comment (Buffer.create 17) lexbuf }
     | eof               { EOF }
     | "let"             { LET }
     | "if"              { IF }
@@ -79,9 +79,18 @@ rule token = parse
     | ident as i        { IDENT i }
     | type_var as t     { TYPEVAR t } 
     | integers as n     { INT   (int_of_string n) }
-    | "."             { DOT}
+    | "."               { DOT}
     | strings as s      { STRING s}
 
+and comment buf (* buffer store comment content, unused for now*) =
+  parse
+  | close_comment       { let _content = Buffer.contents buf in
+                          token lexbuf }
+  | _ as s              { Buffer.add_char buf s;
+                          comment buf lexbuf}
+
+
+(* read all remained content *)
 and tail acc = parse
    | eof { acc }
    | _* as str { tail (acc ^ str) lexbuf }
