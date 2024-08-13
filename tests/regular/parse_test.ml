@@ -677,9 +677,18 @@ let%expect_test "Test: pattern parsing" =
   [%expect {| (PCons Cons ((PTuple ((PVar x) (PVar y) (PVar z))))) |}]
 
 let%expect_test "Test: full program parsing" =
+  print_parsed_program
+    {|
+     (* xyz"abcde\n\\\de" in*) let (* xyz *) x (* xyz *) = (* xyz *) 1 (* xyz *)
+     |};
   print_parsed_program {|let x = 1|};
   [%expect
     {|
+    ((TopLet x
+       ((node (EConst (CInt 1)))
+         (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 70)))
+         (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 71)))
+         (attrs ()))))
     ((TopLet x
        ((node (EConst (CInt 1)))
          (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 8)))
@@ -1210,7 +1219,50 @@ let result = print_int (sum 4)
     {|
                 type t = | Nil
                         |};
-  [%expect {| ((TopTypeDef (TDAdt t () ((Nil ()))))) |}]
+  [%expect {| ((TopTypeDef (TDAdt t () ((Nil ()))))) |}];
+  print_parsed_program
+    {|
+     let x = let rec f = fun x -> 1
+             and g = fun y -> 2 in
+             f
+     let _ = 1
+
+     |};
+  [%expect
+    {|
+    ((TopLet x
+       ((node
+          (ELetrec
+            ((f
+               ((PBare x)
+                 ((node (EConst (CInt 1)))
+                   (start_loc
+                     ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 35)))
+                   (end_loc
+                     ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 36)))
+                   (attrs ()))))
+              (g
+                ((PBare y)
+                  ((node (EConst (CInt 2)))
+                    (start_loc
+                      ((pos_fname "") (pos_lnum 3) (pos_bol 37) (pos_cnum 67)))
+                    (end_loc
+                      ((pos_fname "") (pos_lnum 3) (pos_bol 37) (pos_cnum 68)))
+                    (attrs ())))))
+            ((node (EVar f))
+              (start_loc
+                ((pos_fname "") (pos_lnum 4) (pos_bol 72) (pos_cnum 85)))
+              (end_loc ((pos_fname "") (pos_lnum 4) (pos_bol 72) (pos_cnum 86)))
+              (attrs ()))))
+         (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 14)))
+         (end_loc ((pos_fname "") (pos_lnum 4) (pos_bol 72) (pos_cnum 86)))
+         (attrs ())))
+      (TopLet _
+        ((node (EConst (CInt 1)))
+          (start_loc ((pos_fname "") (pos_lnum 5) (pos_bol 87) (pos_cnum 100)))
+          (end_loc ((pos_fname "") (pos_lnum 5) (pos_bol 87) (pos_cnum 101)))
+          (attrs ()))))
+    |}]
 
 let%expect_test "Test: path parsing" =
   print_parsed_mod_expr {|X|};
