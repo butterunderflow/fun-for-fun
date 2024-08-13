@@ -226,7 +226,7 @@ expr:
        { make_node (EVar v) $startpos $endpos } 
     | LET x=IDENT EQ e1=expr IN e2=expr
        { make_node (ELet (x, e1, e2)) $startpos $endpos }
-    | LET REC binds=separated_nonempty_list(AND, function_bind) IN body=expr 
+    | LET REC binds=separated_nonempty_list(AND, function_bind) IN body=expr %prec over_TOP
        { make_node (ELetrec (binds, body)) $startpos $endpos }
     | IF e0=expr THEN e1=expr ELSE e2=expr
        { make_node (EIf (e0, e1, e2)) $startpos $endpos }
