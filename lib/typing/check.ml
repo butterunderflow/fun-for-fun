@@ -210,7 +210,6 @@ and check_app op arg env =
   let arg_ty = get_ty arg_typed in
   let tv = P.make_tv_of "'ret" in
   U.unify op_ty (I.TArrowI (arg_ty, tv));
-
   EApp (op_typed, arg_typed, tv)
 
 and check_cmp op e0 e1 env =

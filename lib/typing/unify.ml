@@ -40,15 +40,10 @@ let rec unify (t0 : ty) (t1 : ty) : unit =
     (* strip links *)
     | TVarI { contents = Link t0 }, t1 -> unify t0 t1
     | t0, TVarI { contents = Link t1 } -> unify t0 t1
-    (* skip same uninfered type reference *)
-    | ( TVarI ({ contents = Unbound _ } as tv0),
-        TVarI ({ contents = Unbound _ } as tv1) )
-      when tv0 == tv1 ->
-        ()
-    | TVarI ({ contents = Unbound _ } as tv0), t1 ->
+    | TVarI ({ contents = Unbound _ } as tv0), t1
+    | t1, TVarI ({ contents = Unbound _ } as tv0) ->
         occurs tv0 t1;
         tv0.contents <- Link t1
-    | _, TVarI _y -> unify t1 t0
     | TConsI (tc0, tes0), TConsI (tc1, tes1) when tc0 = tc1 ->
         unify_lst tes0 tes1
     | TArrowI (op0, arg0), TArrowI (op1, arg1) ->
