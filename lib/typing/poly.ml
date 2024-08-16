@@ -1,10 +1,17 @@
 module I = Types_in
 
+let current_level = ref 0
+
+let enter_level () = current_level := !current_level + 1
+
+let exit_level () = current_level := !current_level - 1
+
 let make_tv () =
   let name = "'_t" in
-  I.TVarI (ref (I.Unbound (Ident.create ~hint:name)))
+  I.TVarI (ref (I.Unbound (Ident.create ~hint:name, !current_level)))
 
-let make_tv_of hint = I.TVarI (ref (I.Unbound (Ident.create ~hint)))
+let make_tv_of hint =
+  I.TVarI (ref (I.Unbound (Ident.create ~hint, !current_level)))
 
 let inst_with (t : I.bind_ty) tes : I.ty =
   let qvs, te = t in
@@ -40,15 +47,17 @@ let align_inst (t : I.bind_ty) : I.ty =
   in
   inst_with t new_tvs
 
-let generalize (t : I.ty) (env : Env.t) : I.bind_ty =
+let generalize (t : I.ty) (_env : Env.t) : I.bind_ty =
   let qvs = ref [] in
   let cons_uniq x xs = if List.mem x xs then xs else x :: xs in
   let rec gen (t : I.ty) =
     match t with
-    | I.TVarI ({ contents = I.Unbound x } as tv) ->
+    | I.TVarI { contents = I.Unbound (x, level) } ->
         (* if a type variable not captured by environment, we need to
            generalize it *)
-        if not (Env.captured env tv) then (
+        if level > !current_level then (
+          (* if a type variable is created(allocated) in a inner
+             scope(region), quantify(release) it *)
           qvs := cons_uniq x !qvs;
           I.TQVarI x)
         else t

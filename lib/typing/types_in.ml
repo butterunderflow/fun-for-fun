@@ -16,7 +16,7 @@ and ty =
   | TRecordI of (string * ty) list
 
 and tv =
-  | Unbound of Ident.ident
+  | Unbound of Ident.ident * int (* level *)
   | Link of ty
 
 and bind_ty = Ident.ident list * ty
