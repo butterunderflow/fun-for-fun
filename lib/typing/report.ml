@@ -21,7 +21,8 @@ exception OccurError of string * T.ty * Lexing.position * Lexing.position
 
 let occur_error tv te loc1 loc2 =
   match !tv with
-  | T.Unbound v -> raise (OccurError (Ident.to_string v, te, loc1, loc2))
+  | T.Unbound (v, _lvl) ->
+      raise (OccurError (Ident.to_string v, te, loc1, loc2))
   | T.Link _ -> failwith "neverreach"
 
 let print_code_range (start : Lexing.position) (last : Lexing.position) =

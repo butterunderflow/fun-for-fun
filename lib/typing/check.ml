@@ -135,7 +135,9 @@ and check_let x e0 e1 env =
   ELet (x, e0_typed, e1_typed, get_ty e1_typed)
 
 and check_let_binding x e0 env : expr * Env.t =
+  Poly.enter_level ();
   let e_typed = check_expr e0 env in
+  Poly.exit_level ();
   let e_ty = get_ty e_typed in
   let gen (* generalized type *) = P.generalize e_ty env in
   let env = Env.add_value x gen env in
@@ -147,8 +149,9 @@ and check_letrec binds body env : expr =
   ELetrec (List.combine vars lams_typed, body_typed, get_ty body_typed)
 
 and check_letrec_binding binds env =
-  let tvs = List.map (fun _ -> ([], P.make_tv ())) binds in
   let origin_env = env in
+  Poly.enter_level ();
+  let tvs = List.map (fun _ -> ([], P.make_tv ())) binds in
   let env =
     List.fold_left2
       (fun acc (x, _) tv -> Env.add_value x tv acc)
@@ -165,6 +168,7 @@ and check_letrec_binding binds env =
         acc @ [ lam_typed ])
       [] vars lams
   in
+  Poly.exit_level ();
   let lams_typed =
     List.map
       (function
@@ -327,7 +331,9 @@ and check_top_level (top : T.top_level) env : top_level * Env.t =
         let mt = normalize_mt ext_mt env in
         (TopModSig (name, mt), Env.add_module_sig name mt env)
     | T.TopExternal (name, e_ty, ext_name) ->
+        P.enter_level ();
         let te = normalize e_ty Let env in
+        P.exit_level ();
         let gen = P.generalize te env in
         (TopExternal (name, te, ext_name), Env.add_value name gen env)
   in
@@ -597,7 +603,10 @@ and normalize_msig comps env =
         match comp with
         | T.TValueSpec (name, te) ->
             reset_pool ();
-            Env.add_value name (P.generalize (normalize_ty te env) env) env
+            P.enter_level ();
+            let normalized = normalize_ty te env in
+            P.exit_level ();
+            Env.add_value name (P.generalize normalized env) env
         | T.TAbstTySpec (name, paras) ->
             Env.add_type_def (TDOpaqueI (name, paras)) env
         | T.TManiTySpec def ->

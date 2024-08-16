@@ -47,25 +47,26 @@ let%expect_test "Test: expression typing" =
     {|
     (ELet f
       (ELam
-        (x (EVar x (TVarI (Unbound '_t/1)))
-          (TArrowI (TVarI (Unbound '_t/1)) (TVarI (Unbound '_t/1)))))
-      (EVar f (TArrowI (TVarI (Unbound '_t/2)) (TVarI (Unbound '_t/2))))
-      (TArrowI (TVarI (Unbound '_t/2)) (TVarI (Unbound '_t/2)))) |}];
+        (x (EVar x (TVarI (Unbound '_t/1 1)))
+          (TArrowI (TVarI (Unbound '_t/1 1)) (TVarI (Unbound '_t/1 1)))))
+      (EVar f (TArrowI (TVarI (Unbound '_t/2 0)) (TVarI (Unbound '_t/2 0))))
+      (TArrowI (TVarI (Unbound '_t/2 0)) (TVarI (Unbound '_t/2 0))))
+    |}];
 
   print_typed "let f = (fun x -> x) in f 1";
   [%expect
     {|
     (ELet f
       (ELam
-        (x (EVar x (TVarI (Unbound '_t/1)))
-          (TArrowI (TVarI (Unbound '_t/1)) (TVarI (Unbound '_t/1)))))
+        (x (EVar x (TVarI (Unbound '_t/1 1)))
+          (TArrowI (TVarI (Unbound '_t/1 1)) (TVarI (Unbound '_t/1 1)))))
       (EApp
         (EVar f
           (TArrowI (TVarI (Link (TConsI (0 int) ())))
             (TVarI (Link (TConsI (0 int) ())))))
         (EConst (CInt 1) (TConsI (0 int) ())) (TVarI (Link (TConsI (0 int) ()))))
       (TVarI (Link (TConsI (0 int) ()))))
-     |}];
+    |}];
 
   print_type "let f = (fun x -> x) in f 1";
   [%expect {|
@@ -84,8 +85,8 @@ let%expect_test "Test: expression typing" =
     {|
     (ELet f
       (ELam
-        (x (EVar x (TVarI (Unbound '_t/1)))
-          (TArrowI (TVarI (Unbound '_t/1)) (TVarI (Unbound '_t/1)))))
+        (x (EVar x (TVarI (Unbound '_t/1 1)))
+          (TArrowI (TVarI (Unbound '_t/1 1)) (TVarI (Unbound '_t/1 1)))))
       (ETuple
         ((EApp
            (EVar f
@@ -103,7 +104,8 @@ let%expect_test "Test: expression typing" =
           ((TVarI (Link (TConsI (0 int) ())))
             (TVarI (Link (TConsI (0 bool) ()))))))
       (TTupleI
-        ((TVarI (Link (TConsI (0 int) ()))) (TVarI (Link (TConsI (0 bool) ())))))) |}];
+        ((TVarI (Link (TConsI (0 int) ()))) (TVarI (Link (TConsI (0 bool) ()))))))
+    |}];
   print_typed
     {|
      let rec f = fun x -> g x
@@ -121,21 +123,22 @@ let%expect_test "Test: expression typing" =
              (EVar g
                (TVarI
                  (Link
-                   (TArrowI (TVarI (Link (TVarI (Unbound '_t/5))))
-                     (TVarI (Link (TVarI (Unbound 'ret/6))))))))
-             (EVar x (TVarI (Link (TVarI (Unbound '_t/5)))))
-             (TVarI (Link (TVarI (Unbound 'ret/6)))))
-           (TArrowI (TVarI (Link (TVarI (Unbound '_t/5))))
-             (TVarI (Link (TVarI (Unbound 'ret/6)))))))
+                   (TArrowI (TVarI (Link (TVarI (Unbound '_t/5 1))))
+                     (TVarI (Link (TVarI (Unbound 'ret/6 1))))))))
+             (EVar x (TVarI (Link (TVarI (Unbound '_t/5 1)))))
+             (TVarI (Link (TVarI (Unbound 'ret/6 1)))))
+           (TArrowI (TVarI (Link (TVarI (Unbound '_t/5 1))))
+             (TVarI (Link (TVarI (Unbound 'ret/6 1)))))))
         (g
           (x
             (EApp
               (EVar f
-                (TArrowI (TVarI (Link (TVarI (Unbound '_t/5))))
-                  (TVarI (Link (TVarI (Unbound 'ret/6))))))
-              (EVar x (TVarI (Unbound '_t/5))) (TVarI (Unbound 'ret/6)))
-            (TArrowI (TVarI (Unbound '_t/5)) (TVarI (Unbound 'ret/6))))))
-      (EConst (CInt 1) (TConsI (0 int) ())) (TConsI (0 int) ())) |}];
+                (TArrowI (TVarI (Link (TVarI (Unbound '_t/5 1))))
+                  (TVarI (Link (TVarI (Unbound 'ret/6 1))))))
+              (EVar x (TVarI (Unbound '_t/5 1))) (TVarI (Unbound 'ret/6 1)))
+            (TArrowI (TVarI (Unbound '_t/5 1)) (TVarI (Unbound 'ret/6 1))))))
+      (EConst (CInt 1) (TConsI (0 int) ())) (TConsI (0 int) ()))
+    |}];
 
   print_typed
     {|
@@ -160,8 +163,10 @@ let%expect_test "Test: expression typing" =
                   (TVarI (Link (TConsI (0 int) ())))))
               (EConst (CInt 1) (TConsI (0 int) ()))
               (TVarI (Link (TConsI (0 int) ()))))
-            (TArrowI (TVarI (Unbound '_t/4)) (TVarI (Link (TConsI (0 int) ())))))))
-      (EConst (CInt 1) (TConsI (0 int) ())) (TConsI (0 int) ())) |}]
+            (TArrowI (TVarI (Unbound '_t/4 1))
+              (TVarI (Link (TConsI (0 int) ())))))))
+      (EConst (CInt 1) (TConsI (0 int) ())) (TConsI (0 int) ()))
+    |}]
 (* todo: test pattern matching *)
 
 let%expect_test "Test: program toplevel typing" =
@@ -202,7 +207,9 @@ let%expect_test "Test: program toplevel typing" =
                    (TVarI (Link (TConsI (0 int) ())))))
                (EConst (CInt 1) (TConsI (0 int) ()))
                (TVarI (Link (TConsI (0 int) ()))))
-             (TArrowI (TVarI (Unbound '_t/4)) (TVarI (Link (TConsI (0 int) ()))))))))) |}];
+             (TArrowI (TVarI (Unbound '_t/4 1))
+               (TVarI (Link (TConsI (0 int) ())))))))))
+    |}];
   print_effect {|
      type () a 
      = Cons of int
@@ -315,23 +322,24 @@ let%expect_test "Test: program toplevel typing" =
          ((Cons ((TTupleI ((TQVarI 'a/0) (TQVarI 'b/0))))) (Nil ()))))
       (TopLet x
         (ECons Nil 1
-          (TConsI (0 int_l) ((TVarI (Unbound 'a/1)) (TVarI (Unbound 'b/2))))))
+          (TConsI (0 int_l) ((TVarI (Unbound 'a/1 1)) (TVarI (Unbound 'b/2 1))))))
       (TopLet f
         (ECase
           (EVar x
             (TConsI (0 int_l)
-              ((TVarI (Link (TVarI (Unbound '_t/8))))
-                (TVarI (Link (TVarI (Unbound '_t/9)))))))
+              ((TVarI (Link (TVarI (Unbound '_t/8 1))))
+                (TVarI (Link (TVarI (Unbound '_t/9 1)))))))
           (((PCons Cons 0
               ((PTuple
-                 ((PVar a (TVarI (Unbound '_t/8)))
-                   (PVar b (TVarI (Unbound '_t/9)))))))
+                 ((PVar a (TVarI (Unbound '_t/8 1)))
+                   (PVar b (TVarI (Unbound '_t/9 1)))))))
              (ETuple
-               ((EVar b (TVarI (Unbound '_t/9)))
-                 (EVar a (TVarI (Unbound '_t/8))))
-               (TTupleI ((TVarI (Unbound '_t/9)) (TVarI (Unbound '_t/8)))))))
+               ((EVar b (TVarI (Unbound '_t/9 1)))
+                 (EVar a (TVarI (Unbound '_t/8 1))))
+               (TTupleI ((TVarI (Unbound '_t/9 1)) (TVarI (Unbound '_t/8 1)))))))
           (TVarI
-            (Link (TTupleI ((TVarI (Unbound '_t/9)) (TVarI (Unbound '_t/8)))))))))
+            (Link
+              (TTupleI ((TVarI (Unbound '_t/9 1)) (TVarI (Unbound '_t/8 1)))))))))
     |}];
   print_effect
     {|
@@ -1534,8 +1542,8 @@ module L2 = (K: M)
     ((TopLet result
        (ELet id
          (ELam
-           (x (EVar x (TVarI (Unbound '_t/1)))
-             (TArrowI (TVarI (Unbound '_t/1)) (TVarI (Unbound '_t/1)))))
+           (x (EVar x (TVarI (Unbound '_t/1 4)))
+             (TArrowI (TVarI (Unbound '_t/1 4)) (TVarI (Unbound '_t/1 4)))))
          (ETuple
            ((EApp
               (EVar id

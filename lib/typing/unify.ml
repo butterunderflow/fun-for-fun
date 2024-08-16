@@ -19,7 +19,10 @@ let occurs (tpv : tv ref) (te : ty) : unit =
         | { contents = Unbound _ } -> raise (OccurError (tpv, te))
         | { contents = Link _ } -> failwith "illegal occur check value")
     | TVarI { contents = Link te } -> go te
-    | TVarI { contents = _ } -> ()
+    | TVarI ({ contents = Unbound (tvn', level') } as tpv') ->
+        let[@warning "-8"] (Unbound (_, level)) = !tpv in
+        let min_level = min level level' in
+        tpv'.contents <- Unbound (tvn', min_level)
     | TQVarI _ -> ()
     | TArrowI (te1, te2) ->
         go te1;

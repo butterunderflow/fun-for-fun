@@ -321,7 +321,7 @@ module MakePP (Config : PPConfig) = struct
         | None, _ -> Fmt.fprintf fmt "%d." id);
         Fmt.fprintf fmt "%s" name;
         Fmt.fprintf fmt "@]"
-    | I.TVarI { contents = I.Unbound tv } ->
+    | I.TVarI { contents = I.Unbound (tv, _level) } ->
         Fmt.fprintf fmt "{%s}" (Ident.show_ident tv)
     | I.TVarI { contents = I.Link te } ->
         Fmt.fprintf fmt "{";
