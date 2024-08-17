@@ -8,12 +8,12 @@ type ty_id = int (* module type id *) * string
 
 (* normalized type expression *)
 and ty =
-  | TConsI of ty_id * ty list (* x list *)
-  | TVarI of tv ref (* 'var *)
-  | TQVarI of Ident.ident
-  | TArrowI of ty * ty
-  | TTupleI of ty list
-  | TRecordI of (string * ty) list
+  | Ty_cons of ty_id * ty list (* x list *)
+  | Ty_var of tv ref (* 'var *)
+  | Ty_qvar of Ident.ident
+  | Ty_arrow of ty * ty
+  | Ty_tuple of ty list
+  | Ty_record of (string * ty) list
 
 and tv =
   | Unbound of Ident.ident * int (* level *)
@@ -26,13 +26,13 @@ and type_paras = Ident.ident list
 and variant = string * ty option
 
 and ty_def =
-  | TDOpaqueI of string * type_paras
-  | TDAdtI of string * type_paras * variant list
-  | TDRecordI of string * type_paras * (string * ty) list
-  | TDAliasI of string * ty
+  | Ty_def_opaque of string * type_paras
+  | Ty_def_adt of string * type_paras * variant list
+  | Ty_def_record of string * type_paras * (string * ty) list
+  | Ty_def_alias of string * ty
 
 and mod_ty =
-  | MTMod of {
+  | Mod_ty_struct of {
       id : int; (* give every module type an identity *)
       val_defs : (string * bind_ty) list;
       constr_defs :
@@ -42,7 +42,7 @@ and mod_ty =
       mod_defs : (string * mod_ty) list;
       owned_mods : int list;
     }
-  | MTFun of (mod_ty * mod_ty)
+  | Mod_ty_functor of (mod_ty * mod_ty)
 [@@deriving
   sexp,
     show,
@@ -53,9 +53,9 @@ class virtual ['self] map =
   object (self : 'self)
     inherit ['self] ty_map
 
-    method! visit_TVarI () tv =
+    method! visit_Ty_var () tv =
       match !tv with
-      | Unbound _ -> TVarI tv
+      | Unbound _ -> Ty_var tv
       | Link te -> self#visit_ty () te
 
     method visit_ident env id =
@@ -79,32 +79,32 @@ let root_id = 0
 
 let mk_root_tid tn = (root_id, tn)
 
-let int_ty = TConsI (mk_root_tid "int", [])
+let int_ty = Ty_cons (mk_root_tid "int", [])
 
-let string_ty = TConsI (mk_root_tid "string", [])
+let string_ty = Ty_cons (mk_root_tid "string", [])
 
-let bool_ty = TConsI (mk_root_tid "bool", [])
+let bool_ty = Ty_cons (mk_root_tid "bool", [])
 
-let unit_ty = TConsI (mk_root_tid "unit", [])
+let unit_ty = Ty_cons (mk_root_tid "unit", [])
 
 let same_def td0 td1 = td0 = td1
 
 let get_def_name (td : ty_def) =
   match td with
-  | TDOpaqueI (name, _)
-  | TDAdtI (name, _, _)
-  | TDRecordI (name, _, _)
-  | TDAliasI (name, _) ->
+  | Ty_def_opaque (name, _)
+  | Ty_def_adt (name, _, _)
+  | Ty_def_record (name, _, _)
+  | Ty_def_alias (name, _) ->
       name
 
 let get_def name ty_defs =
   List.find
     (fun td ->
       match td with
-      | TDOpaqueI (name', _)
-      | TDAdtI (name', _, _)
-      | TDRecordI (name', _, _)
-      | TDAliasI (name', _)
+      | Ty_def_opaque (name', _)
+      | Ty_def_adt (name', _, _)
+      | Ty_def_record (name', _, _)
+      | Ty_def_alias (name', _)
         when name' = name ->
           true
       | _ -> false)

@@ -5,31 +5,31 @@ module L = Lam.Tree
 type constant = T.constant [@@deriving sexp]
 
 type expr =
-  | ETuple of expr list
-  | EModObject of object_field list
+  | Exp_tuple of expr list
+  | Exp_mod_obj of object_field list
       (** 1. An object can cast to another when possible ;
           2. Field of an object is visible in the scope following its declaration. *)
-  | EStruct of (string * expr) list
-  | EVar of string
-  | EExt of string
-  | ECons of int
-  | EConsWith of int
-  | EConst of constant
-  | EApp of expr * expr list
-  | ESwitch of expr * branch list
-  | ELet of string * expr * expr
-  | EIf of expr * expr * expr
-  | EClosure of closure
-  | ELetRec of closure_rec * expr
-  | EField of expr * string
-  | ECmp of T.cmp_op * expr * expr
-  | ESeq of expr * expr
+  | Exp_struct of (string * expr) list
+  | Exp_var of string
+  | Exp_external of string
+  | Exp_constr of int
+  | Exp_payload_constr of int
+  | Exp_const of constant
+  | Exp_app of expr * expr list
+  | Exp_switch of expr * branch list
+  | Exp_let of string * expr * expr
+  | Exp_if of expr * expr * expr
+  | Exp_closure of closure
+  | Exp_letrec of closure_rec * expr
+  | Exp_field of expr * string
+  | Exp_cmp of T.cmp_op * expr * expr
+  | Exp_seq of expr * expr
 
 and pattern = L.pattern
 
 and object_field =
-  | FSimple of string * expr
-  | FLetRec of closure_rec
+  | Field_simple of string * expr
+  | Field_letrec of closure_rec
 
 and closure = string list * Ident.ident
 

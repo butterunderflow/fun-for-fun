@@ -29,7 +29,7 @@ let%expect_test "Test: full program lowering" =
     Main function name:
     main/1
     Global C functions:
-    (main/1 () () (EModObject ((FSimple x (EConst (CInt 1))))))
+    (main/1 () () (Exp_mod_obj ((Field_simple x (Exp_const (Const_int 1))))))
     |}];
 
   print_lifted
@@ -53,10 +53,13 @@ let%expect_test "Test: full program lowering" =
     main/1
     Global C functions:
     (main/1 () ()
-      (EModObject
-        ((FSimple M
-           (EModObject ((FSimple x (ECons 0)) (FSimple y (EConst (CInt 1))))))
-          (FSimple c (EField (EVar M) x)) (FSimple d (EField (EVar M) y)))))
+      (Exp_mod_obj
+        ((Field_simple M
+           (Exp_mod_obj
+             ((Field_simple x (Exp_constr 0))
+               (Field_simple y (Exp_const (Const_int 1))))))
+          (Field_simple c (Exp_field (Exp_var M) x))
+          (Field_simple d (Exp_field (Exp_var M) y)))))
     |}];
 
   print_lifted
@@ -72,9 +75,9 @@ let%expect_test "Test: full program lowering" =
     Main function name:
     main/1
     Global C functions:
-    (main/1 () () (EModObject ((FLetRec (() ((f f/2) (g g/3)))))))
-    (f/2 (f g) (x) (EVar x))
-    (g/3 (f g) (x) (EApp (EVar f) ((EConst (CInt 1)))))
+    (main/1 () () (Exp_mod_obj ((Field_letrec (() ((f f/2) (g g/3)))))))
+    (f/2 (f g) (x) (Exp_var x))
+    (g/3 (f g) (x) (Exp_app (Exp_var f) ((Exp_const (Const_int 1)))))
     |}];
 
   print_lifted {|
@@ -85,7 +88,7 @@ external add : int -> int -> int = "ff_add"
     Main function name:
     main/1
     Global C functions:
-    (main/1 () () (EModObject ((FSimple add (EExt ff_add)))))
+    (main/1 () () (Exp_mod_obj ((Field_simple add (Exp_external ff_add)))))
     |}];
   print_lifted {|
 let x = 1
@@ -100,10 +103,11 @@ let z = fun z -> x = y
     main/1
     Global C functions:
     (main/1 () ()
-      (EModObject
-        ((FSimple x (EConst (CInt 1))) (FSimple y (EConst (CInt 2)))
-          (FSimple z (EClosure ((x y) z/2))))))
-    (z/2 (x y) (z) (ECmp Eq (EVar x) (EVar y)))
+      (Exp_mod_obj
+        ((Field_simple x (Exp_const (Const_int 1)))
+          (Field_simple y (Exp_const (Const_int 2)))
+          (Field_simple z (Exp_closure ((x y) z/2))))))
+    (z/2 (x y) (z) (Exp_cmp Eq (Exp_var x) (Exp_var y)))
     |}];
 
   print_lifted
@@ -118,8 +122,8 @@ let z = fun z -> x = y
     Main function name:
     main/1
     Global C functions:
-    (main/1 () () (EModObject ((FLetRec (() ((sum sum/2)))))))
+    (main/1 () () (Exp_mod_obj ((Field_letrec (() ((sum sum/2)))))))
     (sum/2 (sum) (x)
-      (EIf (ECmp Eq (EVar x) (EConst (CInt 0))) (EConst (CInt 1))
-        (EConst (CInt 2))))
+      (Exp_if (Exp_cmp Eq (Exp_var x) (Exp_const (Const_int 0)))
+        (Exp_const (Const_int 1)) (Exp_const (Const_int 2))))
     |}]

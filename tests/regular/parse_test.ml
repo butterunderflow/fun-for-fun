@@ -11,7 +11,7 @@ let print_parsed_mod_expr str =
   parse_string_mod_expr str |> sexp_of_mod_expr |> print_sexp
 
 let print_parsed_type_expr str =
-  parse_string_type_expr str |> sexp_of_ety |> print_sexp
+  parse_string_type_expr str |> sexp_of_surface_ty |> print_sexp
 
 let%expect_test "Test: expression parsing" =
   let print_parsed str =
@@ -20,7 +20,7 @@ let%expect_test "Test: expression parsing" =
   print_parsed "x";
   [%expect
     {|
-    ((desc (EVar x))
+    ((desc (Exp_var x))
       (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
       (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 1)))
       (attrs ()))
@@ -28,7 +28,7 @@ let%expect_test "Test: expression parsing" =
   print_parsed "1";
   [%expect
     {|
-    ((desc (EConst (CInt 1)))
+    ((desc (Exp_const (Const_int 1)))
       (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
       (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 1)))
       (attrs ()))
@@ -36,7 +36,7 @@ let%expect_test "Test: expression parsing" =
   print_parsed {| () |};
   [%expect
     {|
-    ((desc (EConst CUnit))
+    ((desc (Exp_const Const_unit))
       (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 1)))
       (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 3)))
       (attrs ()))
@@ -44,7 +44,7 @@ let%expect_test "Test: expression parsing" =
   print_parsed {| "x \n \t,()*@/"|};
   [%expect
     {|
-    ((desc (EConst (CString "\"x \\n \\t,()*@/\"")))
+    ((desc (Exp_const (Const_string "\"x \\n \\t,()*@/\"")))
       (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 1)))
       (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 16)))
       (attrs ()))
@@ -54,18 +54,18 @@ let%expect_test "Test: expression parsing" =
   [%expect
     {|
     ((desc
-       (EApp
+       (Exp_app
          ((desc
-            (EApp
+            (Exp_app
               ((desc
-                 (EApp
-                   ((desc (EVar a))
+                 (Exp_app
+                   ((desc (Exp_var a))
                      (start_loc
                        ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
                      (end_loc
                        ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 1)))
                      (attrs ()))
-                   ((desc (EVar b))
+                   ((desc (Exp_var b))
                      (start_loc
                        ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 2)))
                      (end_loc
@@ -75,7 +75,7 @@ let%expect_test "Test: expression parsing" =
                   ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
                 (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 3)))
                 (attrs ()))
-              ((desc (EVar c))
+              ((desc (Exp_var c))
                 (start_loc
                   ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 4)))
                 (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 5)))
@@ -83,14 +83,14 @@ let%expect_test "Test: expression parsing" =
            (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
            (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 5)))
            (attrs ()))
-         ((desc (EVar d))
+         ((desc (Exp_var d))
            (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 6)))
            (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 7)))
            (attrs ()))))
       (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
       (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 7)))
       (attrs ()))
-    ((desc (EConst (CBool true)))
+    ((desc (Exp_const (Const_bool true)))
       (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
       (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 4)))
       (attrs ()))
@@ -99,12 +99,12 @@ let%expect_test "Test: expression parsing" =
   [%expect
     {|
     ((desc
-       (ELet x
-         ((desc (EConst (CInt 1)))
+       (Exp_let x
+         ((desc (Exp_const (Const_int 1)))
            (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 8)))
            (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 9)))
            (attrs ()))
-         ((desc (EVar y))
+         ((desc (Exp_var y))
            (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 13)))
            (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 14)))
            (attrs ()))))
@@ -115,7 +115,7 @@ let%expect_test "Test: expression parsing" =
   print_parsed {| Nil |};
   [%expect
     {|
-    ((desc (ECons Nil))
+    ((desc (Exp_constr Nil))
       (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 1)))
       (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 4)))
       (attrs ()))
@@ -124,28 +124,28 @@ let%expect_test "Test: expression parsing" =
   [%expect
     {|
     ((desc
-       (ETuple
-         (((desc (EConst (CInt 1)))
+       (Exp_tuple
+         (((desc (Exp_const (Const_int 1)))
             (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
             (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 1)))
             (attrs ()))
-           ((desc (EConst (CInt 3)))
+           ((desc (Exp_const (Const_int 3)))
              (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 2)))
              (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 3)))
              (attrs ()))
-           ((desc (EConst (CInt 4)))
+           ((desc (Exp_const (Const_int 4)))
              (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 4)))
              (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 5)))
              (attrs ()))
            ((desc
-              (ETuple
-                (((desc (EConst (CInt 5)))
+              (Exp_tuple
+                (((desc (Exp_const (Const_int 5)))
                    (start_loc
                      ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 7)))
                    (end_loc
                      ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 8)))
                    (attrs ()))
-                  ((desc (EConst (CInt 6)))
+                  ((desc (Exp_const (Const_int 6)))
                     (start_loc
                       ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 9)))
                     (end_loc
@@ -154,7 +154,7 @@ let%expect_test "Test: expression parsing" =
              (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 7)))
              (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 10)))
              (attrs ()))
-           ((desc (EConst (CInt 7)))
+           ((desc (Exp_const (Const_int 7)))
              (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 12)))
              (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 13)))
              (attrs ())))))
@@ -166,15 +166,15 @@ let%expect_test "Test: expression parsing" =
   [%expect
     {|
     ((desc
-       (ETuple
+       (Exp_tuple
          (((desc
-             (EApp
-               ((desc (EVar f))
+             (Exp_app
+               ((desc (Exp_var f))
                  (start_loc
                    ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
                  (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 1)))
                  (attrs ()))
-               ((desc (EConst (CInt 1)))
+               ((desc (Exp_const (Const_int 1)))
                  (start_loc
                    ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 2)))
                  (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 3)))
@@ -183,14 +183,14 @@ let%expect_test "Test: expression parsing" =
             (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 3)))
             (attrs ()))
            ((desc
-              (EApp
-                ((desc (EVar f))
+              (Exp_app
+                ((desc (Exp_var f))
                   (start_loc
                     ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 5)))
                   (end_loc
                     ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 6)))
                   (attrs ()))
-                ((desc (EConst (CBool true)))
+                ((desc (Exp_const (Const_bool true)))
                   (start_loc
                     ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 7)))
                   (end_loc
@@ -207,12 +207,12 @@ let%expect_test "Test: expression parsing" =
   [%expect
     {|
     ((desc
-       (EApp
-         ((desc (ECons Cons))
+       (Exp_app
+         ((desc (Exp_constr Cons))
            (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
            (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 4)))
            (attrs ()))
-         ((desc (EConst (CInt 1)))
+         ((desc (Exp_const (Const_int 1)))
            (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 6)))
            (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 7)))
            (attrs ()))))
@@ -230,18 +230,18 @@ let%expect_test "Test: expression parsing" =
   [%expect
     {|
     ((desc
-       (ELetrec
+       (Exp_letrec
          ((odd
-            ((PBare x)
+            ((Para_bare x)
               ((desc
-                 (EApp
-                   ((desc (EVar even))
+                 (Exp_app
+                   ((desc (Exp_var even))
                      (start_loc
                        ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 29)))
                      (end_loc
                        ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 33)))
                      (attrs ()))
-                   ((desc (EVar x))
+                   ((desc (Exp_var x))
                      (start_loc
                        ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 34)))
                      (end_loc
@@ -252,16 +252,16 @@ let%expect_test "Test: expression parsing" =
                 (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 35)))
                 (attrs ()))))
            (even
-             ((PAnn x (TCons int ()))
+             ((Para_ann x (Ty_cons int ()))
                ((desc
-                  (EApp
-                    ((desc (EVar odd))
+                  (Exp_app
+                    ((desc (Exp_var odd))
                       (start_loc
                         ((pos_fname "") (pos_lnum 3) (pos_bol 36) (pos_cnum 67)))
                       (end_loc
                         ((pos_fname "") (pos_lnum 3) (pos_bol 36) (pos_cnum 70)))
                       (attrs ()))
-                    ((desc (EVar x))
+                    ((desc (Exp_var x))
                       (start_loc
                         ((pos_fname "") (pos_lnum 3) (pos_bol 36) (pos_cnum 71)))
                       (end_loc
@@ -273,14 +273,14 @@ let%expect_test "Test: expression parsing" =
                    ((pos_fname "") (pos_lnum 3) (pos_bol 36) (pos_cnum 72)))
                  (attrs ())))))
          ((desc
-            (EApp
-              ((desc (EVar odd))
+            (Exp_app
+              ((desc (Exp_var odd))
                 (start_loc
                   ((pos_fname "") (pos_lnum 5) (pos_bol 81) (pos_cnum 86)))
                 (end_loc
                   ((pos_fname "") (pos_lnum 5) (pos_bol 81) (pos_cnum 89)))
                 (attrs ()))
-              ((desc (EConst (CInt 1)))
+              ((desc (Exp_const (Const_int 1)))
                 (start_loc
                   ((pos_fname "") (pos_lnum 5) (pos_bol 81) (pos_cnum 90)))
                 (end_loc
@@ -297,10 +297,10 @@ let%expect_test "Test: expression parsing" =
   [%expect
     {|
     ((desc
-       (EApp
+       (Exp_app
          ((desc
-            (EField
-              ((desc (MEName E))
+            (Exp_field
+              ((desc (Mod_name E))
                 (start_loc
                   ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
                 (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 1)))
@@ -309,7 +309,7 @@ let%expect_test "Test: expression parsing" =
            (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
            (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 3)))
            (attrs ()))
-         ((desc (EVar y))
+         ((desc (Exp_var y))
            (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 4)))
            (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 5)))
            (attrs ()))))
@@ -321,12 +321,12 @@ let%expect_test "Test: expression parsing" =
   [%expect
     {|
     ((desc
-       (EApp
-         ((desc (ECons Cons))
+       (Exp_app
+         ((desc (Exp_constr Cons))
            (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
            (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 4)))
            (attrs ()))
-         ((desc (EConst (CInt 1)))
+         ((desc (Exp_const (Const_int 1)))
            (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 5)))
            (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 6)))
            (attrs ()))))
@@ -338,19 +338,19 @@ let%expect_test "Test: expression parsing" =
   [%expect
     {|
     ((desc
-       (EApp
-         ((desc (ECons Cons))
+       (Exp_app
+         ((desc (Exp_constr Cons))
            (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
            (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 4)))
            (attrs ()))
          ((desc
-            (ETuple
-              (((desc (EVar x))
+            (Exp_tuple
+              (((desc (Exp_var x))
                  (start_loc
                    ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 6)))
                  (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 7)))
                  (attrs ()))
-                ((desc (EVar y))
+                ((desc (Exp_var y))
                   (start_loc
                     ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 9)))
                   (end_loc
@@ -367,10 +367,10 @@ let%expect_test "Test: expression parsing" =
   [%expect
     {|
     ((desc
-       (EApp
+       (Exp_app
          ((desc
-            (EFieldCons
-              ((desc (MEName L))
+            (Exp_field_constr
+              ((desc (Mod_name L))
                 (start_loc
                   ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
                 (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 1)))
@@ -380,13 +380,13 @@ let%expect_test "Test: expression parsing" =
            (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 6)))
            (attrs ()))
          ((desc
-            (ETuple
-              (((desc (EVar x))
+            (Exp_tuple
+              (((desc (Exp_var x))
                  (start_loc
                    ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 8)))
                  (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 9)))
                  (attrs ()))
-                ((desc (EVar y))
+                ((desc (Exp_var y))
                   (start_loc
                     ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 11)))
                   (end_loc
@@ -403,9 +403,9 @@ let%expect_test "Test: expression parsing" =
   [%expect
     {|
     ((desc
-       (ELam
-         ((PBare x)
-           ((desc (EVar x))
+       (Exp_lam
+         ((Para_bare x)
+           ((desc (Exp_var x))
              (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 9)))
              (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 10)))
              (attrs ())))))
@@ -417,12 +417,12 @@ let%expect_test "Test: expression parsing" =
   [%expect
     {|
     ((desc
-       (EApp
-         ((desc (EVar f))
+       (Exp_app
+         ((desc (Exp_var f))
            (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
            (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 1)))
            (attrs ()))
-         ((desc (EConst (CInt 1)))
+         ((desc (Exp_const (Const_int 1)))
            (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 2)))
            (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 3)))
            (attrs ()))))
@@ -439,19 +439,19 @@ let%expect_test "Test: expression parsing" =
   [%expect
     {|
     ((desc
-       (ECase
-         ((desc (EVar c))
+       (Exp_case
+         ((desc (Exp_var c))
            (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 16)))
            (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 17)))
            (attrs ()))
-         (((PCons Cons ((PVar x)))
-            ((desc (EVar x))
+         (((Pat_constr Cons ((Pat_var x)))
+            ((desc (Exp_var x))
               (start_loc
                 ((pos_fname "") (pos_lnum 3) (pos_bol 23) (pos_cnum 44)))
               (end_loc ((pos_fname "") (pos_lnum 3) (pos_bol 23) (pos_cnum 45)))
               (attrs ())))
-           ((PCons Nil ())
-             ((desc (EConst (CInt 0)))
+           ((Pat_constr Nil ())
+             ((desc (Exp_const (Const_int 0)))
                (start_loc
                  ((pos_fname "") (pos_lnum 4) (pos_bol 46) (pos_cnum 67)))
                (end_loc ((pos_fname "") (pos_lnum 4) (pos_bol 46) (pos_cnum 68)))
@@ -464,12 +464,12 @@ let%expect_test "Test: expression parsing" =
   [%expect
     {|
     ((desc
-       (ECmp Eq
-         ((desc (EVar x))
+       (Exp_cmp Eq
+         ((desc (Exp_var x))
            (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 1)))
            (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 2)))
            (attrs ()))
-         ((desc (EVar y))
+         ((desc (Exp_var y))
            (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 5)))
            (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 6)))
            (attrs ()))))
@@ -481,12 +481,12 @@ let%expect_test "Test: expression parsing" =
   [%expect
     {|
     ((desc
-       (ECmp Neq
-         ((desc (EVar x))
+       (Exp_cmp Neq
+         ((desc (Exp_var x))
            (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 1)))
            (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 2)))
            (attrs ()))
-         ((desc (EVar y))
+         ((desc (Exp_var y))
            (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 6)))
            (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 7)))
            (attrs ()))))
@@ -500,15 +500,15 @@ let%expect_test "Test: expression parsing" =
   [%expect
     {|
     ((desc
-       (ESeq
+       (Exp_seq
          ((desc
-            (EApp
-              ((desc (EVar f))
+            (Exp_app
+              ((desc (Exp_var f))
                 (start_loc
                   ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 4)))
                 (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 5)))
                 (attrs ()))
-              ((desc (EConst (CInt 1)))
+              ((desc (Exp_const (Const_int 1)))
                 (start_loc
                   ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 6)))
                 (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 7)))
@@ -517,16 +517,16 @@ let%expect_test "Test: expression parsing" =
            (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 7)))
            (attrs ()))
          ((desc
-            (ESeq
+            (Exp_seq
               ((desc
-                 (EApp
-                   ((desc (EVar f))
+                 (Exp_app
+                   ((desc (Exp_var f))
                      (start_loc
                        ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 10)))
                      (end_loc
                        ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 11)))
                      (attrs ()))
-                   ((desc (EConst (CInt 2)))
+                   ((desc (Exp_const (Const_int 2)))
                      (start_loc
                        ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 12)))
                      (end_loc
@@ -537,10 +537,10 @@ let%expect_test "Test: expression parsing" =
                 (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 13)))
                 (attrs ()))
               ((desc
-                 (ECmp Eq
+                 (Exp_cmp Eq
                    ((desc
-                      (EApp
-                        ((desc (EVar f))
+                      (Exp_app
+                        ((desc (Exp_var f))
                           (start_loc
                             ((pos_fname "") (pos_lnum 2) (pos_bol 1)
                               (pos_cnum 16)))
@@ -548,7 +548,7 @@ let%expect_test "Test: expression parsing" =
                             ((pos_fname "") (pos_lnum 2) (pos_bol 1)
                               (pos_cnum 17)))
                           (attrs ()))
-                        ((desc (EConst (CInt 2)))
+                        ((desc (Exp_const (Const_int 2)))
                           (start_loc
                             ((pos_fname "") (pos_lnum 2) (pos_bol 1)
                               (pos_cnum 18)))
@@ -561,7 +561,7 @@ let%expect_test "Test: expression parsing" =
                      (end_loc
                        ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 19)))
                      (attrs ()))
-                   ((desc (EConst (CInt 3)))
+                   ((desc (Exp_const (Const_int 3)))
                      (start_loc
                        ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 22)))
                      (end_loc
@@ -582,15 +582,15 @@ let%expect_test "Test: expression parsing" =
   [%expect
     {|
     ((desc
-       (EApp
+       (Exp_app
          ((desc
-            (EApp
-              ((desc (EVar add))
+            (Exp_app
+              ((desc (Exp_var add))
                 (start_loc
                   ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
                 (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 3)))
                 (attrs ()))
-              ((desc (EVar x))
+              ((desc (Exp_var x))
                 (start_loc
                   ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 4)))
                 (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 5)))
@@ -599,16 +599,16 @@ let%expect_test "Test: expression parsing" =
            (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 5)))
            (attrs ()))
          ((desc
-            (EApp
+            (Exp_app
               ((desc
-                 (EApp
-                   ((desc (EVar minus))
+                 (Exp_app
+                   ((desc (Exp_var minus))
                      (start_loc
                        ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 7)))
                      (end_loc
                        ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 12)))
                      (attrs ()))
-                   ((desc (EVar x))
+                   ((desc (Exp_var x))
                      (start_loc
                        ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 13)))
                      (end_loc
@@ -618,7 +618,7 @@ let%expect_test "Test: expression parsing" =
                   ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 7)))
                 (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 14)))
                 (attrs ()))
-              ((desc (EConst (CInt 1)))
+              ((desc (Exp_const (Const_int 1)))
                 (start_loc
                   ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 15)))
                 (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 16)))
@@ -634,15 +634,15 @@ let%expect_test "Test: expression parsing" =
   [%expect
     {|
     ((desc
-       (EApp
+       (Exp_app
          ((desc
-            (EApp
-              ((desc (EVar a))
+            (Exp_app
+              ((desc (Exp_var a))
                 (start_loc
                   ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
                 (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 1)))
                 (attrs ()))
-              ((desc (EVar b))
+              ((desc (Exp_var b))
                 (start_loc
                   ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 2)))
                 (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 3)))
@@ -650,7 +650,7 @@ let%expect_test "Test: expression parsing" =
            (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
            (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 3)))
            (attrs ()))
-         ((desc (ECons Nil))
+         ((desc (Exp_constr Nil))
            (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 4)))
            (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 7)))
            (attrs ()))))
@@ -664,17 +664,18 @@ let%expect_test "Test: pattern parsing" =
     parse_string_pattern str |> sexp_of_pattern |> print_sexp
   in
   print_parsed {| x |};
-  [%expect {| (PVar x) |}];
+  [%expect {| (Pat_var x) |}];
   print_parsed {| 1 |};
-  [%expect {| (PVal (CInt 1)) |}];
+  [%expect {| (Pat_val (Const_int 1)) |}];
   print_parsed {| Nil |};
-  [%expect {| (PCons Nil ()) |}];
+  [%expect {| (Pat_constr Nil ()) |}];
   print_parsed {| Cons 1 |};
-  [%expect {| (PCons Cons ((PVal (CInt 1)))) |}];
+  [%expect {| (Pat_constr Cons ((Pat_val (Const_int 1)))) |}];
   print_parsed {| Cons x |};
-  [%expect {| (PCons Cons ((PVar x))) |}];
+  [%expect {| (Pat_constr Cons ((Pat_var x))) |}];
   print_parsed {| Cons (x, y, z) |};
-  [%expect {| (PCons Cons ((PTuple ((PVar x) (PVar y) (PVar z))))) |}]
+  [%expect
+    {| (Pat_constr Cons ((Pat_tuple ((Pat_var x) (Pat_var y) (Pat_var z))))) |}]
 
 let%expect_test "Test: full program parsing" =
   print_parsed_program
@@ -684,13 +685,13 @@ let%expect_test "Test: full program parsing" =
   print_parsed_program {|let x = 1|};
   [%expect
     {|
-    ((TopLet x
-       ((desc (EConst (CInt 1)))
+    ((Top_let x
+       ((desc (Exp_const (Const_int 1)))
          (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 70)))
          (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 71)))
          (attrs ()))))
-    ((TopLet x
-       ((desc (EConst (CInt 1)))
+    ((Top_let x
+       ((desc (Exp_const (Const_int 1)))
          (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 8)))
          (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 9)))
          (attrs ()))))
@@ -703,28 +704,28 @@ let%expect_test "Test: full program parsing" =
      |};
   [%expect
     {|
-    ((TopLet x
-       ((desc (EConst (CInt 1)))
+    ((Top_let x
+       ((desc (Exp_const (Const_int 1)))
          (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 14)))
          (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 15)))
          (attrs ())))
-      (TopLet y
-        ((desc (EConst (CInt 2)))
+      (Top_let y
+        ((desc (Exp_const (Const_int 2)))
           (start_loc ((pos_fname "") (pos_lnum 3) (pos_bol 16) (pos_cnum 29)))
           (end_loc ((pos_fname "") (pos_lnum 3) (pos_bol 16) (pos_cnum 30)))
           (attrs ())))
-      (TopLetRec
+      (Top_letrec
         ((foo
-           ((PBare x)
+           ((Para_bare x)
              ((desc
-                (EApp
-                  ((desc (EVar foo))
+                (Exp_app
+                  ((desc (Exp_var foo))
                     (start_loc
                       ((pos_fname "") (pos_lnum 4) (pos_bol 31) (pos_cnum 59)))
                     (end_loc
                       ((pos_fname "") (pos_lnum 4) (pos_bol 31) (pos_cnum 62)))
                     (attrs ()))
-                  ((desc (EVar x))
+                  ((desc (Exp_var x))
                     (start_loc
                       ((pos_fname "") (pos_lnum 4) (pos_bol 31) (pos_cnum 63)))
                     (end_loc
@@ -738,10 +739,10 @@ let%expect_test "Test: full program parsing" =
   print_parsed_program {|let rec f = fun (x:int) -> 1|};
   [%expect
     {|
-    ((TopLetRec
+    ((Top_letrec
        ((f
-          ((PAnn x (TCons int ()))
-            ((desc (EConst (CInt 1)))
+          ((Para_ann x (Ty_cons int ()))
+            ((desc (Exp_const (Const_int 1)))
               (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 27)))
               (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 28)))
               (attrs ())))))))
@@ -753,18 +754,18 @@ let%expect_test "Test: full program parsing" =
      |};
   [%expect
     {|
-    ((TopLetRec
+    ((Top_letrec
        ((odd
-          ((PBare x)
+          ((Para_bare x)
             ((desc
-               (EApp
-                 ((desc (EVar even))
+               (Exp_app
+                 ((desc (Exp_var even))
                    (start_loc
                      ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 28)))
                    (end_loc
                      ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 32)))
                    (attrs ()))
-                 ((desc (EVar x))
+                 ((desc (Exp_var x))
                    (start_loc
                      ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 33)))
                    (end_loc
@@ -774,16 +775,16 @@ let%expect_test "Test: full program parsing" =
               (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 34)))
               (attrs ()))))
          (even
-           ((PBare x)
+           ((Para_bare x)
              ((desc
-                (EApp
-                  ((desc (EVar odd))
+                (Exp_app
+                  ((desc (Exp_var odd))
                     (start_loc
                       ((pos_fname "") (pos_lnum 3) (pos_bol 35) (pos_cnum 59)))
                     (end_loc
                       ((pos_fname "") (pos_lnum 3) (pos_bol 35) (pos_cnum 62)))
                     (attrs ()))
-                  ((desc (EVar x))
+                  ((desc (Exp_var x))
                     (start_loc
                       ((pos_fname "") (pos_lnum 3) (pos_bol 35) (pos_cnum 63)))
                     (end_loc
@@ -810,14 +811,14 @@ let%expect_test "Test: full program parsing" =
      |};
   [%expect
     {|
-    ((TopMod M
+    ((Top_mod M
        ((desc
-          (MERestrict
+          (Mod_restrict
             ((desc
-               (MEStruct
-                 ((TopTypeDef (TDAdt t () ((Nil ()))))
-                   (TopLet x
-                     ((desc (ECons Nil))
+               (Mod_struct
+                 ((Top_type_def (Ty_def_adt t () ((Nil ()))))
+                   (Top_let x
+                     ((desc (Exp_constr Nil))
                        (start_loc
                          ((pos_fname "") (pos_lnum 6) (pos_bol 55) (pos_cnum 70)))
                        (end_loc
@@ -827,7 +828,7 @@ let%expect_test "Test: full program parsing" =
                 ((pos_fname "") (pos_lnum 3) (pos_bol 18) (pos_cnum 23)))
               (end_loc ((pos_fname "") (pos_lnum 7) (pos_bol 74) (pos_cnum 82)))
               (attrs ()))
-            (MTSig ((TAbstTySpec t ()) (TValueSpec x (TCons t ()))))))
+            (Mod_ty_sig ((Spec_abstr t ()) (Spec_value x (Ty_cons t ()))))))
          (start_loc ((pos_fname "") (pos_lnum 3) (pos_bol 18) (pos_cnum 23)))
          (end_loc ((pos_fname "") (pos_lnum 11) (pos_bol 128) (pos_cnum 136)))
          (attrs ()))))
@@ -844,9 +845,10 @@ let%expect_test "Test: full program parsing" =
      |};
   [%expect
     {|
-    ((TopModSig MIntf
-       (MTSig
-         ((TManiTySpec (TDAdt t () ((Nil ())))) (TValueSpec x (TCons t ()))))))
+    ((Top_mod_sig MIntf
+       (Mod_ty_sig
+         ((Spec_mani_ty (Ty_def_adt t () ((Nil ()))))
+           (Spec_value x (Ty_cons t ()))))))
     |}];
 
   print_parsed_program
@@ -867,16 +869,16 @@ functor
 |};
   [%expect
     {|
-    ((TopMod F
+    ((Top_mod F
        ((desc
-          (MEFunctor
-            ((MI (MTName I))
+          (Mod_functor
+            ((MI (Mod_ty_name I))
               ((desc
-                 (MERestrict
+                 (Mod_restrict
                    ((desc
-                      (MEStruct
-                        ((TopLet x
-                           ((desc (EConst (CInt 1)))
+                      (Mod_struct
+                        ((Top_let x
+                           ((desc (Exp_const (Const_int 1)))
                              (start_loc
                                ((pos_fname "") (pos_lnum 8) (pos_bol 51)
                                  (pos_cnum 65)))
@@ -884,8 +886,8 @@ functor
                                ((pos_fname "") (pos_lnum 8) (pos_bol 51)
                                  (pos_cnum 66)))
                              (attrs ())))
-                          (TopLet y
-                            ((desc (EConst (CInt 1)))
+                          (Top_let y
+                            ((desc (Exp_const (Const_int 1)))
                               (start_loc
                                 ((pos_fname "") (pos_lnum 10) (pos_bol 68)
                                   (pos_cnum 82)))
@@ -893,8 +895,8 @@ functor
                                 ((pos_fname "") (pos_lnum 10) (pos_bol 68)
                                   (pos_cnum 83)))
                               (attrs ())))
-                          (TopLet z
-                            ((desc (EConst (CInt 1)))
+                          (Top_let z
+                            ((desc (Exp_const (Const_int 1)))
                               (start_loc
                                 ((pos_fname "") (pos_lnum 12) (pos_bol 85)
                                   (pos_cnum 99)))
@@ -908,7 +910,7 @@ functor
                        ((pos_fname "") (pos_lnum 13) (pos_bol 101)
                          (pos_cnum 108)))
                      (attrs ()))
-                   (MTName J)))
+                   (Mod_ty_name J)))
                 (start_loc
                   ((pos_fname "") (pos_lnum 7) (pos_bol 40) (pos_cnum 44)))
                 (end_loc
@@ -926,22 +928,22 @@ functor
 |};
   [%expect
     {|
-    ((TopLet co
+    ((Top_let co
        ((desc
-          (EApp
-            ((desc (ECons Cons))
+          (Exp_app
+            ((desc (Exp_constr Cons))
               (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 14)))
               (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 18)))
               (attrs ()))
-            ((desc (EConst (CInt 1)))
+            ((desc (Exp_const (Const_int 1)))
               (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 19)))
               (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 20)))
               (attrs ()))))
          (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 14)))
          (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 20)))
          (attrs ())))
-      (TopLet f
-        ((desc (EConst (CInt 1)))
+      (Top_let f
+        ((desc (Exp_const (Const_int 1)))
           (start_loc ((pos_fname "") (pos_lnum 4) (pos_bol 22) (pos_cnum 34)))
           (end_loc ((pos_fname "") (pos_lnum 4) (pos_bol 22) (pos_cnum 35)))
           (attrs ()))))
@@ -951,15 +953,19 @@ functor
        type t =  a list -> b
 |};
   [%expect
-    {| ((TopTypeDef (TDAlias t (TArrow (TCons list ((TCons a ()))) (TCons b ()))))) |}];
+    {|
+    ((Top_type_def
+       (Ty_def_alias t (Ty_arrow (Ty_cons list ((Ty_cons a ()))) (Ty_cons b ())))))
+    |}];
 
   print_parsed_program {|
   external x : int -> int -> int = "ff_add"
 |};
   [%expect
     {|
-    ((TopExternal x
-       (TArrow (TCons int ()) (TArrow (TCons int ()) (TCons int ()))) ff_add))
+    ((Top_external x
+       (Ty_arrow (Ty_cons int ()) (Ty_arrow (Ty_cons int ()) (Ty_cons int ())))
+       ff_add))
     |}];
 
   print_parsed_program
@@ -971,15 +977,15 @@ let y = 2
 |};
   [%expect
     {|
-    ((TopLet x
+    ((Top_let x
        ((desc
-          (ECase
-            ((desc (EVar a))
+          (Exp_case
+            ((desc (Exp_var a))
               (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 15)))
               (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 16)))
               (attrs ()))
-            (((PCons Cons ())
-               ((desc (EConst (CInt 0)))
+            (((Pat_constr Cons ())
+               ((desc (Exp_const (Const_int 0)))
                  (start_loc
                    ((pos_fname "") (pos_lnum 3) (pos_bol 22) (pos_cnum 38)))
                  (end_loc
@@ -988,8 +994,8 @@ let y = 2
          (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 9)))
          (end_loc ((pos_fname "") (pos_lnum 3) (pos_bol 22) (pos_cnum 39)))
          (attrs ())))
-      (TopLet y
-        ((desc (EConst (CInt 2)))
+      (Top_let y
+        ((desc (Exp_const (Const_int 2)))
           (start_loc ((pos_fname "") (pos_lnum 5) (pos_bol 41) (pos_cnum 49)))
           (end_loc ((pos_fname "") (pos_lnum 5) (pos_bol 41) (pos_cnum 50)))
           (attrs ()))))
@@ -1002,11 +1008,11 @@ let y = 2
 |};
   [%expect
     {|
-    ((TopLet x
+    ((Top_let x
        ((desc
-          (ELam
-            ((PBare x)
-              ((desc (EVar y))
+          (Exp_lam
+            ((Para_bare x)
+              ((desc (Exp_var y))
                 (start_loc
                   ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 18)))
                 (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 19)))
@@ -1014,8 +1020,8 @@ let y = 2
          (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 9)))
          (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 19)))
          (attrs ())))
-      (TopLet y
-        ((desc (EConst (CInt 2)))
+      (Top_let y
+        ((desc (Exp_const (Const_int 2)))
           (start_loc ((pos_fname "") (pos_lnum 4) (pos_bol 21) (pos_cnum 29)))
           (end_loc ((pos_fname "") (pos_lnum 4) (pos_bol 21) (pos_cnum 30)))
           (attrs ()))))
@@ -1037,15 +1043,15 @@ let y = 2
      |};
   [%expect
     {|
-    ((TopLet x
+    ((Top_let x
        ((desc
-          (ETuple
-            (((desc (EConst (CInt 1)))
+          (Exp_tuple
+            (((desc (Exp_const (Const_int 1)))
                (start_loc
                  ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 15)))
                (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 16)))
                (attrs ()))
-              ((desc (EConst (CInt 2)))
+              ((desc (Exp_const (Const_int 2)))
                 (start_loc
                   ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 17)))
                 (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 18)))
@@ -1053,16 +1059,16 @@ let y = 2
          (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 15)))
          (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 18)))
          (attrs ())))
-      (TopLet y
+      (Top_let y
         ((desc
-           (ETuple
-             (((desc (EConst (CInt 1)))
+           (Exp_tuple
+             (((desc (Exp_const (Const_int 1)))
                 (start_loc
                   ((pos_fname "") (pos_lnum 4) (pos_bol 21) (pos_cnum 35)))
                 (end_loc
                   ((pos_fname "") (pos_lnum 4) (pos_bol 21) (pos_cnum 36)))
                 (attrs ()))
-               ((desc (EConst (CInt 2)))
+               ((desc (Exp_const (Const_int 2)))
                  (start_loc
                    ((pos_fname "") (pos_lnum 4) (pos_bol 21) (pos_cnum 38)))
                  (end_loc
@@ -1071,16 +1077,16 @@ let y = 2
           (start_loc ((pos_fname "") (pos_lnum 4) (pos_bol 21) (pos_cnum 35)))
           (end_loc ((pos_fname "") (pos_lnum 4) (pos_bol 21) (pos_cnum 39)))
           (attrs ())))
-      (TopLet z
+      (Top_let z
         ((desc
-           (ECase
-             ((desc (EVar y))
+           (Exp_case
+             ((desc (Exp_var y))
                (start_loc
                  ((pos_fname "") (pos_lnum 6) (pos_bol 42) (pos_cnum 61)))
                (end_loc ((pos_fname "") (pos_lnum 6) (pos_bol 42) (pos_cnum 62)))
                (attrs ()))
-             (((PTuple ((PVar x) (PVar y)))
-                ((desc (EVar x))
+             (((Pat_tuple ((Pat_var x) (Pat_var y)))
+                ((desc (Exp_var x))
                   (start_loc
                     ((pos_fname "") (pos_lnum 7) (pos_bol 69) (pos_cnum 94)))
                   (end_loc
@@ -1089,20 +1095,20 @@ let y = 2
           (start_loc ((pos_fname "") (pos_lnum 6) (pos_bol 42) (pos_cnum 55)))
           (end_loc ((pos_fname "") (pos_lnum 7) (pos_bol 69) (pos_cnum 95)))
           (attrs ())))
-      (TopLet n
+      (Top_let n
         ((desc
-           (ELam
-             ((PBare y)
+           (Exp_lam
+             ((Para_bare y)
                ((desc
-                  (ECase
-                    ((desc (EVar y))
+                  (Exp_case
+                    ((desc (Exp_var y))
                       (start_loc
                         ((pos_fname "") (pos_lnum 9) (pos_bol 97) (pos_cnum 125)))
                       (end_loc
                         ((pos_fname "") (pos_lnum 9) (pos_bol 97) (pos_cnum 126)))
                       (attrs ()))
-                    (((PTuple ((PVar x) (PVar y)))
-                       ((desc (EVar y))
+                    (((Pat_tuple ((Pat_var x) (Pat_var y)))
+                       ((desc (Exp_var y))
                          (start_loc
                            ((pos_fname "") (pos_lnum 10) (pos_bol 133)
                              (pos_cnum 152)))
@@ -1118,8 +1124,8 @@ let y = 2
           (start_loc ((pos_fname "") (pos_lnum 9) (pos_bol 97) (pos_cnum 110)))
           (end_loc ((pos_fname "") (pos_lnum 10) (pos_bol 133) (pos_cnum 153)))
           (attrs ())))
-      (TopLet w
-        ((desc (EConst (CInt 1)))
+      (Top_let w
+        ((desc (Exp_const (Const_int 1)))
           (start_loc ((pos_fname "") (pos_lnum 12) (pos_bol 155) (pos_cnum 168)))
           (end_loc ((pos_fname "") (pos_lnum 12) (pos_bol 155) (pos_cnum 169)))
           (attrs ()))))
@@ -1136,14 +1142,14 @@ let result = print_int (sum 4)
 |};
   [%expect
     {|
-    ((TopLetRec
+    ((Top_letrec
        ((sum
-          ((PBare x)
+          ((Para_bare x)
             ((desc
-               (EIf
+               (Exp_if
                  ((desc
-                    (ECmp Eq
-                      ((desc (EVar x))
+                    (Exp_cmp Eq
+                      ((desc (Exp_var x))
                         (start_loc
                           ((pos_fname "") (pos_lnum 3) (pos_bol 24)
                             (pos_cnum 32)))
@@ -1151,7 +1157,7 @@ let result = print_int (sum 4)
                           ((pos_fname "") (pos_lnum 3) (pos_bol 24)
                             (pos_cnum 33)))
                         (attrs ()))
-                      ((desc (EConst (CInt 0)))
+                      ((desc (Exp_const (Const_int 0)))
                         (start_loc
                           ((pos_fname "") (pos_lnum 3) (pos_bol 24)
                             (pos_cnum 36)))
@@ -1164,13 +1170,13 @@ let result = print_int (sum 4)
                    (end_loc
                      ((pos_fname "") (pos_lnum 3) (pos_bol 24) (pos_cnum 37)))
                    (attrs ()))
-                 ((desc (EConst (CInt 0)))
+                 ((desc (Exp_const (Const_int 0)))
                    (start_loc
                      ((pos_fname "") (pos_lnum 4) (pos_bol 38) (pos_cnum 47)))
                    (end_loc
                      ((pos_fname "") (pos_lnum 4) (pos_bol 38) (pos_cnum 48)))
                    (attrs ()))
-                 ((desc (EConst (CInt 1)))
+                 ((desc (Exp_const (Const_int 1)))
                    (start_loc
                      ((pos_fname "") (pos_lnum 5) (pos_bol 49) (pos_cnum 58)))
                    (end_loc
@@ -1180,23 +1186,23 @@ let result = print_int (sum 4)
                 ((pos_fname "") (pos_lnum 3) (pos_bol 24) (pos_cnum 29)))
               (end_loc ((pos_fname "") (pos_lnum 5) (pos_bol 49) (pos_cnum 59)))
               (attrs ()))))))
-      (TopLet result
+      (Top_let result
         ((desc
-           (EApp
-             ((desc (EVar print_int))
+           (Exp_app
+             ((desc (Exp_var print_int))
                (start_loc
                  ((pos_fname "") (pos_lnum 7) (pos_bol 62) (pos_cnum 75)))
                (end_loc ((pos_fname "") (pos_lnum 7) (pos_bol 62) (pos_cnum 84)))
                (attrs ()))
              ((desc
-                (EApp
-                  ((desc (EVar sum))
+                (Exp_app
+                  ((desc (Exp_var sum))
                     (start_loc
                       ((pos_fname "") (pos_lnum 7) (pos_bol 62) (pos_cnum 86)))
                     (end_loc
                       ((pos_fname "") (pos_lnum 7) (pos_bol 62) (pos_cnum 89)))
                     (attrs ()))
-                  ((desc (EConst (CInt 4)))
+                  ((desc (Exp_const (Const_int 4)))
                     (start_loc
                       ((pos_fname "") (pos_lnum 7) (pos_bol 62) (pos_cnum 90)))
                     (end_loc
@@ -1214,12 +1220,12 @@ let result = print_int (sum 4)
     {|
                 type 'a t = Nil
                         |};
-  [%expect {| ((TopTypeDef (TDAdt t ('a/0) ((Nil ()))))) |}];
+  [%expect {| ((Top_type_def (Ty_def_adt t ('a/0) ((Nil ()))))) |}];
   print_parsed_program
     {|
                 type t = | Nil
                         |};
-  [%expect {| ((TopTypeDef (TDAdt t () ((Nil ()))))) |}];
+  [%expect {| ((Top_type_def (Ty_def_adt t () ((Nil ()))))) |}];
   print_parsed_program
     {|
      let x = let rec f = fun x -> 1
@@ -1230,26 +1236,26 @@ let result = print_int (sum 4)
      |};
   [%expect
     {|
-    ((TopLet x
+    ((Top_let x
        ((desc
-          (ELetrec
+          (Exp_letrec
             ((f
-               ((PBare x)
-                 ((desc (EConst (CInt 1)))
+               ((Para_bare x)
+                 ((desc (Exp_const (Const_int 1)))
                    (start_loc
                      ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 35)))
                    (end_loc
                      ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 36)))
                    (attrs ()))))
               (g
-                ((PBare y)
-                  ((desc (EConst (CInt 2)))
+                ((Para_bare y)
+                  ((desc (Exp_const (Const_int 2)))
                     (start_loc
                       ((pos_fname "") (pos_lnum 3) (pos_bol 37) (pos_cnum 67)))
                     (end_loc
                       ((pos_fname "") (pos_lnum 3) (pos_bol 37) (pos_cnum 68)))
                     (attrs ())))))
-            ((desc (EVar f))
+            ((desc (Exp_var f))
               (start_loc
                 ((pos_fname "") (pos_lnum 4) (pos_bol 72) (pos_cnum 85)))
               (end_loc ((pos_fname "") (pos_lnum 4) (pos_bol 72) (pos_cnum 86)))
@@ -1257,8 +1263,8 @@ let result = print_int (sum 4)
          (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 14)))
          (end_loc ((pos_fname "") (pos_lnum 4) (pos_bol 72) (pos_cnum 86)))
          (attrs ())))
-      (TopLet _
-        ((desc (EConst (CInt 1)))
+      (Top_let _
+        ((desc (Exp_const (Const_int 1)))
           (start_loc ((pos_fname "") (pos_lnum 5) (pos_bol 87) (pos_cnum 100)))
           (end_loc ((pos_fname "") (pos_lnum 5) (pos_bol 87) (pos_cnum 101)))
           (attrs ()))))
@@ -1268,7 +1274,7 @@ let%expect_test "Test: path parsing" =
   print_parsed_mod_expr {|X|};
   [%expect
     {|
-    ((desc (MEName X))
+    ((desc (Mod_name X))
       (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
       (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 1)))
       (attrs ()))
@@ -1277,8 +1283,8 @@ let%expect_test "Test: path parsing" =
   [%expect
     {|
     ((desc
-       (MEField
-         ((desc (MEName X))
+       (Mod_field
+         ((desc (Mod_name X))
            (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
            (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 1)))
            (attrs ()))
@@ -1291,12 +1297,12 @@ let%expect_test "Test: path parsing" =
   [%expect
     {|
     ((desc
-       (MEApply
-         ((desc (MEName X))
+       (Mod_apply
+         ((desc (Mod_name X))
            (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
            (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 1)))
            (attrs ()))
-         ((desc (MEName Y))
+         ((desc (Mod_name Y))
            (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 2)))
            (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 3)))
            (attrs ()))))
@@ -1308,12 +1314,12 @@ let%expect_test "Test: path parsing" =
   [%expect
     {|
     ((desc
-       (MEApply
+       (Mod_apply
          ((desc
-            (MEApply
+            (Mod_apply
               ((desc
-                 (MEField
-                   ((desc (MEName X))
+                 (Mod_field
+                   ((desc (Mod_name X))
                      (start_loc
                        ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
                      (end_loc
@@ -1325,14 +1331,14 @@ let%expect_test "Test: path parsing" =
                 (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 3)))
                 (attrs ()))
               ((desc
-                 (MEApply
-                   ((desc (MEName Z))
+                 (Mod_apply
+                   ((desc (Mod_name Z))
                      (start_loc
                        ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 4)))
                      (end_loc
                        ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 5)))
                      (attrs ()))
-                   ((desc (MEName N))
+                   ((desc (Mod_name N))
                      (start_loc
                        ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 6)))
                      (end_loc
@@ -1346,10 +1352,10 @@ let%expect_test "Test: path parsing" =
            (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 9)))
            (attrs ()))
          ((desc
-            (MEField
+            (Mod_field
               ((desc
-                 (MEField
-                   ((desc (MEName W))
+                 (Mod_field
+                   ((desc (Mod_name W))
                      (start_loc
                        ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 10)))
                      (end_loc
@@ -1371,68 +1377,71 @@ let%expect_test "Test: path parsing" =
 
 let%expect_test "Test: type expression parsing" =
   print_parsed_type_expr "string";
-  [%expect {| (TCons string ()) |}];
+  [%expect {| (Ty_cons string ()) |}];
   print_parsed_type_expr "(string) list";
-  [%expect {| (TCons list ((TCons string ()))) |}];
+  [%expect {| (Ty_cons list ((Ty_cons string ()))) |}];
   print_parsed_type_expr "string list";
-  [%expect {| (TCons list ((TCons string ()))) |}];
+  [%expect {| (Ty_cons list ((Ty_cons string ()))) |}];
   print_parsed_type_expr "'x";
-  [%expect {| (TVar 'x/0) |}];
+  [%expect {| (Ty_var 'x/0) |}];
   print_parsed_type_expr "(string, 'x, 'y) list";
-  [%expect {| (TCons list ((TCons string ()) (TVar 'x/0) (TVar 'y/0))) |}];
+  [%expect
+    {| (Ty_cons list ((Ty_cons string ()) (Ty_var 'x/0) (Ty_var 'y/0))) |}];
   print_parsed_type_expr "int * int";
-  [%expect {| (TTuple ((TCons int ()) (TCons int ()))) |}];
+  [%expect {| (Ty_tuple ((Ty_cons int ()) (Ty_cons int ()))) |}];
   print_parsed_type_expr "int * i list * (x * y) list * (t1 * t2)";
   [%expect
     {|
-    (TTuple
-      ((TCons int ()) (TCons list ((TCons i ())))
-        (TCons list ((TTuple ((TCons x ()) (TCons y ())))))
-        (TTuple ((TCons t1 ()) (TCons t2 ()))))) |}];
+    (Ty_tuple
+      ((Ty_cons int ()) (Ty_cons list ((Ty_cons i ())))
+        (Ty_cons list ((Ty_tuple ((Ty_cons x ()) (Ty_cons y ())))))
+        (Ty_tuple ((Ty_cons t1 ()) (Ty_cons t2 ())))))
+    |}];
   print_parsed_type_expr "{x: int; y: float; z: int -> float }";
   [%expect
     {|
-    (TRecord
-      ((x (TCons int ())) (y (TCons float ()))
-        (z (TArrow (TCons int ()) (TCons float ()))))) |}];
+    (Ty_record
+      ((x (Ty_cons int ())) (y (Ty_cons float ()))
+        (z (Ty_arrow (Ty_cons int ()) (Ty_cons float ())))))
+    |}];
   print_parsed_type_expr "(int, float) T.t";
   [%expect
     {|
-    (TField
-      ((desc (MEName T))
+    (Ty_field
+      ((desc (Mod_name T))
         (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 13)))
         (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 14)))
         (attrs ()))
-      t ((TCons int ()) (TCons float ())))
+      t ((Ty_cons int ()) (Ty_cons float ())))
     |}];
   print_parsed_type_expr "int T(M).t";
   [%expect
     {|
-    (TField
+    (Ty_field
       ((desc
-         (MEApply
-           ((desc (MEName T))
+         (Mod_apply
+           ((desc (Mod_name T))
              (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 4)))
              (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 5)))
              (attrs ()))
-           ((desc (MEName M))
+           ((desc (Mod_name M))
              (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 6)))
              (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 7)))
              (attrs ()))))
         (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 4)))
         (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 8)))
         (attrs ()))
-      t ((TCons int ())))
+      t ((Ty_cons int ())))
     |}];
   print_parsed_type_expr "(int) T.t";
   [%expect
     {|
-    (TField
-      ((desc (MEName T))
+    (Ty_field
+      ((desc (Mod_name T))
         (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 6)))
         (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 7)))
         (attrs ()))
-      t ((TCons int ())))
+      t ((Ty_cons int ())))
     |}]
 
 let%expect_test "Test: top level module" =
@@ -1442,8 +1451,8 @@ let%expect_test "Test: top level module" =
      |};
   [%expect
     {|
-    ((TopMod X
-       ((desc (MEStruct ()))
+    ((Top_mod X
+       ((desc (Mod_struct ()))
          (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 17)))
          (end_loc ((pos_fname "") (pos_lnum 3) (pos_bol 24) (pos_cnum 32)))
          (attrs ()))))
@@ -1460,27 +1469,27 @@ let%expect_test "Test: top level module" =
      |};
   [%expect
     {|
-    ((TopMod X
+    ((Top_mod X
        ((desc
-          (MEStruct
-            ((TopLet x
-               ((desc (EConst (CInt 1)))
+          (Mod_struct
+            ((Top_let x
+               ((desc (Exp_const (Const_int 1)))
                  (start_loc
                    ((pos_fname "") (pos_lnum 3) (pos_bol 24) (pos_cnum 39)))
                  (end_loc
                    ((pos_fname "") (pos_lnum 3) (pos_bol 24) (pos_cnum 40)))
                  (attrs ())))
-              (TopLetRec
+              (Top_letrec
                 ((y
-                   ((PBare x)
-                     ((desc (EConst (CInt 3)))
+                   ((Para_bare x)
+                     ((desc (Exp_const (Const_int 3)))
                        (start_loc
                          ((pos_fname "") (pos_lnum 4) (pos_bol 41) (pos_cnum 69)))
                        (end_loc
                          ((pos_fname "") (pos_lnum 4) (pos_bol 41) (pos_cnum 70)))
                        (attrs ()))))))
-              (TopMod Y
-                ((desc (MEStruct ()))
+              (Top_mod Y
+                ((desc (Mod_struct ()))
                   (start_loc
                     ((pos_fname "") (pos_lnum 5) (pos_bol 71) (pos_cnum 89)))
                   (end_loc
@@ -1508,14 +1517,14 @@ let%expect_test "Test: module expression" =
   [%expect
     {|
     ((desc
-       (MEStruct
-         ((TopLet x
-            ((desc (EConst (CInt 1)))
+       (Mod_struct
+         ((Top_let x
+            ((desc (Exp_const (Const_int 1)))
               (start_loc
                 ((pos_fname "") (pos_lnum 3) (pos_bol 14) (pos_cnum 29)))
               (end_loc ((pos_fname "") (pos_lnum 3) (pos_bol 14) (pos_cnum 30)))
               (attrs ())))
-           (TopTypeDef (TDAdt a () ((Cons ((TCons int ()))) (Nil ())))))))
+           (Top_type_def (Ty_def_adt a () ((Cons ((Ty_cons int ()))) (Nil ())))))))
       (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 6)))
       (end_loc ((pos_fname "") (pos_lnum 8) (pos_bol 91) (pos_cnum 99)))
       (attrs ()))
@@ -1524,9 +1533,9 @@ let%expect_test "Test: module expression" =
   [%expect
     {|
     ((desc
-       (MEFunctor
-         ((X (MTName M))
-           ((desc (MEStruct ()))
+       (Mod_functor
+         ((X (Mod_ty_name M))
+           ((desc (Mod_struct ()))
              (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 18)))
              (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 28)))
              (attrs ())))))
@@ -1537,19 +1546,19 @@ let%expect_test "Test: module expression" =
 
 let%expect_test "Test: module type" =
   let print_parsed str =
-    parse_string_mod_type str |> sexp_of_emod_ty |> print_sexp
+    parse_string_mod_type str |> sexp_of_surface_mod_ty |> print_sexp
   in
   print_parsed {|M|};
-  [%expect {| (MTName M) |}];
+  [%expect {| (Mod_ty_name M) |}];
   print_parsed {|M.X(M).E|};
   [%expect
     {|
-    (MTField
+    (Mod_ty_field
       ((desc
-         (MEApply
+         (Mod_apply
            ((desc
-              (MEField
-                ((desc (MEName M))
+              (Mod_field
+                ((desc (Mod_name M))
                   (start_loc
                     ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
                   (end_loc
@@ -1559,7 +1568,7 @@ let%expect_test "Test: module type" =
              (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
              (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 3)))
              (attrs ()))
-           ((desc (MEName M))
+           ((desc (Mod_name M))
              (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 4)))
              (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 5)))
              (attrs ()))))
@@ -1569,15 +1578,21 @@ let%expect_test "Test: module type" =
       E)
     |}];
   print_parsed {|sig val x : int end|};
-  [%expect {| (MTSig ((TValueSpec x (TCons int ())))) |}];
+  [%expect {| (Mod_ty_sig ((Spec_value x (Ty_cons int ())))) |}];
   print_parsed {|functor (M:M) -> sig val x: int end|};
   [%expect
-    {| (MTFunctor M (MTName M) (MTSig ((TValueSpec x (TCons int ()))))) |}];
+    {|
+    (Mod_ty_functor M (Mod_ty_name M)
+      (Mod_ty_sig ((Spec_value x (Ty_cons int ())))))
+    |}];
   print_parsed {|functor (M:M) -> M1|};
-  [%expect {| (MTFunctor M (MTName M) (MTName M1)) |}];
+  [%expect {| (Mod_ty_functor M (Mod_ty_name M) (Mod_ty_name M1)) |}];
   print_parsed {|functor (M:functor (X:M)->M) -> M1|};
   [%expect
-    {| (MTFunctor M (MTFunctor X (MTName M) (MTName M)) (MTName M1)) |}];
+    {|
+    (Mod_ty_functor M (Mod_ty_functor X (Mod_ty_name M) (Mod_ty_name M))
+      (Mod_ty_name M1))
+    |}];
   print_parsed
     {|
                 sig
@@ -1592,7 +1607,9 @@ let%expect_test "Test: module type" =
                 |};
   [%expect
     {|
-    (MTSig
-      ((TValueSpec x (TCons int ())) (TAbstTySpec t ())
-        (TValueSpec m (TArrow (TCons t ()) (TCons t ())))
-        (TManiTySpec (TDAdt i_list () ((Cons ((TCons int ()))) (Nil ())))))) |}]
+    (Mod_ty_sig
+      ((Spec_value x (Ty_cons int ())) (Spec_abstr t ())
+        (Spec_value m (Ty_arrow (Ty_cons t ()) (Ty_cons t ())))
+        (Spec_mani_ty
+          (Ty_def_adt i_list () ((Cons ((Ty_cons int ()))) (Nil ()))))))
+    |}]
