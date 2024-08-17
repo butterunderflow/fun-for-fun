@@ -23,7 +23,8 @@ let occurs (tpv : tv ref) (te : ty) : unit =
         let[@warning "-8"] (Unbound (_, level)) = !tpv in
         let min_level = min level level' in
         tpv'.contents <- Unbound (tvn', min_level)
-    | Ty_qvar _ -> ()
+    | Ty_qvar _ ->
+        failwith "internal error: unify with quantified type variable"
     | Ty_arrow (te1, te2) ->
         go te1;
         go te2
