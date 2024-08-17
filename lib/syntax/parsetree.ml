@@ -15,8 +15,8 @@ type position = Lexing.position = {
 }
 [@@deriving sexp]
 
-type 'a node_desc = {
-  node : 'a;
+type 'a node = {
+  desc : 'a;
   start_loc : position;
   end_loc : position;
   attrs : string list; (* unused now *)
@@ -42,9 +42,9 @@ and cmp_op =
   | Eq
   | Neq
 
-and expr = expr_node node_desc
+and expr = expr_desc node
 
-and expr_node =
+and expr_desc =
   | EConst of constant
   | EVar of string
   | ECons of string
@@ -72,9 +72,9 @@ and lambda = para * expr
 
 and mod_body = top_level list
 
-and mod_expr = mod_expr_node node_desc
+and mod_expr = mod_expr_desc node
 
-and mod_expr_node =
+and mod_expr_desc =
   | MEName of string (* M *)
   | MEStruct of mod_body (* struct ... end *)
   | MEFunctor of functor_expr (* functor (M: MT) -> ... *)
@@ -117,8 +117,8 @@ and emod_ty =
 
 and evariant = string * ety option [@@deriving sexp]
 
-let make_node node start_loc end_loc =
-  { node; start_loc; end_loc; attrs = [] }
+let make_node desc start_loc end_loc =
+  { desc; start_loc; end_loc; attrs = [] }
 
 let dbg prog =
   let s = sexp_of_program prog in

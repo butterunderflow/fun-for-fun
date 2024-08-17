@@ -34,7 +34,7 @@ let check_subtype = Subtype.check_subtype
 (* typing expression *)
 let rec check_expr (e : T.expr) (env : Env.t) : expr =
   try
-    match e.node with
+    match e.desc with
     | T.EConst c -> check_const c
     | T.EVar x -> check_var x env
     | T.ELet (x, e0, e1) -> check_let x e0 e1 env
@@ -395,7 +395,7 @@ and make_mt_by_scope
 
 and check_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
   let me_typed =
-    match me.node with
+    match me.desc with
     | T.MEName name -> check_mod_name name env
     | T.MEStruct body -> check_struct body env
     | T.MEFunctor ((name, ext_mt0), me1) ->

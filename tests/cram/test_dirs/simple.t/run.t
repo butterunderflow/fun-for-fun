@@ -112,23 +112,23 @@
 
   $ cat simple1.parsing
   ((TopLet x
-     ((node (EConst (CInt 1)))
+     ((desc (EConst (CInt 1)))
        (start_loc
          ((pos_fname simple.fun) (pos_lnum 1) (pos_bol 0) (pos_cnum 8)))
        (end_loc ((pos_fname simple.fun) (pos_lnum 1) (pos_bol 0) (pos_cnum 9)))
        (attrs ())))
     (TopLet y
-      ((node (EConst (CInt 1)))
+      ((desc (EConst (CInt 1)))
         (start_loc
           ((pos_fname simple.fun) (pos_lnum 3) (pos_bol 11) (pos_cnum 19)))
         (end_loc
           ((pos_fname simple.fun) (pos_lnum 3) (pos_bol 11) (pos_cnum 20)))
         (attrs ())))
     (TopLet z
-      ((node
+      ((desc
          (ELam
            ((PBare x)
-             ((node (EVar y))
+             ((desc (EVar y))
                (start_loc
                  ((pos_fname simple.fun) (pos_lnum 5) (pos_bol 22)
                    (pos_cnum 40)))
@@ -142,10 +142,10 @@
           ((pos_fname simple.fun) (pos_lnum 5) (pos_bol 22) (pos_cnum 41)))
         (attrs ())))
     (TopLet w
-      ((node
+      ((desc
          (ELam
            ((PBare x)
-             ((node (EConst (CInt 0)))
+             ((desc (EConst (CInt 0)))
                (start_loc
                  ((pos_fname simple.fun) (pos_lnum 7) (pos_bol 44)
                    (pos_cnum 62)))
@@ -159,12 +159,12 @@
           ((pos_fname simple.fun) (pos_lnum 7) (pos_bol 44) (pos_cnum 63)))
         (attrs ())))
     (TopLet m
-      ((node
+      ((desc
          (ELam
            ((PBare x)
-             ((node
+             ((desc
                 (EApp
-                  ((node (EVar w))
+                  ((desc (EVar w))
                     (start_loc
                       ((pos_fname simple.fun) (pos_lnum 9) (pos_bol 66)
                         (pos_cnum 84)))
@@ -172,7 +172,7 @@
                       ((pos_fname simple.fun) (pos_lnum 9) (pos_bol 66)
                         (pos_cnum 85)))
                     (attrs ()))
-                  ((node (EConst (CInt 1)))
+                  ((desc (EConst (CInt 1)))
                     (start_loc
                       ((pos_fname simple.fun) (pos_lnum 9) (pos_bol 66)
                         (pos_cnum 86)))
