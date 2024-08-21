@@ -94,17 +94,20 @@ program:
 
 top_levels:
     | (* empty *) { [] }
-    | td=type_def rest=top_levels
+    | td=type_def_group rest=top_levels
         { 
-          TopTypeDef td :: rest }
+          TopTypeDef td :: rest 
+        }
     | LET x=IDENT EQ e=expr rest=top_levels
         { 
           TopLet (x, e)
-          :: rest }
+          :: rest
+        }
     | LET REC funcs=separated_list(AND, function_bind) rest=top_levels
         { 
           TopLetRec funcs
-          :: rest }
+          :: rest
+        }
     | EXTERNAL x=IDENT COLON te=type_expr EQ s=STRING  rest=top_levels
         { 
           TopExternal (x, te, String.(sub s 1 (length s - 2)))
@@ -148,21 +151,24 @@ functor_bind:
        { (m_name, (mp, m_body)) }
 
 type_def:
-    | TYPE LPAREN tvs=separated_list(COMMA, TYPEVAR) RPAREN n=IDENT
-        EQ OR? vs=separated_list(OR, variant) %prec over_TOP
+    | LPAREN tvs=separated_list(COMMA, TYPEVAR) RPAREN n=IDENT EQ
+        OR? vs=separated_list(OR, variant) %prec over_TOP
                 { TDAdt (n, (List.map Ident.from tvs), vs) }
-    | TYPE UNIT n=IDENT
-        EQ OR? vs=separated_list(OR, variant) %prec over_TOP
+    | UNIT n=IDENT EQ
+        OR? vs=separated_list(OR, variant) %prec over_TOP
                 { TDAdt (n, [], vs) }
-    | TYPE tv=TYPEVAR n=IDENT
+    | tv=TYPEVAR n=IDENT
         EQ OR? vs=separated_list(OR, variant) %prec over_TOP
                 { TDAdt (n, [ Ident.from tv ], vs) }
-    | TYPE n=IDENT
-        EQ OR? vs=separated_list(OR, variant) %prec over_TOP
+    | n=IDENT EQ OR? vs=separated_list(OR, variant) %prec over_TOP
                 { TDAdt (n, [], vs) }
-    | TYPE n=IDENT
-        EQ te=type_expr %prec over_TOP
+    | n=IDENT EQ te=type_expr %prec over_TOP
                 { TDAlias (n, te) }
+
+
+type_def_group:
+    | TYPE defs=separated_nonempty_list(AND, type_def) { defs }
+;
 
 pattern:
     | n=IDENT { PVar n } (* variable pattern *)
@@ -280,7 +286,7 @@ sig_comp:
         { SpecAbstTy (t, (List.map Ident.from tvs)) }
     | TYPE UNIT t=IDENT
         { SpecAbstTy (t, []) }
-    | def=type_def                   { SpecManiTy def }
+    | def=type_def_group                     { SpecManiTy def }
     | MODULE m_name=MIDENT COLON mt=mod_type { SpecMod (m_name, mt) }
 ;
 

@@ -294,51 +294,71 @@ and check_ann e te env =
   e_typed
 
 (* typing top levels *)
-and check_top_level (top : T.top_level) env : top_level * Env.t =
+and check_top_level (top : T.top_level) env : top_level list * Env.t =
   let old_pool = !tv_pool in
   reset_pool ();
-  let top_typed =
+  let tops_typed, env =
     match top with
     | T.TopLet (x, e) ->
         let e_typed0, env = check_let_binding x e env in
-        (TopLet (x, e_typed0), env)
+        ([ TopLet (x, e_typed0) ], env)
     | T.TopLetRec binds ->
         let env, vars, lams = check_letrec_binding binds env in
         let binds = List.combine vars lams in
-        (TopLetRec binds, env)
-    | T.TopTypeDef (TDAdt (name, ty_para_names, _) as def_ext) ->
-        let tid = Env.mk_tid name env in
-
-        let normalize_env =
-          (* special environment for normalizing type definition, with typed
-             definition pushed as an opaque type *)
-          Env.add_type_def (I.TDOpaque (name, ty_para_names)) env
-        in
-        let def = normalize_def def_ext normalize_env in
-        let[@warning "-8"] (I.TDAdt (_, _, bs)) = def in
-        let env = Env.add_type_def def env in
-        let constructors = analyze_constructors tid ty_para_names bs in
-        let env = Env.add_constrs constructors env in
-        (TopTypeDef def, env)
-    | T.TopTypeDef (_ as def_ext) ->
-        let def = normalize_def def_ext env in
-        (TopTypeDef def, Env.add_type_def def env)
+        ([ TopLetRec binds ], env)
+    | T.TopTypeDef defs ->
+        let defs, env = check_ty_def_group defs env in
+        (defs, env)
     | T.TopMod (name, me) ->
         let me_typed = check_mod me env in
-        ( TopMod (name, me_typed),
+        ( [ TopMod (name, me_typed) ],
           Env.add_module name (get_mod_ty me_typed) env )
     | T.TopModSig (name, ext_mt) ->
         let mt = normalize_mt ext_mt env in
-        (TopModSig (name, mt), Env.add_module_sig name mt env)
+        ([ TopModSig (name, mt) ], Env.add_module_sig name mt env)
     | T.TopExternal (name, e_ty, ext_name) ->
         P.enter_level ();
         let te = normalize e_ty Let env in
         P.exit_level ();
         let gen = P.generalize te env in
-        (TopExternal (name, te, ext_name), Env.add_value name gen env)
+        ([ TopExternal (name, te, ext_name) ], Env.add_value name gen env)
   in
   tv_pool := old_pool;
-  top_typed
+  (tops_typed, env)
+
+and check_ty_def_group defs env =
+  (* Create a temporary special environment for normalizing type definition,
+     with typed definition pushed as an opaque type. We push type definitions
+     to this environment by first *)
+  let normalize_env =
+    List.fold_left
+      (fun env def ->
+        match def with
+        | T.TDAdt (name, ty_para_names, _) ->
+            Env.add_type_def (I.TDOpaque (name, ty_para_names)) env
+        | T.TDRecord (name, _, _)
+        | T.TDAlias (name, _) ->
+            Env.add_type_def (I.TDOpaque (name, [])) env)
+      env defs
+  in
+  let normalized_defs, env =
+    List.fold_left
+      (fun (acc, env) def ->
+        match def with
+        | T.TDAdt (name, ty_para_names, _) as def_ext ->
+            let tid = Env.mk_tid name env in
+            let def = normalize_def def_ext normalize_env in
+            let[@warning "-8"] (I.TDAdt (_, _, bs)) = def in
+            let env = Env.add_type_def def env in
+            let constructors = analyze_constructors tid ty_para_names bs in
+            let env = Env.add_constrs constructors env in
+            (TopTypeDef def :: acc, env)
+        | _ as def_ext ->
+            let def = normalize_def def_ext normalize_env in
+            (TopTypeDef def :: acc, Env.add_type_def def env))
+      ([], env) defs
+  in
+  (normalized_defs, env)
 
 and analyze_constructors (tid : I.ty_id) para_names (bs : I.variant list) :
     (string * (I.bind_ty * int)) list =
@@ -365,9 +385,9 @@ and check_top_levels (prog : T.top_level list) env : program * Env.t =
   match prog with
   | [] -> ([], env)
   | top :: rest ->
-      let top_typed0, env = check_top_level top env in
-      let rest_typed1, env = check_top_levels rest env in
-      (top_typed0 :: rest_typed1, env)
+      let tops_typed0, env = check_top_level top env in
+      let rest_tops_typed1, env = check_top_levels rest env in
+      (tops_typed0 @ rest_tops_typed1, env)
 
 and make_mt_by_scope
     {

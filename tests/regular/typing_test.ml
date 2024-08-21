@@ -1181,6 +1181,28 @@ external print_int : int ->  int = "ff_builtin_print_int"
            (mod_sigs ()) (mod_defs ()) (owned_mods ()))
          (MTMod (id 5) (val_defs ()) (constr_defs ()) (ty_defs ((TDOpaque t ())))
            (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
+    |}];
+
+  print_typed
+    {|
+               type additive =
+               | Add of (atom * atom)
+               and () multiple = 
+               | Mul of (additive * additive)
+               | Div of (additive * additive)
+               and atom =
+               | Int of int
+               |};
+  [%expect
+    {|
+    ((TopTypeDef (TDAdt atom () ((Int ((TCons (0 int) ()))))))
+      (TopTypeDef
+        (TDAdt multiple ()
+          ((Mul ((TTuple ((TCons (0 additive) ()) (TCons (0 additive) ())))))
+            (Div ((TTuple ((TCons (0 additive) ()) (TCons (0 additive) ()))))))))
+      (TopTypeDef
+        (TDAdt additive ()
+          ((Add ((TTuple ((TCons (0 atom) ()) (TCons (0 atom) ())))))))))
     |}]
 
 let%expect_test "Error reporting test" =
