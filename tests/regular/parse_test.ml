@@ -815,7 +815,7 @@ let%expect_test "Test: full program parsing" =
           (MERestrict
             ((desc
                (MEStruct
-                 ((TopTypeDef (TDAdt t () ((Nil ()))))
+                 ((TopTypeDef ((TDAdt t () ((Nil ())))))
                    (TopLet x
                      ((desc (ECons Nil))
                        (start_loc
@@ -845,7 +845,7 @@ let%expect_test "Test: full program parsing" =
   [%expect
     {|
     ((TopModSig MIntf
-       (MTSig ((SpecManiTy (TDAdt t () ((Nil ())))) (SpecVal x (TCons t ()))))))
+       (MTSig ((SpecManiTy ((TDAdt t () ((Nil ()))))) (SpecVal x (TCons t ()))))))
     |}];
 
   print_parsed_program
@@ -950,7 +950,7 @@ functor
        type t =  a list -> b
 |};
   [%expect
-    {| ((TopTypeDef (TDAlias t (TArrow (TCons list ((TCons a ()))) (TCons b ()))))) |}];
+    {| ((TopTypeDef ((TDAlias t (TArrow (TCons list ((TCons a ()))) (TCons b ())))))) |}];
 
   print_parsed_program {|
   external x : int -> int -> int = "ff_add"
@@ -1213,12 +1213,12 @@ let result = print_int (sum 4)
     {|
                 type 'a t = Nil
                         |};
-  [%expect {| ((TopTypeDef (TDAdt t ('a/0) ((Nil ()))))) |}];
+  [%expect {| ((TopTypeDef ((TDAdt t ('a/0) ((Nil ())))))) |}];
   print_parsed_program
     {|
                 type t = | Nil
                         |};
-  [%expect {| ((TopTypeDef (TDAdt t () ((Nil ()))))) |}];
+  [%expect {| ((TopTypeDef ((TDAdt t () ((Nil ())))))) |}];
   print_parsed_program
     {|
      let x = let rec f = fun x -> 1
@@ -1261,6 +1261,25 @@ let result = print_int (sum 4)
           (start_loc ((pos_fname "") (pos_lnum 5) (pos_bol 87) (pos_cnum 100)))
           (end_loc ((pos_fname "") (pos_lnum 5) (pos_bol 87) (pos_cnum 101)))
           (attrs ()))))
+    |}];
+  print_parsed_program
+    {|
+               type additive =
+               | Add of (atom * atom)
+               and () multiple = 
+               | Mul of (additive * additive)
+               | Div of (additive * additive)
+               and atom =
+               | Var of string
+                        |};
+  [%expect
+    {|
+    ((TopTypeDef
+       ((TDAdt additive () ((Add ((TTuple ((TCons atom ()) (TCons atom ())))))))
+         (TDAdt multiple ()
+           ((Mul ((TTuple ((TCons additive ()) (TCons additive ())))))
+             (Div ((TTuple ((TCons additive ()) (TCons additive ())))))))
+         (TDAdt atom () ((Var ((TCons string ()))))))))
     |}]
 
 let%expect_test "Test: path parsing" =
@@ -1514,7 +1533,7 @@ let%expect_test "Test: module expression" =
                 ((pos_fname "") (pos_lnum 3) (pos_bol 14) (pos_cnum 29)))
               (end_loc ((pos_fname "") (pos_lnum 3) (pos_bol 14) (pos_cnum 30)))
               (attrs ())))
-           (TopTypeDef (TDAdt a () ((Cons ((TCons int ()))) (Nil ())))))))
+           (TopTypeDef ((TDAdt a () ((Cons ((TCons int ()))) (Nil ()))))))))
       (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 6)))
       (end_loc ((pos_fname "") (pos_lnum 8) (pos_bol 91) (pos_cnum 99)))
       (attrs ()))
@@ -1594,5 +1613,5 @@ let%expect_test "Test: module type" =
     (MTSig
       ((SpecVal x (TCons int ())) (SpecAbstTy t ())
         (SpecVal m (TArrow (TCons t ()) (TCons t ())))
-        (SpecManiTy (TDAdt i_list () ((Cons ((TCons int ()))) (Nil ()))))))
+        (SpecManiTy ((TDAdt i_list () ((Cons ((TCons int ()))) (Nil ())))))))
     |}]

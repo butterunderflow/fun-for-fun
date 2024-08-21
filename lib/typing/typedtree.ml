@@ -46,6 +46,7 @@ and top_level =
   | TopLet of string * expr
   | TopLetRec of (string * lambda_typed) list
   | TopTypeDef of ty_def
+    (* type definitions in typedtree are free to recursive by design *)
   | TopMod of string * mod_expr
   | TopModSig of string * mod_ty
   | TopExternal of string * ty * string

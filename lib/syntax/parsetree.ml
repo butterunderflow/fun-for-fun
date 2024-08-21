@@ -27,7 +27,7 @@ and program = top_level list
 and top_level =
   | TopLet of string * expr
   | TopLetRec of (string * lambda) list
-  | TopTypeDef of ty_def
+  | TopTypeDef of ty_def_group
   | TopMod of string * mod_expr
   | TopModSig of string * mod_ty
   | TopExternal of string * ty * string
@@ -91,7 +91,7 @@ and adt_def = string * ty_paras * evariant list
 and spec =
   | SpecVal of string * ty
   | SpecAbstTy of string * ty_paras
-  | SpecManiTy of ty_def
+  | SpecManiTy of ty_def_group
   | SpecMod of (string * mod_ty)
 
 and ty =
@@ -106,6 +106,8 @@ and ty_def =
   | TDAdt of string * ty_paras * evariant list
   | TDRecord of string * ty_paras * (string * ty) list
   | TDAlias of string * ty
+
+and ty_def_group = ty_def list
 
 and ty_paras = Ident.ident list
 

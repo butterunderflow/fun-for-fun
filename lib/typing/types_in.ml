@@ -97,7 +97,7 @@ let get_def_name (td : ty_def) =
   | TDAlias (name, _) ->
       name
 
-let get_def name ty_defs =
+let get_def name ty_def_group =
   List.find
     (fun td ->
       match td with
@@ -108,4 +108,4 @@ let get_def name ty_defs =
         when name' = name ->
           true
       | _ -> false)
-    ty_defs
+    ty_def_group
