@@ -95,7 +95,7 @@ let compatible mt0 mt1 =
             let vt0 = List.assoc name vds0 in
             if
               P.align_inst vt0 <> P.align_inst (Alias.dealias vt1 !alias_map)
-            then Report.in_compatible_error name vt0 vt1)
+            then Report.error_incompatible name vt0 vt1)
           vds1;
         List.iter
           (fun (name, (cd1, cid1)) ->

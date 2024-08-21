@@ -1571,21 +1571,21 @@ module L2 = (K: M)
 
              let result = _
 |};
-  [%expect {| name `_` not found |}];
+  [%expect {| 4:26-4:26 name `_` not found |}];
   print_typed
     {|
      module M = struct end
      module X = M
      module Bad = M(M)
      |};
-  [%expect {| try apply a structure |}];
+  [%expect {| 4:18-4:18 try apply a structure |}];
   print_typed
     {|
      module type M = sig end
      module F = functor (X:M) -> struct end
      let x = F.x
      |};
-  [%expect {| try get field from functor |}];
+  [%expect {| 4:13-4:13 try get field from functor |}];
   print_typed
     {|
      module M = functor(X:sig end) -> struct
@@ -1593,7 +1593,7 @@ module L2 = (K: M)
  
      module F = M.N
      |};
-  [%expect {| try get field from functor |}];
+  [%expect {| 5:16-5:16 try get field from functor |}];
   print_typed
     {|
                module type MT = sig
