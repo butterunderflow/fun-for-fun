@@ -6,15 +6,15 @@ let build_mod_correspond mt0 mt1 =
   let mid_map = ref [] in
   let rec collect_mid_maping mt0 mt1 =
     match (mt0, mt1) with
-    | ( I.Mod_ty_struct { id = id0; mod_defs = mds0; _ },
-        I.Mod_ty_struct { id = id1; mod_defs = mds1; _ } ) ->
+    | ( I.MTMod { id = id0; mod_defs = mds0; _ },
+        I.MTMod { id = id1; mod_defs = mds1; _ } ) ->
         mid_map := (id1, id0) :: !mid_map;
         List.iter
           (fun (name, md1) ->
             let md0 = List.assoc name mds0 in
             collect_mid_maping md0 md1)
           mds1
-    | I.Mod_ty_functor (argt0, mt0), I.Mod_ty_functor (argt1, mt1) ->
+    | I.MTFun (argt0, mt0), I.MTFun (argt1, mt1) ->
         collect_mid_maping argt0 argt1;
         collect_mid_maping mt0 mt1
     | _ -> failwith "subtype check error"
@@ -49,7 +49,7 @@ let compatible mt0 mt1 =
   let alias_map : (I.ty_id * I.ty) list ref = ref [] in
   let rec compatible_aux mt0 mt1 : unit =
     match (mt0, mt1) with
-    | ( I.Mod_ty_struct
+    | ( I.MTMod
           {
             val_defs = vds0;
             constr_defs = cds0;
@@ -59,7 +59,7 @@ let compatible mt0 mt1 =
             id = id0;
             _;
           },
-        I.Mod_ty_struct
+        I.MTMod
           {
             val_defs = vds1;
             constr_defs = cds1;
@@ -71,17 +71,17 @@ let compatible mt0 mt1 =
         List.iter
           (fun td1 ->
             match td1 with
-            | I.Ty_def_opaque (name, paras) -> (
+            | I.TDOpaque (name, paras) -> (
                 let td0 = I.get_def name tds0 in
                 match td0 with
-                | I.Ty_def_opaque (_, paras0)
-                | I.Ty_def_adt (_, paras0, _)
-                | I.Ty_def_record (_, paras0, _) ->
+                | I.TDOpaque (_, paras0)
+                | I.TDAdt (_, paras0, _)
+                | I.TDRecord (_, paras0, _) ->
                     if List.length paras0 <> List.length paras then
                       failwith
                         "number of type parameter not compatible in opaque \
                          type"
-                | I.Ty_def_alias (_, ty0) -> (
+                | I.TDAlias (_, ty0) -> (
                     match paras with
                     | [] -> alias_map := ((id0, name), ty0) :: !alias_map
                     | _ :: _ -> failwith "type alias has parameter"))
@@ -115,7 +115,7 @@ let compatible mt0 mt1 =
         List.iter
           (fun (name, ms1) -> compatible_aux (List.assoc name mds0) ms1)
           ms1
-    | I.Mod_ty_functor (argt0, mt0), I.Mod_ty_functor (argt1, mt1) ->
+    | I.MTFun (argt0, mt0), I.MTFun (argt1, mt1) ->
         compatible_aux argt1 argt0;
         compatible_aux mt0 mt1
     | _ -> failwith "subtype check error"

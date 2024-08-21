@@ -80,7 +80,7 @@ let try_record_hint me_typed (env : t) =
   | s :: _ -> (
       let mt = T.get_mod_ty me_typed in
       match mt with
-      | I.Mod_ty_struct { id; _ } -> s.hints := (id, me_typed) :: !(s.hints)
+      | I.MTMod { id; _ } -> s.hints := (id, me_typed) :: !(s.hints)
       | _ -> ())
 
 let record_all_history ids (env : t) =
@@ -107,10 +107,10 @@ let rec lookup_module_sig m (env : t) =
 let get_root_def tn =
   ( 0,
     match tn with
-    | "int" -> I.Ty_def_adt ("int", [], [])
-    | "string" -> I.Ty_def_adt ("string", [], [])
-    | "bool" -> I.Ty_def_adt ("bool", [], [])
-    | "unit" -> I.Ty_def_adt ("unit", [], [])
+    | "int" -> I.TDAdt ("int", [], [])
+    | "string" -> I.TDAdt ("string", [], [])
+    | "bool" -> I.TDAdt ("bool", [], [])
+    | "unit" -> I.TDAdt ("unit", [], [])
     | tn -> failwith (Printf.sprintf "cant get type `%s`" tn) )
 
 let rec lookup_type_def tn env =
@@ -120,10 +120,10 @@ let rec lookup_type_def tn env =
       match
         List.find_opt
           (function
-            | I.Ty_def_opaque (x, _)
-            | Ty_def_adt (x, _, _)
-            | Ty_def_record (x, _, _)
-            | Ty_def_alias (x, _) ->
+            | I.TDOpaque (x, _)
+            | TDAdt (x, _, _)
+            | TDRecord (x, _, _)
+            | TDAlias (x, _) ->
                 x = tn)
           s.types
       with
@@ -205,10 +205,10 @@ let dbg (env : t) =
     s.types
     |> List.map (fun def ->
            match def with
-           | I.Ty_def_opaque (name, _) -> (name, def)
-           | I.Ty_def_adt (name, _, _) -> (name, def)
-           | I.Ty_def_record (name, _, _) -> (name, def)
-           | I.Ty_def_alias (name, _) -> (name, def))
+           | I.TDOpaque (name, _) -> (name, def)
+           | I.TDAdt (name, _, _) -> (name, def)
+           | I.TDRecord (name, _, _) -> (name, def)
+           | I.TDAlias (name, _) -> (name, def))
     |> List.map (fun (name, def) ->
            ( name,
              I.sexp_of_ty_def def

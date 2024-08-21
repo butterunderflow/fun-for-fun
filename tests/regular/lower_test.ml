@@ -16,7 +16,7 @@ let%expect_test "Test: full program lowering" =
   in
 
   print_lowered {| let x = 1 |};
-  [%expect {| (Exp_mod_obj ((Field_simple x (Exp_const (Const_int 1))))) |}];
+  [%expect {| (EModObject ((FSimple x (EConst (CInt 1))))) |}];
 
   print_lowered
     {| 
@@ -35,14 +35,10 @@ let%expect_test "Test: full program lowering" =
                  |};
   [%expect
     {|
-    (Exp_mod_obj
-      ((Field_simple M
-         (Exp_mod_obj
-           ((Field_simple x (Exp_constr 0))
-             (Field_simple y (Exp_const (Const_int 1))))))
-        (Field_simple c (Exp_field (Exp_var M) x))
-        (Field_simple d (Exp_field (Exp_var M) y))))
-    |}];
+    (EModObject
+      ((FSimple M
+         (EModObject ((FSimple x (ECons 0)) (FSimple y (EConst (CInt 1))))))
+        (FSimple c (EField (EVar M) x)) (FSimple d (EField (EVar M) y)))) |}];
 
   print_lowered
     {|
@@ -105,34 +101,29 @@ module MMM = (M(F).K : I)
      |};
   [%expect
     {|
-    (Exp_mod_obj
-      ((Field_simple MJ
-         (Exp_mod_obj
-           ((Field_simple x (Exp_const (Const_int 1)))
-             (Field_simple y (Exp_const (Const_int 1)))
-             (Field_simple z (Exp_const (Const_int 1))))))
-        (Field_simple Simple
-          (Exp_mod_obj
-            ((Field_simple x (Exp_const (Const_int 1)))
-              (Field_simple y (Exp_const (Const_int 2))))))
-        (Field_simple M
-          (Exp_lam
-            ((MI)
-              (Exp_mod_obj
-                ((Field_simple K (Exp_app (Exp_var MI) ((Exp_var Simple))))))
+    (EModObject
+      ((FSimple MJ
+         (EModObject
+           ((FSimple x (EConst (CInt 1))) (FSimple y (EConst (CInt 1)))
+             (FSimple z (EConst (CInt 1))))))
+        (FSimple Simple
+          (EModObject
+            ((FSimple x (EConst (CInt 1))) (FSimple y (EConst (CInt 2))))))
+        (FSimple M
+          (ELam
+            ((MI) (EModObject ((FSimple K (EApp (EVar MI) ((EVar Simple))))))
               (Simple))))
-        (Field_simple F
-          (Exp_lam
+        (FSimple F
+          (ELam
             ((MI)
-              (Exp_mod_obj
-                ((Field_simple x (Exp_const (Const_int 1)))
-                  (Field_simple y (Exp_const (Const_int 1)))
-                  (Field_simple z (Exp_const (Const_int 1)))))
+              (EModObject
+                ((FSimple x (EConst (CInt 1))) (FSimple y (EConst (CInt 1)))
+                  (FSimple z (EConst (CInt 1)))))
               ())))
-        (Field_simple MMM (Exp_field (Exp_app (Exp_var M) ((Exp_var F))) K))
-        (Field_letrec
-          ((f ((x) (Exp_var x) ()))
-            (g ((x) (Exp_app (Exp_var f) ((Exp_const (Const_int 1)))) (f)))))))
+        (FSimple MMM (EField (EApp (EVar M) ((EVar F))) K))
+        (FLetRec
+          ((f ((x) (EVar x) ()))
+            (g ((x) (EApp (EVar f) ((EConst (CInt 1)))) (f)))))))
     |}];
 
   print_lowered
@@ -145,10 +136,10 @@ module MMM = (M(F).K : I)
 |};
   [%expect
     {|
-    (Exp_mod_obj
-      ((Field_letrec
-         ((f ((x) (Exp_var x) ()))
-           (g ((x) (Exp_app (Exp_var f) ((Exp_const (Const_int 1)))) (f)))))))
+    (EModObject
+      ((FLetRec
+         ((f ((x) (EVar x) ()))
+           (g ((x) (EApp (EVar f) ((EConst (CInt 1)))) (f)))))))
     |}];
   print_lowered
     {|
@@ -168,16 +159,14 @@ module MMM = (M(F).K : I)
      |};
   [%expect
     {|
-    (Exp_mod_obj
-      ((Field_simple x (Exp_constr 1))
-        (Field_simple z
-          (Exp_app (Exp_payload_constr 0) ((Exp_const (Const_int 1)))))
-        (Field_simple f
-          (Exp_lam
+    (EModObject
+      ((FSimple x (ECons 1)) (FSimple z (EApp (EConsWith 0) ((EConst (CInt 1)))))
+        (FSimple f
+          (ELam
             ((p)
-              (Exp_switch (Exp_var x)
-                (((Pat_constr 0 ((Pat_var y))) (Exp_var y))
-                  ((Pat_constr 1 ()) (Exp_const (Const_int 0)))))
+              (ESwitch (EVar x)
+                (((PCons 0 ((PVar y))) (EVar y))
+                  ((PCons 1 ()) (EConst (CInt 0)))))
               (x))))))
     |}];
 
@@ -198,12 +187,10 @@ module MMM = (M(F).K : I)
 
   [%expect
     {|
-    (Exp_mod_obj
-      ((Field_simple M
-         (Exp_mod_obj ((Field_simple x (Exp_const (Const_int 1))))))
-        (Field_simple F
-          (Exp_lam
-            ((X) (Exp_mod_obj ((Field_simple y (Exp_field (Exp_var M) x)))) (M))))))
+    (EModObject
+      ((FSimple M (EModObject ((FSimple x (EConst (CInt 1))))))
+        (FSimple F
+          (ELam ((X) (EModObject ((FSimple y (EField (EVar M) x)))) (M))))))
     |}];
   print_lowered
     {|
@@ -222,15 +209,11 @@ module MMM = (M(F).K : I)
      |};
   [%expect
     {|
-    (Exp_mod_obj
-      ((Field_simple M
-         (Exp_mod_obj ((Field_simple x (Exp_const (Const_int 1))))))
-        (Field_simple F1
-          (Exp_lam
-            ((X)
-              (Exp_lam
-                ((Y) (Exp_mod_obj ((Field_simple y (Exp_field (Exp_var M) x))))
-                  (M)))
+    (EModObject
+      ((FSimple M (EModObject ((FSimple x (EConst (CInt 1))))))
+        (FSimple F1
+          (ELam
+            ((X) (ELam ((Y) (EModObject ((FSimple y (EField (EVar M) x)))) (M)))
               (M))))))
     |}];
 
@@ -258,28 +241,23 @@ module MMM = (M(F).K : I)
      |};
   [%expect
     {|
-    (Exp_mod_obj
-      ((Field_simple M
-         (Exp_mod_obj ((Field_simple x (Exp_const (Const_int 1))))))
-        (Field_simple F2
-          (Exp_lam
+    (EModObject
+      ((FSimple M (EModObject ((FSimple x (EConst (CInt 1))))))
+        (FSimple F2
+          (ELam
             ((X)
-              (Exp_mod_obj
-                ((Field_simple N
-                   (Exp_mod_obj ((Field_simple x (Exp_const (Const_int 2))))))
-                  (Field_simple F3
-                    (Exp_lam
-                      ((Y)
-                        (Exp_mod_obj
-                          ((Field_simple y (Exp_field (Exp_var N) x))))
-                        (N))))))
+              (EModObject
+                ((FSimple N (EModObject ((FSimple x (EConst (CInt 2))))))
+                  (FSimple F3
+                    (ELam
+                      ((Y) (EModObject ((FSimple y (EField (EVar N) x)))) (N))))))
               ())))))
     |}];
 
   print_lowered {|
 external add : int -> int -> int = "ff_add"
 |};
-  [%expect {| (Exp_mod_obj ((Field_simple add (Exp_external ff_add)))) |}];
+  [%expect {| (EModObject ((FSimple add (EExt ff_add)))) |}];
 
   print_lowered {|
 let x = 1
@@ -290,10 +268,9 @@ let z = x = y
 |};
   [%expect
     {|
-    (Exp_mod_obj
-      ((Field_simple x (Exp_const (Const_int 1)))
-        (Field_simple y (Exp_const (Const_int 2)))
-        (Field_simple z (Exp_cmp Eq (Exp_var x) (Exp_var y)))))
+    (EModObject
+      ((FSimple x (EConst (CInt 1))) (FSimple y (EConst (CInt 2)))
+        (FSimple z (ECmp Eq (EVar x) (EVar y)))))
     |}];
   print_lowered
     {|
@@ -305,12 +282,10 @@ let z = x = y
      |};
   [%expect
     {|
-    (Exp_mod_obj
-      ((Field_simple even
-         (Exp_letrec
-           ((even
-              ((x) (Exp_app (Exp_var odd) ((Exp_const (Const_int 1)))) (odd)))
-             (odd
-               ((x) (Exp_app (Exp_var even) ((Exp_const (Const_int 1)))) (even))))
-           (Exp_var even)))))
+    (EModObject
+      ((FSimple even
+         (ELetRec
+           ((even ((x) (EApp (EVar odd) ((EConst (CInt 1)))) (odd)))
+             (odd ((x) (EApp (EVar even) ((EConst (CInt 1)))) (even))))
+           (EVar even)))))
     |}]

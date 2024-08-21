@@ -4,27 +4,27 @@ module L = Lam.Tree
 let rec lift ?(hint = "temp") (e : L.expr) (vars : string list) :
     C.expr * C.func list =
   match e with
-  | L.Exp_tuple es ->
+  | L.ETuple es ->
       es
       |> List.map (fun e -> lift e vars ~hint)
       |> List.split
-      |> fun (es, fns) -> (C.Exp_tuple es, List.flatten fns)
-  | L.Exp_mod_obj mems ->
+      |> fun (es, fns) -> (C.ETuple es, List.flatten fns)
+  | L.EModObject mems ->
       let _, mems, fns =
         List.fold_left
           (fun (vars, mem_acc, fn_acc) mem ->
             match mem with
-            | L.Field_simple (x, e) ->
+            | L.FSimple (x, e) ->
                 let e, fns = lift ~hint:x e vars in
-                (x :: vars, C.Field_simple (x, e) :: mem_acc, fns @ fn_acc)
-            | L.Field_letrec binds ->
+                (x :: vars, C.FSimple (x, e) :: mem_acc, fns @ fn_acc)
+            | L.FLetRec binds ->
                 let xs, _ = List.split binds in
                 let binds, fns = lift_letrec binds vars in
-                (xs @ vars, C.Field_letrec binds :: mem_acc, fns @ fn_acc))
+                (xs @ vars, C.FLetRec binds :: mem_acc, fns @ fn_acc))
           (vars, [], []) mems
       in
-      (C.Exp_mod_obj (List.rev mems), fns)
-  | L.Exp_struct mems ->
+      (C.EModObject (List.rev mems), fns)
+  | L.EStruct mems ->
       let mems, fns =
         List.fold_left
           (fun (acc_mems, acc_fns) (name, e) ->
@@ -33,28 +33,28 @@ let rec lift ?(hint = "temp") (e : L.expr) (vars : string list) :
           ([], []) mems
       in
       let mems = List.rev mems in
-      (C.Exp_struct mems, fns)
-  | L.Exp_var x ->
+      (C.EStruct mems, fns)
+  | L.EVar x ->
       assert (List.mem x vars);
-      (C.Exp_var x, [])
-  | L.Exp_external x -> (C.Exp_external x, [])
-  | L.Exp_constr i -> (C.Exp_constr i, [])
-  | L.Exp_payload_constr i -> (C.Exp_payload_constr i, [])
-  | L.Exp_const c -> (C.Exp_const c, [])
-  | L.Exp_app (e0, e1s) ->
+      (C.EVar x, [])
+  | L.EExt x -> (C.EExt x, [])
+  | L.ECons i -> (C.ECons i, [])
+  | L.EConsWith i -> (C.EConsWith i, [])
+  | L.EConst c -> (C.EConst c, [])
+  | L.EApp (e0, e1s) ->
       let e0, fns0 = lift e0 vars in
       let e1s, fns1 = List.(split (map (fun e1 -> lift e1 vars) e1s)) in
       let fns1 = List.flatten fns1 in
-      (C.Exp_app (e0, e1s), fns0 @ fns1)
-  | L.Exp_cmp (op, e0, e1) ->
+      (C.EApp (e0, e1s), fns0 @ fns1)
+  | L.ECmp (op, e0, e1) ->
       let e0, fns0 = lift e0 vars in
       let e1, fns1 = lift e1 vars in
-      (C.Exp_cmp (op, e0, e1), fns0 @ fns1)
-  | L.Exp_seq (e0, e1) ->
+      (C.ECmp (op, e0, e1), fns0 @ fns1)
+  | L.ESeq (e0, e1) ->
       let e0, fns0 = lift e0 vars in
       let e1, fns1 = lift e1 vars in
-      (C.Exp_seq (e0, e1), fns0 @ fns1)
-  | L.Exp_switch (e0, bs) ->
+      (C.ESeq (e0, e1), fns0 @ fns1)
+  | L.ESwitch (e0, bs) ->
       let e0, fns0 = lift e0 vars in
       let es, fns1 =
         bs
@@ -64,29 +64,29 @@ let rec lift ?(hint = "temp") (e : L.expr) (vars : string list) :
         |> fun (e, fns) -> (e, List.flatten fns)
       in
       let ps, _ = List.split bs in
-      (C.Exp_switch (e0, List.combine ps es), fns0 @ fns1)
-  | L.Exp_let (x, e0, e1) ->
+      (C.ESwitch (e0, List.combine ps es), fns0 @ fns1)
+  | L.ELet (x, e0, e1) ->
       let e0, fns0 = lift ~hint:x e0 vars in
       let e1, fns1 = lift e1 (x :: vars) ~hint in
-      (C.Exp_let (x, e0, e1), fns0 @ fns1)
-  | L.Exp_if (e0, e1, e2) ->
+      (C.ELet (x, e0, e1), fns0 @ fns1)
+  | L.EIf (e0, e1, e2) ->
       let e0, fns0 = lift ~hint e0 vars in
       let e1, fns1 = lift ~hint e1 vars in
       let e2, fns2 = lift ~hint e2 vars in
-      (C.Exp_if (e0, e1, e2), fns0 @ fns1 @ fns2)
-  | L.Exp_lam (xs, e, fvs) ->
+      (C.EIf (e0, e1, e2), fns0 @ fns1 @ fns2)
+  | L.ELam (xs, e, fvs) ->
       let fn_id = Ident.create ~hint in
       let e', fns = lift e (xs @ vars) ~hint in
       let new_fn = (fn_id, !fvs, xs, e') in
-      (C.Exp_closure (!fvs, fn_id), new_fn :: fns)
-  | L.Exp_letrec (binds, e) ->
+      (C.EClosure (!fvs, fn_id), new_fn :: fns)
+  | L.ELetRec (binds, e) ->
       let xs, _ = List.split binds in
       let cls, fns = lift_letrec binds vars in
       let e, fns' = lift e (xs @ vars) ~hint in
-      (C.Exp_letrec (cls, e), fns' @ fns)
-  | L.Exp_field (e, name) ->
+      (C.ELetRec (cls, e), fns' @ fns)
+  | L.EField (e, name) ->
       let e', fns = lift e vars ~hint in
-      (C.Exp_field (e', name), fns)
+      (C.EField (e', name), fns)
 
 and lift_letrec binds vars =
   let xs = List.map fst binds in

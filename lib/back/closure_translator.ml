@@ -122,8 +122,8 @@ let get_all_member_names (mems : object_field list) =
   mems
   |> List.map (fun mem ->
          match mem with
-         | Field_simple (x, _) -> [ x ]
-         | Field_letrec (_, binds) -> fst (List.split binds))
+         | FSimple (x, _) -> [ x ]
+         | FLetRec (_, binds) -> fst (List.split binds))
   |> List.flatten
 
 let rec trans_main_expr buf (_e : expr) =
@@ -141,11 +141,11 @@ int main()
 
 and trans_expr ctx e =
   match e with
-  | Exp_var x -> (List.assoc x ctx.dict, [])
-  | Exp_external ff_name ->
+  | EVar x -> (List.assoc x ctx.dict, [])
+  | EExt ff_name ->
       ( ff_name (* assume we can access an ff object by its external name*),
         [] )
-  | Exp_let (x, e0, e1) ->
+  | ELet (x, e0, e1) ->
       let e0_v, e0_stmts = trans_expr ctx e0 in
       let result_stmt = e0_stmts in
       let x, ctx = create_var ~need_decl:true x ctx in
@@ -155,10 +155,10 @@ and trans_expr ctx e =
       let e1_v, e1_stmts = trans_expr ctx e1 in
       let result_stmt = result_stmt @ e1_stmts in
       (e1_v, result_stmt)
-  | Exp_const c ->
+  | EConst c ->
       let ret_v = create_decl "temp" ctx in
       (ret_v, [ make_assign (VARIABLE ret_v) (trans_const c) ])
-  | Exp_tuple es ->
+  | ETuple es ->
       let es_v, stmts_list = List.split (List.map (trans_expr ctx) es) in
       let stmts = List.flatten stmts_list in
       let tu = create_decl "tu" ctx in
@@ -180,7 +180,7 @@ and trans_expr ctx e =
           ]
       in
       (tu, stmts)
-  | Exp_if (e0, e1, e2) ->
+  | EIf (e0, e1, e2) ->
       let ifel_v = create_decl "ifel_res" ctx in
       let e0_v, e0_stmts = trans_expr ctx e0 in
       let e1_v, e1_stmts = trans_expr ctx e1 in
@@ -198,7 +198,7 @@ and trans_expr ctx e =
                     (e2_stmts
                     @ [ make_assign (VARIABLE ifel_v) (VARIABLE e2_v) ]) ));
           ] )
-  | Exp_app (e0, e1s) ->
+  | EApp (e0, e1s) ->
       let app_v = create_decl "app_res" ctx in
       let e0_v, e0_stmts = trans_expr ctx e0 in
       let e1_vs, e1_stmts = List.(split (map (trans_expr ctx) e1s)) in
@@ -211,21 +211,21 @@ and trans_expr ctx e =
                  ( ff_apply,
                    VARIABLE e0_v :: List.map (fun x -> C.VARIABLE x) e1_vs ));
           ] )
-  | Exp_constr i ->
+  | ECons i ->
       let constr_v = create_decl (Printf.sprintf "constr%d" i) ctx in
       ( constr_v,
         [
           make_assign (VARIABLE constr_v)
             (CALL (ff_constr_np, [ CONSTANT (CONST_INT (string_of_int i)) ]));
         ] )
-  | Exp_payload_constr i ->
+  | EConsWith i ->
       let constr_v = create_decl (Printf.sprintf "constr%d" i) ctx in
       ( constr_v,
         [
           make_assign (VARIABLE constr_v)
             (CALL (ff_constr_p, [ CONSTANT (CONST_INT (string_of_int i)) ]));
         ] )
-  | Exp_field (e, name) ->
+  | EField (e, name) ->
       let field = create_decl "field" ctx in
       let e_v, e_stmts = trans_expr ctx e in
       ( field,
@@ -235,7 +235,7 @@ and trans_expr ctx e =
               (CALL
                  (ff_get_mem, [ VARIABLE e_v; CONSTANT (CONST_STRING name) ]));
           ] )
-  | Exp_closure (fvs, cfunc) ->
+  | EClosure (fvs, cfunc) ->
       let clos_v = create_decl "clos" ctx in
       let fvs_c = List.map (fun fv -> List.assoc fv ctx.dict) fvs in
       let cfn_name = to_c_ident_fn cfunc in
@@ -250,23 +250,23 @@ and trans_expr ctx e =
                    CAST (ff_erased_fptr_typename, VARIABLE cfn_name);
                  ] ));
         ] )
-  | Exp_letrec ((fvs, binds), body) ->
+  | ELetRec ((fvs, binds), body) ->
       let _binds_c, letrec_init, ctx = trans_letrec fvs binds ctx in
       let body_c, body_stmts = trans_expr ctx body in
       (body_c, letrec_init @ body_stmts)
-  | Exp_mod_obj members ->
+  | EModObject members ->
       let stmts, mems_c, ctx =
         List.fold_left
           (fun (stmts_acc, mems_c_acc, ctx) mem ->
             match mem with
-            | Field_simple (x, e) ->
+            | FSimple (x, e) ->
                 let e_c, e_stmts = trans_expr ctx e in
                 let x_c, ctx = create_var ~need_decl:true x ctx in
                 ( stmts_acc @ e_stmts
                   @ [ make_assign (VARIABLE x_c) (VARIABLE e_c) ],
                   mems_c_acc @ [ x_c ],
                   ctx )
-            | Field_letrec (fvs, binds) ->
+            | FLetRec (fvs, binds) ->
                 let binds_c, bind_stmts, ctx = trans_letrec fvs binds ctx in
                 (stmts_acc @ bind_stmts, mems_c_acc @ binds_c, ctx))
           ([], [], ctx) members
@@ -288,7 +288,7 @@ and trans_expr ctx e =
                      make_compound (List.map (fun x -> C.VARIABLE x) mems_c);
                    ] ));
           ] )
-  | Exp_switch (e, bs) ->
+  | ESwitch (e, bs) ->
       (* match x with | Cons[1](y, z, w) -> e 
        *
          =>
@@ -313,7 +313,7 @@ and trans_expr ctx e =
           C.DOWHILE
             (C.CONSTANT (C.CONST_INT "0"), make_stmt_seq (e_stmts @ branches));
         ] )
-  | Exp_cmp (op, e0, e1) ->
+  | ECmp (op, e0, e1) ->
       let is_eq_v = create_decl "is_eq" ctx in
       let e0_v, e0_stmts = trans_expr ctx e0 in
       let e1_v, e1_stmts = trans_expr ctx e1 in
@@ -328,19 +328,18 @@ and trans_expr ctx e =
             make_assign (VARIABLE is_eq_v)
               (CALL (eq_fn, [ VARIABLE e0_v; VARIABLE e1_v ]));
           ] )
-  | Exp_seq (e0, e1) ->
+  | ESeq (e0, e1) ->
       let _e0_v, e0_stmts = trans_expr ctx e0 in
       let e1_v, e1_stmts = trans_expr ctx e1 in
       (e1_v, e0_stmts @ e1_stmts)
-  | Exp_struct _ -> ("todo", [])
+  | EStruct _ -> ("todo", [])
 
 and trans_const (c : S.constant) =
   match c with
-  | Const_bool b ->
+  | CBool b ->
       C.CALL (ff_make_bool, [ CONSTANT (CONST_INT (if b then "1" else "0")) ])
-  | Const_int i ->
-      C.CALL (ff_make_int, [ CONSTANT (CONST_INT (string_of_int i)) ])
-  | Const_string s ->
+  | CInt i -> C.CALL (ff_make_int, [ CONSTANT (CONST_INT (string_of_int i)) ])
+  | CString s ->
       C.CALL
         ( ff_make_str,
           [
@@ -348,8 +347,7 @@ and trans_const (c : S.constant) =
               (CONST_STRING
                  (Scanf.unescaped (String.sub s 1 (String.length s - 2))));
           ] )
-  | Const_unit ->
-      C.CALL (ff_make_int, [ CONSTANT (CONST_INT (string_of_int 0)) ])
+  | CUnit -> C.CALL (ff_make_int, [ CONSTANT (CONST_INT (string_of_int 0)) ])
 
 and trans_switch res cond p e ctx =
   let match_seq, ctx = analyze_match_sequence cond p ctx in
@@ -368,16 +366,16 @@ and trans_switch res cond p e ctx =
 and analyze_match_sequence (cond_var : string) (p : pattern) ctx :
     match_operation list * context =
   match p with
-  | Pat_var x ->
+  | PVar x ->
       let x, ctx = create_var ~need_decl:true x ctx in
       ([ Bind C.(BINARY (ASSIGN, VARIABLE x, VARIABLE cond_var)) ], ctx)
-  | Pat_val c ->
+  | PVal c ->
       ( [
           CheckPat
             (C.CALL (ff_is_equal_aux, [ VARIABLE cond_var; trans_const c ]));
         ],
         ctx )
-  | Pat_constr (id, None) ->
+  | PCons (id, None) ->
       ( [
           CheckPat
             (C.CALL
@@ -387,7 +385,7 @@ and analyze_match_sequence (cond_var : string) (p : pattern) ctx :
                  ] ));
         ],
         ctx )
-  | Pat_constr (id, Some p) ->
+  | PCons (id, Some p) ->
       let pat_var = create_decl "pat_var" ctx in
       let check =
         CheckPat
@@ -401,7 +399,7 @@ and analyze_match_sequence (cond_var : string) (p : pattern) ctx :
       in
       let match_seq, ctx = analyze_match_sequence pat_var p ctx in
       (check :: match_seq, ctx)
-  | Pat_tuple ps ->
+  | PTuple ps ->
       let pat_vars =
         List.mapi
           (fun index _ -> create_decl (Printf.sprintf "tu_%dth" index) ctx)

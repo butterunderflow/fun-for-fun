@@ -98,41 +98,37 @@
   main/1
   Global C functions: 
   (main/1 () ()
-    (Exp_mod_obj
-      ((Field_simple x (Exp_const (Const_int 1)))
-        (Field_simple y (Exp_const (Const_int 1)))
-        (Field_simple z (Exp_closure ((y) z/2)))
-        (Field_simple w (Exp_closure (() w/3)))
-        (Field_simple m (Exp_closure ((w) m/4))))))(m/4 (w) (x) (Exp_app (Exp_var w) ((Exp_const (Const_int 1)))))(w/3 () (x) (Exp_const (Const_int 0)))(z/2 (y) (x) (Exp_var y))
+    (EModObject
+      ((FSimple x (EConst (CInt 1))) (FSimple y (EConst (CInt 1)))
+        (FSimple z (EClosure ((y) z/2))) (FSimple w (EClosure (() w/3)))
+        (FSimple m (EClosure ((w) m/4))))))(m/4 (w) (x) (EApp (EVar w) ((EConst (CInt 1)))))(w/3 () (x) (EConst (CInt 0)))(z/2 (y) (x) (EVar y))
 
   $ cat simple1.lambda
-  (Exp_mod_obj
-    ((Field_simple x (Exp_const (Const_int 1)))
-      (Field_simple y (Exp_const (Const_int 1)))
-      (Field_simple z (Exp_lam ((x) (Exp_var y) (y))))
-      (Field_simple w (Exp_lam ((x) (Exp_const (Const_int 0)) ())))
-      (Field_simple m
-        (Exp_lam ((x) (Exp_app (Exp_var w) ((Exp_const (Const_int 1)))) (w))))))
+  (EModObject
+    ((FSimple x (EConst (CInt 1))) (FSimple y (EConst (CInt 1)))
+      (FSimple z (ELam ((x) (EVar y) (y))))
+      (FSimple w (ELam ((x) (EConst (CInt 0)) ())))
+      (FSimple m (ELam ((x) (EApp (EVar w) ((EConst (CInt 1)))) (w))))))
 
   $ cat simple1.parsing
-  ((Top_let x
-     ((desc (Exp_const (Const_int 1)))
+  ((TopLet x
+     ((desc (EConst (CInt 1)))
        (start_loc
          ((pos_fname simple.fun) (pos_lnum 1) (pos_bol 0) (pos_cnum 8)))
        (end_loc ((pos_fname simple.fun) (pos_lnum 1) (pos_bol 0) (pos_cnum 9)))
        (attrs ())))
-    (Top_let y
-      ((desc (Exp_const (Const_int 1)))
+    (TopLet y
+      ((desc (EConst (CInt 1)))
         (start_loc
           ((pos_fname simple.fun) (pos_lnum 3) (pos_bol 11) (pos_cnum 19)))
         (end_loc
           ((pos_fname simple.fun) (pos_lnum 3) (pos_bol 11) (pos_cnum 20)))
         (attrs ())))
-    (Top_let z
+    (TopLet z
       ((desc
-         (Exp_lam
-           ((Para_bare x)
-             ((desc (Exp_var y))
+         (ELam
+           ((PBare x)
+             ((desc (EVar y))
                (start_loc
                  ((pos_fname simple.fun) (pos_lnum 5) (pos_bol 22)
                    (pos_cnum 40)))
@@ -145,11 +141,11 @@
         (end_loc
           ((pos_fname simple.fun) (pos_lnum 5) (pos_bol 22) (pos_cnum 41)))
         (attrs ())))
-    (Top_let w
+    (TopLet w
       ((desc
-         (Exp_lam
-           ((Para_bare x)
-             ((desc (Exp_const (Const_int 0)))
+         (ELam
+           ((PBare x)
+             ((desc (EConst (CInt 0)))
                (start_loc
                  ((pos_fname simple.fun) (pos_lnum 7) (pos_bol 44)
                    (pos_cnum 62)))
@@ -162,13 +158,13 @@
         (end_loc
           ((pos_fname simple.fun) (pos_lnum 7) (pos_bol 44) (pos_cnum 63)))
         (attrs ())))
-    (Top_let m
+    (TopLet m
       ((desc
-         (Exp_lam
-           ((Para_bare x)
+         (ELam
+           ((PBare x)
              ((desc
-                (Exp_app
-                  ((desc (Exp_var w))
+                (EApp
+                  ((desc (EVar w))
                     (start_loc
                       ((pos_fname simple.fun) (pos_lnum 9) (pos_bol 66)
                         (pos_cnum 84)))
@@ -176,7 +172,7 @@
                       ((pos_fname simple.fun) (pos_lnum 9) (pos_bol 66)
                         (pos_cnum 85)))
                     (attrs ()))
-                  ((desc (Exp_const (Const_int 1)))
+                  ((desc (EConst (CInt 1)))
                     (start_loc
                       ((pos_fname simple.fun) (pos_lnum 9) (pos_bol 66)
                         (pos_cnum 86)))
