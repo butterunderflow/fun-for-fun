@@ -2,8 +2,6 @@ open Types_in
 module SMap = Map.Make (Ident)
 module Tree = Syntax.Parsetree
 
-exception UnificationError of (ty * ty)
-
 exception OccurError of (tv ref * ty)
 
 exception IllFormType
@@ -16,7 +14,7 @@ let occurs (tpv : tv ref) (te : ty) : unit =
         List.iter go tes
     | TVar tpv' when tpv == tpv' -> (
         match tpv with
-        | { contents = Unbound _ } -> raise (OccurError (tpv, te))
+        | { contents = Unbound (name, _) } -> Report.error_occur name te
         | { contents = Link _ } -> failwith "illegal occur check value")
     | TVar { contents = Link te } -> go te
     | TVar ({ contents = Unbound (tvn', level') } as tpv') ->
@@ -53,7 +51,7 @@ let rec unify (t0 : ty) (t1 : ty) : unit =
         unify_lst [ op0; arg0 ] [ op1; arg1 ]
     | TTuple tes0, TTuple tes1 -> unify_lst tes0 tes1
     (* by default raise an exception *)
-    | _ -> raise (UnificationError (t0, t1))
+    | _ -> Report.error_unification t0 t1
 
 and unify_lst t0 t1 =
   match (t0, t1) with
@@ -69,3 +67,6 @@ let occur (tpv : tv ref) (te : ty) : bool =
     false
   with
   | OccurError (_tpv, _te) -> true
+
+(* initialize forward definition *)
+let () = Env.occur := occur

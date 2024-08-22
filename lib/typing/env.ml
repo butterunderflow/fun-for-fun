@@ -178,10 +178,12 @@ let mk_tid tn env =
   | s :: _ -> (s.curr, tn)
   | _ -> failwith "nevnerreach"
 
+let occur = ref (fun (_tpv : I.tv ref) (_te : I.ty) : bool -> assert false)
+
 let captured_scope (s : scope) (tpv : Types_in.tv ref) =
   match tpv with
   | { contents = I.Unbound _ } ->
-      List.exists (fun (_, (_, te)) -> Unify.occur tpv te) s.values
+      List.exists (fun (_, (_, te)) -> !occur tpv te) s.values
   | { contents = I.Link _ } -> failwith "neverreach"
 
 let captured (env : t) tpv = List.exists (fun s -> captured_scope s tpv) env

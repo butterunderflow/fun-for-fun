@@ -51,10 +51,7 @@ let rec check_expr (e : T.expr) (env : Env.t) : expr =
     | T.ECmp (op, e0, e1) -> check_cmp op e0 e1 env
     | T.ESeq (e0, e1) -> check_seq e0 e1 env
   with
-  | U.UnificationError (t0, t1) ->
-      Report.unification_error t0 t1 e.start_loc e.end_loc env
-  | U.OccurError (tv, te) -> Report.occur_error tv te e.start_loc e.end_loc
-  | e -> raise e
+  | err -> Report.wrap_and_reraise err e.start_loc e.end_loc env
 
 and check_const c =
   match c with
@@ -414,14 +411,17 @@ and make_mt_by_scope
 
 and check_mod (me : T.mod_expr) (env : Env.t) : mod_expr =
   let me_typed =
-    match me.desc with
-    | T.MEName name -> check_mod_name name env
-    | T.MEStruct body -> check_struct body env
-    | T.MEFunctor ((name, ext_mt0), me1) ->
-        check_functor name ext_mt0 me1 env
-    | T.MEField (me, name) -> check_mod_field me name env
-    | T.MEApply (me0, me1) -> check_mod_apply me0 me1 env
-    | T.MERestrict (me, mt) -> check_mod_restrict me mt env
+    try
+      match me.desc with
+      | T.MEName name -> check_mod_name name env
+      | T.MEStruct body -> check_struct body env
+      | T.MEFunctor ((name, ext_mt0), me1) ->
+          check_functor name ext_mt0 me1 env
+      | T.MEField (me, name) -> check_mod_field me name env
+      | T.MEApply (me0, me1) -> check_mod_apply me0 me1 env
+      | T.MERestrict (me, mt) -> check_mod_restrict me mt env
+    with
+    | err -> Report.wrap_and_reraise err me.start_loc me.end_loc env
   in
   Env.try_record_hint me_typed env;
   me_typed
