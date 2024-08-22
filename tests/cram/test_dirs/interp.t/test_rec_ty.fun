@@ -10,7 +10,6 @@ and 'a forest =
   | EmptyForest
   | ConsForest of ('a tree * 'a forest)
 
-
 let x = Node (1, ConsForest (Leaf 1, EmptyForest))
 
 let _ =

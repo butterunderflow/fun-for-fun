@@ -1203,6 +1203,47 @@ external print_int : int ->  int = "ff_builtin_print_int"
       (TopTypeDef
         (TDAdt additive ()
           ((Add ((TTuple ((TCons (0 atom) ()) (TCons (0 atom) ())))))))))
+    |}];
+  print_typed
+    {|
+type 'a list =
+  | Nil
+  | Cons of ('a * 'a list)
+
+type env = int list
+
+and t =
+  | Closure of (string * env)
+
+let x = Closure ("x", Nil)
+
+               |};
+  [%expect
+    {|
+    ((TopTypeDef
+       (TDAdt list ('a/0)
+         ((Nil ())
+           (Cons ((TTuple ((TQVar 'a/0) (TCons (0 list) ((TQVar 'a/0))))))))))
+      (TopTypeDef
+        (TDAdt t ()
+          ((Closure
+             ((TTuple
+                ((TCons (0 string) ()) (TCons (0 list) ((TCons (0 int) ()))))))))))
+      (TopTypeDef (TDAlias env (TCons (0 list) ((TCons (0 int) ())))))
+      (TopLet x
+        (EApp
+          (ECons Closure 0
+            (TArrow
+              (TTuple
+                ((TCons (0 string) ()) (TCons (0 list) ((TCons (0 int) ())))))
+              (TCons (0 t) ())))
+          (ETuple
+            ((EConst (CString "\"x\"") (TCons (0 string) ()))
+              (ECons Nil 0 (TCons (0 list) ((TVar (Link (TCons (0 int) ())))))))
+            (TTuple
+              ((TCons (0 string) ())
+                (TCons (0 list) ((TVar (Link (TCons (0 int) ()))))))))
+          (TVar (Link (TCons (0 t) ()))))))
     |}]
 
 let%expect_test "Error reporting test" =
