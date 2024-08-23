@@ -50,6 +50,9 @@ let reorg_ty_defs (defs : P.ty_def list) =
       | Some neighber when List.memq neighber alias_defs ->
           dfs graph cluster neighber
       | _ -> cluster)
+    else if List.memq node cluster then
+      (* Find a node in current cluster => dircle detected! *)
+      failwith "Find a circle in alias dependency"
     else cluster
   in
   let clusters =
