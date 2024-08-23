@@ -185,4 +185,6 @@ ff_obj_t ff_is_not_equal(ff_obj_t x, ff_obj_t y);
 
 bool ff_is_zero(ff_obj_t x);
 
+ff_obj_t ff_assert(ff_obj_t x);
+
 #endif

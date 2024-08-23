@@ -24,6 +24,7 @@ type expr =
   | EField of expr * string
   | ECmp of T.cmp_op * expr * expr
   | ESeq of expr * expr
+  | EAssert of expr
 
 and pattern = L.pattern
 

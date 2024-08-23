@@ -52,6 +52,8 @@ let ff_is_equal_aux = C.VARIABLE "ff_is_equal_aux"
 
 let ff_is_zero = C.VARIABLE "ff_is_zero"
 
+let ff_assert = C.VARIABLE "ff_assert"
+
 let ff_is_not_equal = C.VARIABLE "ff_is_not_equal"
 
 let ff_get_mem = C.VARIABLE "ff_get_member"
@@ -72,9 +74,11 @@ let ff_match_constr = C.VARIABLE "ff_match_constr"
 
 let ff_match_tuple = C.VARIABLE "ff_match_tuple"
 
-let header = {|
-#include"fun_rt.hpp"
-#include<stdio.h>
+let header =
+  {|
+#include "fun_rt.hpp"
+#include <stdio.h>
+#include <stdexcept>
 
 |}
 
@@ -332,6 +336,14 @@ and trans_expr ctx e =
       let _e0_v, e0_stmts = trans_expr ctx e0 in
       let e1_v, e1_stmts = trans_expr ctx e1 in
       (e1_v, e0_stmts @ e1_stmts)
+  | EAssert e0 ->
+      let e0_v, e0_stmts = trans_expr ctx e0 in
+      let is_true_v = create_decl "is_true" ctx in
+      let assert_stmt =
+        make_assign (VARIABLE is_true_v)
+          (CALL (ff_assert, [ VARIABLE e0_v ]))
+      in
+      (is_true_v, e0_stmts @ [ assert_stmt ])
   | EStruct _ -> ("todo", [])
 
 and trans_const (c : S.constant) =
@@ -515,11 +527,20 @@ let translate (main, (fns : func list)) =
   Cprint1.print buf fn_defs;
   let prog = Buffer.contents buf in
   let driver =
-    Printf.sprintf {|
+    Printf.sprintf
+      {|
 int main()
 {
-  %s(nullptr);
+  try
+  {
+    %s(nullptr);
+  }
+  catch (const std::runtime_error& error)
+  {
+    printf("Runtime error: %%s", error.what());
+  }
 }
-|} main_name
+|}
+      main_name
   in
   header ^ prog ^ driver

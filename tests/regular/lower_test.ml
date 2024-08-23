@@ -288,4 +288,8 @@ let z = x = y
            ((even ((x) (EApp (EVar odd) ((EConst (CInt 1)))) (odd)))
              (odd ((x) (EApp (EVar even) ((EConst (CInt 1)))) (even))))
            (EVar even)))))
-    |}]
+    |}];
+  print_lowered {|
+     let x = assert true
+     |};
+  [%expect {| (EModObject ((FSimple x (EAssert (EConst (CBool true)))))) |}]

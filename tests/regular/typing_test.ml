@@ -1244,6 +1244,15 @@ let x = Closure ("x", Nil)
               ((TCons (0 string) ())
                 (TCons (0 list) ((TVar (Link (TCons (0 int) ()))))))))
           (TVar (Link (TCons (0 t) ()))))))
+    |}];
+
+  print_typed {|
+let x = assert true
+|};
+  [%expect
+    {|
+    ((TopLet x
+       (EAssert (EConst (CBool true) (TCons (0 bool) ())) (TCons (0 unit) ()))))
     |}]
 
 let%expect_test "Error reporting test" =

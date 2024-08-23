@@ -662,7 +662,8 @@ let%expect_test "Test: expression parsing" =
   print_parsed {|
                 (assert false)
                 |};
-  [%expect {|
+  [%expect
+    {|
     ((desc
        (EAssert
          ((desc (EConst (CBool false)))
@@ -1296,11 +1297,13 @@ let result = print_int (sum 4)
              (Div ((TTuple ((TCons additive ()) (TCons additive ())))))))
          (TDAdt atom () ((Var ((TCons string ()))))))))
     |}];
-  print_parsed_program {|
+  print_parsed_program
+    {|
                         let x = assert false
                         let y = 1
                         |};
-  [%expect {|
+  [%expect
+    {|
     ((TopLet x
        ((desc
           (EAssert

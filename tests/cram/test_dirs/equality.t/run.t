@@ -2,8 +2,9 @@
 
   $ cat test_equality.fun.cpp
   
-  #include"fun_rt.hpp"
-  #include<stdio.h>
+  #include "fun_rt.hpp"
+  #include <stdio.h>
+  #include <stdexcept>
   
   ff_obj_t main_1__fn(ff_fvs_t fvs_1);
   
@@ -84,7 +85,14 @@
   
   int main()
   {
-    main_1__fn(nullptr);
+    try
+    {
+      main_1__fn(nullptr);
+    }
+    catch (const std::runtime_error& error)
+    {
+      printf("Runtime error: %s", error.what());
+    }
   }
 
   $ ./test_equality.fun.out
