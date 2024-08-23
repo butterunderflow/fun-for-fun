@@ -53,6 +53,7 @@ let mk_type_ref fon t_args =
 %token LBRACE
 %token RBRACE
 %token SEMI
+%token ASSERT
 
 %nonassoc LET TYPE
 %nonassoc over_TOP
@@ -248,6 +249,7 @@ expr:
        }
     | e=bin_expr { e }
     | e=expr COLON te=type_expr { make_node (EAnn (e, te)) $startpos $endpos }
+    | ASSERT e=expr %prec over_TOP { make_node (EAssert e) $startpos $endpos }
     ;
 
 bin_expr:

@@ -60,6 +60,7 @@ and expr_desc =
   | EFieldCons of mod_expr * string
   | ECmp of cmp_op * expr * expr
   | ESeq of expr * expr
+  | EAssert of expr
 
 and pattern =
   | PVal of constant

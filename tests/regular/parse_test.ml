@@ -657,6 +657,21 @@ let%expect_test "Test: expression parsing" =
       (start_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 0)))
       (end_loc ((pos_fname "") (pos_lnum 1) (pos_bol 0) (pos_cnum 7)))
       (attrs ()))
+     |}];
+
+  print_parsed {|
+                (assert false)
+                |};
+  [%expect {|
+    ((desc
+       (EAssert
+         ((desc (EConst (CBool false)))
+           (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 25)))
+           (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 30)))
+           (attrs ()))))
+      (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 18)))
+      (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 30)))
+      (attrs ()))
     |}]
 
 let%expect_test "Test: pattern parsing" =
@@ -1280,6 +1295,27 @@ let result = print_int (sum 4)
            ((Mul ((TTuple ((TCons additive ()) (TCons additive ())))))
              (Div ((TTuple ((TCons additive ()) (TCons additive ())))))))
          (TDAdt atom () ((Var ((TCons string ()))))))))
+    |}];
+  print_parsed_program {|
+                        let x = assert false
+                        let y = 1
+                        |};
+  [%expect {|
+    ((TopLet x
+       ((desc
+          (EAssert
+            ((desc (EConst (CBool false)))
+              (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 40)))
+              (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 45)))
+              (attrs ()))))
+         (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 33)))
+         (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 45)))
+         (attrs ())))
+      (TopLet y
+        ((desc (EConst (CInt 1)))
+          (start_loc ((pos_fname "") (pos_lnum 3) (pos_bol 46) (pos_cnum 78)))
+          (end_loc ((pos_fname "") (pos_lnum 3) (pos_bol 46) (pos_cnum 79)))
+          (attrs ()))))
     |}]
 
 let%expect_test "Test: path parsing" =

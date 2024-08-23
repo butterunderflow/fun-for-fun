@@ -27,6 +27,7 @@ type expr =
       * ty
   | ECmp of T.cmp_op * expr * expr * ty
   | ESeq of expr * expr * ty
+  | EAssert of expr * ty
 
 and lambda_typed = string * expr * ty
 
@@ -76,7 +77,8 @@ let get_ty = function
   | ECons (_, _, ty)
   | EFieldCons (_, _, _, ty)
   | ECmp (_, _, _, ty)
-  | ESeq (_, _, ty) ->
+  | ESeq (_, _, ty)
+  | EAssert (_, ty) ->
       ty
 
 let rec get_mod_ty (me : mod_expr) =

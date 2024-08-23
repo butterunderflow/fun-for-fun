@@ -59,6 +59,7 @@ rule token = parse
     | "functor"         { FUNCTOR }
     | "fun"             { FUN }
     | "of"              { OF }
+    | "assert"          { ASSERT }
     | "->"              { ARROW }
     | "="               { EQ }
     | "<>"              { NEQ }
