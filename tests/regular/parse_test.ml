@@ -1319,6 +1319,38 @@ let result = print_int (sum 4)
           (start_loc ((pos_fname "") (pos_lnum 3) (pos_bol 46) (pos_cnum 78)))
           (end_loc ((pos_fname "") (pos_lnum 3) (pos_bol 46) (pos_cnum 79)))
           (attrs ()))))
+    |}];
+
+  print_parsed_program {|
+let x = if true then 2 else 1 
+
+let x = 1
+     |};
+  [%expect
+    {|
+    ((TopLet x
+       ((desc
+          (EIf
+            ((desc (EConst (CBool true)))
+              (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 12)))
+              (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 16)))
+              (attrs ()))
+            ((desc (EConst (CInt 2)))
+              (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 22)))
+              (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 23)))
+              (attrs ()))
+            ((desc (EConst (CInt 1)))
+              (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 29)))
+              (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 30)))
+              (attrs ()))))
+         (start_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 9)))
+         (end_loc ((pos_fname "") (pos_lnum 2) (pos_bol 1) (pos_cnum 30)))
+         (attrs ())))
+      (TopLet x
+        ((desc (EConst (CInt 1)))
+          (start_loc ((pos_fname "") (pos_lnum 4) (pos_bol 33) (pos_cnum 41)))
+          (end_loc ((pos_fname "") (pos_lnum 4) (pos_bol 33) (pos_cnum 42)))
+          (attrs ()))))
     |}]
 
 let%expect_test "Test: path parsing" =
