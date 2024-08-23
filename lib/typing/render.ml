@@ -149,6 +149,10 @@ module MakePP (Config : PPConfig) = struct
         Fmt.fprintf fmt " ;@\n";
         pp_expr fmt e1;
         Fmt.fprintf fmt "@]"
+    | EAssert (e, _te) ->
+        Fmt.fprintf fmt "@[assert ";
+        pp_expr fmt e;
+        Fmt.fprintf fmt "@]"
 
   and pp_lam fmt (x, e, _te) =
     Fmt.fprintf fmt "@[<v 2>fun %s -> @\n" x;

@@ -50,6 +50,7 @@ let rec check_expr (e : T.expr) (env : Env.t) : expr =
     | T.EFieldCons (p, c) -> check_field_cons p c env
     | T.ECmp (op, e0, e1) -> check_cmp op e0 e1 env
     | T.ESeq (e0, e1) -> check_seq e0 e1 env
+    | T.EAssert e -> check_assert e env
   with
   | err -> Report.wrap_and_reraise err e.start_loc e.end_loc env
 
@@ -65,6 +66,11 @@ and check_var x env =
   let bind = Env.lookup_var_type x env in
   let t = P.inst bind in
   EVar (x, t)
+
+and check_assert e env =
+  let e_typed = check_expr e env in
+  U.unify I.bool_ty (get_ty e_typed);
+  EAssert (e_typed, I.unit_ty)
 
 (* pattern will create bindings under context's type *)
 and check_pattern p te env : pattern * (string * I.ty) list =

@@ -122,4 +122,14 @@ let z = fun z -> x = y
     (sum/2 (sum) (x)
       (EIf (ECmp Eq (EVar x) (EConst (CInt 0))) (EConst (CInt 1))
         (EConst (CInt 2))))
+    |}];
+  print_lifted {|
+let x = assert true
+     |};
+  [%expect
+    {|
+    Main function name:
+    main/1
+    Global C functions:
+    (main/1 () () (EModObject ((FSimple x (EAssert (EConst (CBool true)))))))
     |}]

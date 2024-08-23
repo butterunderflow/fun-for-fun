@@ -87,6 +87,9 @@ let rec lift ?(hint = "temp") (e : L.expr) (vars : string list) :
   | L.EField (e, name) ->
       let e', fns = lift e vars ~hint in
       (C.EField (e', name), fns)
+  | L.EAssert e ->
+      let e', fns = lift e vars ~hint in
+      (C.EAssert e', fns)
 
 and lift_letrec binds vars =
   let xs = List.map fst binds in

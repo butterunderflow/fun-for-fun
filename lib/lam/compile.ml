@@ -24,6 +24,7 @@ let rec compile_expr (e : T.expr) =
   | T.EFieldCons (_, _, id, _) -> L.ECons id
   | T.ECmp (op, e1, e2, _) -> L.ECmp (op, compile_expr e1, compile_expr e2)
   | T.ESeq (e0, e1, _) -> L.ESeq (compile_expr e0, compile_expr e1)
+  | T.EAssert (e, _) -> L.EAssert (compile_expr e)
 
 and compile_lam (x, e, _) = ([ x ], compile_expr e, ref [])
 
@@ -141,6 +142,7 @@ let rec fva_expr e vars =
       let fvs_in_binds = fva_letrec binds vars in
       capture fvs_in_binds xs @ capture (fva_expr e (xs @ vars)) xs
   | L.EField (e, _) -> fva_expr e vars
+  | L.EAssert e -> fva_expr e vars
 
 and fva_lambda x e vars =
   let vars = x @ vars in
