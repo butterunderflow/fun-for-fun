@@ -177,6 +177,8 @@ bool ff_match_tuple(ff_obj_t cond, ff_obj_t* const (&payloads)[N]) {
     return true;
 }
 
+void ff_match_fail();
+
 ff_obj_t ff_is_equal(ff_obj_t x, ff_obj_t y);
 
 bool ff_is_equal_aux(const ff_obj_t& x, const ff_obj_t& y);

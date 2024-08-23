@@ -153,6 +153,10 @@ bool ff_match_constr(int64_t id, ff_obj_t cond, ff_obj_t* payload) {
     return true;
 }
 
+void ff_match_fail() {
+    throw std::runtime_error("Match failure!");
+}
+
 bool ff_is_equal_aux(const ff_obj_t& x, const ff_obj_t& y) {
     if (x.tag != y.tag) {
         return false;

@@ -74,6 +74,10 @@ let ff_match_constr = C.VARIABLE "ff_match_constr"
 
 let ff_match_tuple = C.VARIABLE "ff_match_tuple"
 
+let ff_match_fail = C.VARIABLE "ff_match_fail"
+
+let ff_match_fail_stmt = C.(COMPUTATION (CALL (ff_match_fail, [])))
+
 let header =
   {|
 #include "fun_rt.hpp"
@@ -315,7 +319,8 @@ and trans_expr ctx e =
       ( res,
         [
           C.DOWHILE
-            (C.CONSTANT (C.CONST_INT "0"), make_stmt_seq (e_stmts @ branches));
+            ( C.CONSTANT (C.CONST_INT "0"),
+              make_stmt_seq (e_stmts @ branches @ [ ff_match_fail_stmt ]) );
         ] )
   | ECmp (op, e0, e1) ->
       let is_eq_v = create_decl "is_eq" ctx in

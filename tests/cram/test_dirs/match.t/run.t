@@ -85,6 +85,7 @@
   				break;
   			}
   		}
+  		ff_match_fail();
   	}
   	while(0);
   	m_28 = match_res_21;
@@ -96,6 +97,7 @@
   			match_res_29 = tu_31;
   			break;
   		}
+  		ff_match_fail();
   	}
   	while(0);
   	tu_32 = match_res_29;
@@ -109,6 +111,7 @@
   			match_res_33 = app_res_38;
   			break;
   		}
+  		ff_match_fail();
   	}
   	while(0);
   	m_39 = match_res_33;
@@ -144,6 +147,7 @@
   			match_res_4 = app_res_8;
   			break;
   		}
+  		ff_match_fail();
   	}
   	while(0);
   	return match_res_4;
@@ -200,6 +204,7 @@
   			match_res_3 = app_res_5;
   			break;
   		}
+  		ff_match_fail();
   	}
   	while(0);
   	__7 = match_res_3;
@@ -225,4 +230,4 @@
   }
 
   $ ./test_unhandled.fun.out
-  Runtime error: Assertion failed!
+  Runtime error: Match failure!
