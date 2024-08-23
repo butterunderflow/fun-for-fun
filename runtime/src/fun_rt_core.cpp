@@ -163,7 +163,7 @@ bool ff_is_equal_aux(const ff_obj_t& x, const ff_obj_t& y) {
         return ff_get_int(x) == ff_get_int(y);
     }
     if (x.tag == FF_STR_TAG) {
-        return strcmp((const char*)x.data, (const char*)y.data);
+        return 0 == strcmp((const char*)x.data, (const char*)y.data);
     }
     if (x.tag == FF_TUPLE_TAG) {
         const auto& x_1 = *reinterpret_cast<const ff_tuple_t*>(x.data);
