@@ -54,5 +54,6 @@
   $ $FF test_assert.fun
 
   $ ./test_assert.fun.out
+  A true asserted!
   Runtime error: Assertion failed!
 

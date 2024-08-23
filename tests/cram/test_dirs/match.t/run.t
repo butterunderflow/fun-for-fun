@@ -85,6 +85,7 @@
   				break;
   			}
   		}
+  		ff_match_fail();
   	}
   	while(0);
   	m_28 = match_res_21;
@@ -96,6 +97,7 @@
   			match_res_29 = tu_31;
   			break;
   		}
+  		ff_match_fail();
   	}
   	while(0);
   	tu_32 = match_res_29;
@@ -109,6 +111,7 @@
   			match_res_33 = app_res_38;
   			break;
   		}
+  		ff_match_fail();
   	}
   	while(0);
   	m_39 = match_res_33;
@@ -144,6 +147,7 @@
   			match_res_4 = app_res_8;
   			break;
   		}
+  		ff_match_fail();
   	}
   	while(0);
   	return match_res_4;
@@ -164,3 +168,66 @@
 
   $ ./test_match.fun.out
   19981022
+
+  $ $FF test_unhandled.fun
+
+  $ cat test_unhandled.fun.cpp
+  
+  #include "fun_rt.hpp"
+  #include <stdio.h>
+  #include <stdexcept>
+  
+  ff_obj_t main_1__fn(ff_fvs_t fvs_1);
+  
+  ff_obj_t main_1__fn(ff_fvs_t fvs_1)
+  {
+  	ff_obj_t mod_11;
+  	ff_obj_t __10;
+  	ff_obj_t is_true_9;
+  	ff_obj_t temp_8;
+  	ff_obj_t __7;
+  	ff_obj_t temp_6;
+  	ff_obj_t app_res_5;
+  	ff_obj_t constr0_4;
+  	ff_obj_t match_res_3;
+  	ff_obj_t println_str_2;
+  	println_str_2 = ff_builtin_println_str;
+  	do
+  	{
+  		constr0_4 = ff_make_constr_no_payload(0);
+  		if(ff_match_constr(1, constr0_4))
+  		{
+  			temp_6 =
+  				ff_make_str("internal error, this should never matched")
+  				;
+  			app_res_5 = ff_apply_generic(println_str_2, temp_6);
+  			match_res_3 = app_res_5;
+  			break;
+  		}
+  		ff_match_fail();
+  	}
+  	while(0);
+  	__7 = match_res_3;
+  	temp_8 = ff_make_int(0);
+  	is_true_9 = ff_assert(temp_8);
+  	__10 = is_true_9;
+  	mod_11 = ff_make_mod_obj(3, {"println_str", "_", "_"}, {println_str_2,
+  		__7, __10});
+  	return mod_11;
+  }
+  
+  
+  int main()
+  {
+    try
+    {
+      main_1__fn(nullptr);
+    }
+    catch (const std::runtime_error& error)
+    {
+      printf("Runtime error: %s", error.what());
+    }
+  }
+
+  $ ./test_unhandled.fun.out
+  Runtime error: Match failure!

@@ -180,6 +180,7 @@
   			match_res_5 = app_res_17;
   			break;
   		}
+  		ff_match_fail();
   	}
   	while(0);
   	return match_res_5;
@@ -346,6 +347,7 @@
   				}
   			}
   		}
+  		ff_match_fail();
   	}
   	while(0);
   	return match_res_11;
@@ -469,6 +471,7 @@
   				break;
   			}
   		}
+  		ff_match_fail();
   	}
   	while(0);
   	return match_res_4;
@@ -496,6 +499,7 @@
   			match_res_3 = temp_7;
   			break;
   		}
+  		ff_match_fail();
   	}
   	while(0);
   	return match_res_3;
