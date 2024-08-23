@@ -338,22 +338,26 @@ and check_ty_def_group defs env =
             Env.add_type_def (I.TDOpaque (name, [])) env)
       env defs
   in
-  let normalized_defs, env =
+  let defs = Util.reorg_ty_defs defs in
+  let normalized_defs, env, _ =
     List.fold_left
-      (fun (acc, env) def ->
+      (fun (acc, env, normalize_env) def ->
         match def with
         | T.TDAdt (name, ty_para_names, _) as def_ext ->
             let tid = Env.mk_tid name env in
             let def = normalize_def def_ext normalize_env in
             let[@warning "-8"] (I.TDAdt (_, _, bs)) = def in
             let env = Env.add_type_def def env in
+            let normalize_env = Env.add_type_def def normalize_env in
             let constructors = analyze_constructors tid ty_para_names bs in
             let env = Env.add_constrs constructors env in
-            (TopTypeDef def :: acc, env)
+            (TopTypeDef def :: acc, env, normalize_env)
         | _ as def_ext ->
             let def = normalize_def def_ext normalize_env in
-            (TopTypeDef def :: acc, Env.add_type_def def env))
-      ([], env) defs
+            ( TopTypeDef def :: acc,
+              Env.add_type_def def env,
+              Env.add_type_def def normalize_env ))
+      ([], env, normalize_env) defs
   in
   (normalized_defs, env)
 
