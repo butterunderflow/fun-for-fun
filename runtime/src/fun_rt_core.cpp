@@ -204,7 +204,7 @@ bool ff_is_zero(ff_obj_t x) {
 
 ff_obj_t ff_assert(ff_obj_t x) {
     auto val = ff_get_int(x);
-    if (val != 0) {
+    if (val == 0) {
         throw std::runtime_error("Assertion failed!");
     }
     return ff_make_int(0);
