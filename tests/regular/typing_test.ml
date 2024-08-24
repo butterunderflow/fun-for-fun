@@ -1964,4 +1964,12 @@ module L2 = (K: M)
     6:27-7:27 Module Signature component S1 not exists in module struct
 
     end
+    |}];
+  print_typed {|
+               let _ = fun x -> x x
+               |};
+  [%expect
+    {|
+    2:32-2:32 internal error: occur check error
+    type variable '_t/1 occured in {'_t/1}
     |}]
