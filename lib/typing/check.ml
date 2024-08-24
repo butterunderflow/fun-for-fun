@@ -294,7 +294,7 @@ and check_ann e te env =
   let e_typed = check_expr e env in
   let te = normalize_ty te env in
   U.unify te (get_ty e_typed);
-  e_typed
+  EAnn (e_typed, te)
 
 (* typing top levels *)
 and check_top_level (top : T.top_level) env : top_level list * Env.t =

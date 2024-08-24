@@ -1397,7 +1397,50 @@ let x = assert true
                      ((id 6) (val_defs ()) (constr_defs ()) (ty_defs ())
                        (mod_sigs ()) (mod_defs ()) (owned_mods ()))))))
               (mod_defs ()) (owned_mods (6)))))))
-    |}]
+    |}];
+  print_typed
+    {|
+               let x = 1
+
+               let _ = match x with
+               | 1 -> "one"
+               | 2 -> "two"
+               | _ -> (assert false); ""
+               |};
+  [%expect
+    {|
+    ((TopLet x (EConst (CInt 1) (TCons (0 int) ())))
+      (TopLet _
+        (ECase (EVar x (TCons (0 int) ()))
+          (((PVal (CInt 1)) (EConst (CString "\"one\"") (TCons (0 string) ())))
+            ((PVal (CInt 2)) (EConst (CString "\"two\"") (TCons (0 string) ())))
+            ((PVar _ (TCons (0 int) ()))
+              (ESeq
+                (EAssert (EConst (CBool false) (TCons (0 bool) ()))
+                  (TCons (0 unit) ()))
+                (EConst (CString "\"\"") (TCons (0 string) ()))
+                (TCons (0 string) ()))))
+          (TVar (Link (TCons (0 string) ()))))))
+    |}];
+  print_typed
+    {|
+               let x = if 1 = 2 then "never" else "of course"
+               |};
+  [%expect
+    {|
+    ((TopLet x
+       (EIf
+         (ECmp Eq (EConst (CInt 1) (TCons (0 int) ()))
+           (EConst (CInt 2) (TCons (0 int) ())) (TCons (0 bool) ()))
+         (EConst (CString "\"never\"") (TCons (0 string) ()))
+         (EConst (CString "\"of course\"") (TCons (0 string) ()))
+         (TCons (0 string) ()))))
+    |}];
+  print_typed {|
+               let x = (3 : int)
+               |};
+  [%expect
+    {| ((TopLet x (EAnn (EConst (CInt 3) (TCons (0 int) ())) (TCons (0 int) ())))) |}]
 
 let%expect_test "Error reporting test" =
   let print_typed str =
@@ -1603,14 +1646,16 @@ let%expect_test "Error reporting test" =
     ((TopLet x
        (ELet y
          (ETuple
-           ((EConst (CInt 1) (TCons (0 int) ()))
+           ((EAnn (EConst (CInt 1) (TCons (0 int) ()))
+              (TVar (Link (TCons (0 int) ()))))
              (EConst (CInt 1) (TCons (0 int) ())))
-           (TTuple ((TCons (0 int) ()) (TCons (0 int) ()))))
+           (TTuple ((TVar (Link (TCons (0 int) ()))) (TCons (0 int) ()))))
          (ELet z
            (ETuple
              ((EConst (CInt 2) (TCons (0 int) ()))
-               (EConst (CInt 1) (TCons (0 int) ())))
-             (TTuple ((TCons (0 int) ()) (TCons (0 int) ()))))
+               (EAnn (EConst (CInt 1) (TCons (0 int) ()))
+                 (TVar (Link (TCons (0 int) ())))))
+             (TTuple ((TCons (0 int) ()) (TVar (Link (TCons (0 int) ()))))))
            (ETuple
              ((EVar y (TTuple ((TCons (0 int) ()) (TCons (0 int) ()))))
                (EVar z (TTuple ((TCons (0 int) ()) (TCons (0 int) ())))))
