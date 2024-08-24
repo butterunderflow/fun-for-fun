@@ -471,6 +471,13 @@ module MakePP (Config : PPConfig) = struct
     pp_ty formatter ?env ty;
     Fmt.pp_print_flush formatter ();
     Buffer.contents buf
+
+  let pp_str_of_mod_expr ?env me =
+    let buf = Buffer.create 10 in
+    let formatter = Fmt.formatter_of_buffer buf in
+    pp_mod formatter ?env me;
+    Fmt.pp_print_flush formatter ();
+    Buffer.contents buf
 end
 
 module ShowAllConfig : PPConfig = struct
