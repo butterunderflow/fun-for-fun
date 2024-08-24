@@ -47,18 +47,15 @@ let report_error ?env (err : exn) =
   match err with
   | UnificationError (t0, t1) ->
       Printf.printf "Can't unify `%s` with `%s`" (PP.pp_str_of_ty ?env t0)
-        (PP.pp_str_of_ty ?env t1);
-      None
+        (PP.pp_str_of_ty ?env t1)
   | OccurError (tvn, te) ->
       Printf.printf "internal error: occur check error\n";
       Printf.printf "type variable %s occured in " tvn;
-      PP.pp_ty Format.std_formatter te;
-      None
+      PP.pp_ty Format.std_formatter te
   | ComponentInCompatible0 (name, (_, t0), (_, t1)) ->
       Printf.printf
         "Value component %s has type `%s`, which is not compatible with `%s`"
-        name (PP.pp_str_of_ty t0) (PP.pp_str_of_ty t1);
-      None
+        name (PP.pp_str_of_ty t0) (PP.pp_str_of_ty t1)
   | ComponentNotFound (kind, name, { id = mid; _ }) ->
       Printf.printf "%s component %s not exists in module %s"
         (match kind with
@@ -73,20 +70,16 @@ let report_error ?env (err : exn) =
             match Env.lookup_hint mid env with
             | Some me -> PP.pp_str_of_mod_expr me
             | None -> Printf.sprintf "{ id = %d}" mid)
-        | None -> Printf.sprintf "%d" mid);
-      None
-  | Failure msg ->
-      Printf.printf "%s\n" msg;
-      None
-  | _ ->
-      Printf.printf "unknown error";
-      None
+        | None -> Printf.sprintf "%d" mid)
+  | Failure msg -> Printf.printf "%s\n" msg
+  | _ -> Printf.printf "unknown error"
 
 let wrap_with_error_report f =
   try Some (f ()) with
   | LocatedErr (e, start, last, env) ->
       print_code_range start last;
-      report_error ~env e
+      report_error ~env e;
+      None
   | Failure msg ->
       unknown_location ();
       Printf.printf "%s\n" msg;
