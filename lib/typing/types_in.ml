@@ -31,17 +31,19 @@ and ty_def =
   | TDRecord of string * type_paras * (string * ty) list
   | TDAlias of string * ty
 
+and structure = {
+  id : int; (* give every module type an identity *)
+  val_defs : (string * bind_ty) list;
+  constr_defs :
+    (string * (bind_ty * int (* constructor id of a adt *))) list;
+  ty_defs : ty_def list;
+  mod_sigs : (string * mod_ty) list;
+  mod_defs : (string * mod_ty) list;
+  owned_mods : int list;
+}
+
 and mod_ty =
-  | MTMod of {
-      id : int; (* give every module type an identity *)
-      val_defs : (string * bind_ty) list;
-      constr_defs :
-        (string * (bind_ty * int (* constructor id of a adt *))) list;
-      ty_defs : ty_def list;
-      mod_sigs : (string * mod_ty) list;
-      mod_defs : (string * mod_ty) list;
-      owned_mods : int list;
-    }
+  | MTMod of structure
   | MTFun of (mod_ty * mod_ty)
 [@@deriving
   sexp,

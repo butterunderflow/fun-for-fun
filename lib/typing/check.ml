@@ -525,12 +525,27 @@ and shift_mt (mt : I.mod_ty) env : I.mod_ty =
         (* todo: remove this object *)
         inherit [_] Types_in.map as super
 
-        method! visit_MTMod () id val_defs constr_defs ty_defs mod_sigs
-            mod_defs owned_mods =
+        method! visit_MTMod ()
+            {
+              id;
+              val_defs;
+              constr_defs;
+              ty_defs;
+              mod_sigs;
+              mod_defs;
+              owned_mods;
+            } =
           let shifted_id = get_id_or_default id in
-          super#visit_MTMod () shifted_id val_defs constr_defs ty_defs
-            mod_sigs mod_defs
-            (List.map get_id_or_default owned_mods)
+          super#visit_MTMod ()
+            {
+              id = shifted_id;
+              val_defs;
+              constr_defs;
+              ty_defs;
+              mod_sigs;
+              mod_defs;
+              owned_mods = List.map get_id_or_default owned_mods;
+            }
 
         method! visit_ty_id () (id, name) = (get_id_or_default id, name)
 
