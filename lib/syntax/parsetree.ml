@@ -94,6 +94,7 @@ and spec =
   | SpecAbstTy of string * ty_paras
   | SpecManiTy of ty_def_group
   | SpecMod of (string * mod_ty)
+  | SpecModSig of (string * mod_ty)
 
 and ty =
   | TField of mod_expr * string * ty list (* T.Cons *)

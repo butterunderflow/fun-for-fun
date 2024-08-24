@@ -97,7 +97,8 @@ let compatible mt0 mt1 =
           (fun (name, md1) -> compatible_aux (R.find_mod_comp name st0) md1)
           st1.mod_defs;
         List.iter
-          (fun (name, ms1) -> compatible_aux (R.find_mod_sig_comp name st0) ms1)
+          (fun (name, ms1) ->
+            compatible_aux (R.find_mod_sig_comp name st0) ms1)
           st1.mod_sigs
     | I.MTFun (argt0, mt0), I.MTFun (argt1, mt1) ->
         compatible_aux argt1 argt0;

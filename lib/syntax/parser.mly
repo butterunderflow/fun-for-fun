@@ -288,8 +288,9 @@ sig_comp:
         { SpecAbstTy (t, (List.map Ident.from tvs)) }
     | TYPE UNIT t=IDENT
         { SpecAbstTy (t, []) }
-    | def=type_def_group                     { SpecManiTy def }
-    | MODULE m_name=MIDENT COLON mt=mod_type { SpecMod (m_name, mt) }
+    | def=type_def_group                       { SpecManiTy def }
+    | MODULE m_name=MIDENT COLON mt=mod_type   { SpecMod (m_name, mt) }
+    | MODULE TYPE m_name=MIDENT EQ mt=mod_type { SpecModSig (m_name, mt) }
 ;
 
 constant:
