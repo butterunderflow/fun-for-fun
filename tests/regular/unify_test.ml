@@ -35,4 +35,9 @@ let%expect_test "Test: unify typing" =
     {|
     (TVar (Link (TVar (Unbound 't/1 1))))
     (TVar (Unbound 't/1 1))
-    |}]
+    |}];
+  let t1 = TVar { contents = Unbound (Ident.mk_ident 0 "'t", 1) } in
+  let[@warning "-8"] (TVar tv) = t1 in
+  let t2 = TArrow (t1, int_ty) in
+  Printf.printf "%b\n" (occur tv t2);
+  [%expect {| true |}]

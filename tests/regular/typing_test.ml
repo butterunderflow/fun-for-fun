@@ -15,8 +15,8 @@ let%expect_test "Test: expression typing" =
       let typed = Typing.Check.check_expr e (Typing.Env.init ()) in
       typed |> T.sexp_of_expr |> print_sexp
     with
-    | Unify.OccurError (tvn, te) ->
-        print_sexp (Types_in.sexp_of_tv !tvn);
+    | Report.OccurError (tvn, te) ->
+        print_string tvn;
         Printf.printf "occured in ";
         print_sexp (Types_in.sexp_of_ty te)
   in

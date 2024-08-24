@@ -2,8 +2,6 @@ open Types_in
 module SMap = Map.Make (Ident)
 module Tree = Syntax.Parsetree
 
-exception OccurError of (tv ref * ty)
-
 exception IllFormType
 
 let occurs (tpv : tv ref) (te : ty) : unit =
@@ -66,7 +64,7 @@ let occur (tpv : tv ref) (te : ty) : bool =
     occurs tpv te;
     false
   with
-  | OccurError (_tpv, _te) -> true
+  | Report.OccurError (_tpv, _te) -> true
 
 (* initialize forward definition *)
 let () = Env.occur := occur
