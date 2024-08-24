@@ -7,7 +7,7 @@ external compare : int -> int -> int = "ff_builtin_minus"
 external greater : int -> int -> bool = "ff_builtin_greater"
 
 module type Comparable = sig
-  type () t
+  type t
 
   val compare : t -> t -> int
 end

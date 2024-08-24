@@ -5,7 +5,7 @@ external print_int : int -> unit = "ff_builtin_print_int"
 external print_string : string -> unit = "ff_builtin_print_str"
 
 module type Cmp = sig
-  type () t
+  type t
 
   val compare : t -> t -> bool
 end

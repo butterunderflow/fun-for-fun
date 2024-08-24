@@ -158,6 +158,9 @@ type_def:
     | UNIT n=IDENT EQ
         OR? vs=separated_list(OR, variant) %prec over_TOP
                 { TDAdt (n, [], vs) }
+    | n=IDENT EQ
+        OR? vs=separated_list(OR, variant) %prec over_TOP
+                { TDAdt (n, [], vs) }
     | tv=TYPEVAR n=IDENT
         EQ OR? vs=separated_list(OR, variant) %prec over_TOP
                 { TDAdt (n, [ Ident.from tv ], vs) }
@@ -287,6 +290,8 @@ sig_comp:
     | TYPE LPAREN tvs=separated_list(COMMA, TYPEVAR) RPAREN t=IDENT
         { SpecAbstTy (t, (List.map Ident.from tvs)) }
     | TYPE UNIT t=IDENT
+        { SpecAbstTy (t, []) }
+    | TYPE t=IDENT
         { SpecAbstTy (t, []) }
     | def=type_def_group                       { SpecManiTy def }
     | MODULE m_name=MIDENT COLON mt=mod_type   { SpecMod (m_name, mt) }
