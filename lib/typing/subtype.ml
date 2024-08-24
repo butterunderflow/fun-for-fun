@@ -1,4 +1,5 @@
 module I = Types_in
+module R = Read_type
 module P = Poly
 
 let build_mod_correspond mt0 mt1 =
@@ -6,18 +7,19 @@ let build_mod_correspond mt0 mt1 =
   let mid_map = ref [] in
   let rec collect_mid_maping mt0 mt1 =
     match (mt0, mt1) with
-    | ( I.MTMod { id = id0; mod_defs = mds0; _ },
-        I.MTMod { id = id1; mod_defs = mds1; _ } ) ->
-        mid_map := (id1, id0) :: !mid_map;
+    | I.MTMod st0, I.MTMod st1 ->
+        mid_map := (st1.id, st0.id) :: !mid_map;
         List.iter
           (fun (name, md1) ->
-            let md0 = List.assoc name mds0 in
+            let md0 = R.find_mod_comp name st0 in
             collect_mid_maping md0 md1)
-          mds1
+          st1.mod_defs
     | I.MTFun (argt0, mt0), I.MTFun (argt1, mt1) ->
         collect_mid_maping argt0 argt1;
         collect_mid_maping mt0 mt1
-    | _ -> failwith "subtype check error"
+    | _ ->
+        failwith
+          "subtype check error, structure is not compatible with functor"
   in
   collect_mid_maping mt0 mt1;
   !mid_map
@@ -49,30 +51,12 @@ let compatible mt0 mt1 =
   let alias_map : (I.ty_id * I.ty) list ref = ref [] in
   let rec compatible_aux mt0 mt1 : unit =
     match (mt0, mt1) with
-    | ( I.MTMod
-          {
-            val_defs = vds0;
-            constr_defs = cds0;
-            ty_defs = tds0;
-            mod_defs = mds0;
-            mod_sigs = _ms0;
-            id = id0;
-            _;
-          },
-        I.MTMod
-          {
-            val_defs = vds1;
-            constr_defs = cds1;
-            ty_defs = tds1;
-            mod_defs = mds1;
-            mod_sigs = ms1;
-            _;
-          } ) ->
+    | I.MTMod st0, I.MTMod st1 ->
         List.iter
           (fun td1 ->
             match td1 with
             | I.TDOpaque (name, paras) -> (
-                let td0 = I.get_def name tds0 in
+                let td0 = R.find_ty_def name st0 in
                 match td0 with
                 | I.TDOpaque (_, paras0)
                 | I.TDAdt (_, paras0, _)
@@ -83,23 +67,23 @@ let compatible mt0 mt1 =
                          type"
                 | I.TDAlias (_, ty0) -> (
                     match paras with
-                    | [] -> alias_map := ((id0, name), ty0) :: !alias_map
+                    | [] -> alias_map := ((st0.id, name), ty0) :: !alias_map
                     | _ :: _ -> failwith "type alias has parameter"))
             | _ ->
-                let td0 = I.get_def (I.get_def_name td1) tds0 in
+                let td0 = R.(find_ty_def (get_def_name td1) st0) in
                 if td0 <> Alias.dealias_td td1 !alias_map then
                   failwith "a type def component not compatible")
-          tds1;
+          st1.ty_defs;
         List.iter
           (fun (name, vt1) ->
-            let vt0 = List.assoc name vds0 in
+            let vt0 = R.find_val_comp name st0 in
             if
               P.align_inst vt0 <> P.align_inst (Alias.dealias vt1 !alias_map)
-            then Report.error_incompatible name vt0 vt1)
-          vds1;
+            then Report.error_incompatible0 name vt0 vt1)
+          st1.val_defs;
         List.iter
           (fun (name, (cd1, cid1)) ->
-            let cd0, cid0 = List.assoc name cds0 in
+            let cd0, cid0 = R.find_constr_comp name st0 in
             if
               cid1 <> cid0
               || P.align_inst cd0
@@ -108,13 +92,13 @@ let compatible mt0 mt1 =
               failwith
                 (Printf.sprintf "a constructor component `%s` not compatible"
                    name))
-          cds1;
+          st1.constr_defs;
         List.iter
-          (fun (name, md1) -> compatible_aux (List.assoc name mds0) md1)
-          mds1;
+          (fun (name, md1) -> compatible_aux (R.find_mod_comp name st0) md1)
+          st1.mod_defs;
         List.iter
-          (fun (name, ms1) -> compatible_aux (List.assoc name mds0) ms1)
-          ms1
+          (fun (name, ms1) -> compatible_aux (R.find_mod_comp name st0) ms1)
+          st1.mod_sigs
     | I.MTFun (argt0, mt0), I.MTFun (argt1, mt1) ->
         compatible_aux argt1 argt0;
         compatible_aux mt0 mt1

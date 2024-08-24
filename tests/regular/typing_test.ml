@@ -1797,4 +1797,58 @@ module L2 = (K: M)
             ((id 3) (val_defs ()) (constr_defs ((Nil ((() (TCons (3 t) ())) 0))))
               (ty_defs ((TDAdt t () ((Nil ()))))) (mod_sigs ()) (mod_defs ())
               (owned_mods ()))))))
-    |}]
+    |}];
+
+  print_typed
+    {|
+     module type S = sig
+       type () t
+     end
+     
+     module X = (struct end : S)
+               |};
+  [%expect
+    {|
+    6:17-6:17 Type definition component t not exists in module struct
+
+    end
+    |}];
+  print_typed
+    {|
+     module type S = sig
+       val x : int
+     end
+     
+     module X = (struct end : S)
+               |};
+  [%expect
+    {|
+    6:17-6:17 Value component x not exists in module struct
+
+    end
+    |}];
+  print_typed
+    {|
+     module type S = sig
+       module M : sig end
+     end
+     
+     module X = (struct end : S)
+     |};
+  [%expect
+    {|
+    6:17-6:17 Module component M not exists in module struct
+
+    end
+    |}];
+
+  print_typed
+    {|
+     module type S = sig
+       val x : int
+     end
+     
+     module X = (struct let x = "" end : S)
+     |};
+  [%expect
+    {| 6:17-6:17 Value component x has type `() string`, which is not compatible with `() int` |}]

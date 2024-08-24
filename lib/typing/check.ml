@@ -3,6 +3,7 @@ module U = Unify
 module T = Syntax.Parsetree
 module I = Types_in
 module P = Poly
+module R = Read_type
 module IdMap = Map.Make (Ident)
 module IntMap = Map.Make (Int)
 
@@ -278,16 +279,15 @@ and check_cons c env =
 and check_field_cons me c env =
   let me_typed = check_mod me env in
   match get_mod_ty me_typed with
-  | I.MTMod { constr_defs; _ } ->
-      let t, id = List.assoc c constr_defs in
+  | I.MTMod st ->
+      let t, id = R.find_constr_comp c st in
       EFieldCons (me_typed, c, id, P.inst t)
   | I.MTFun _ -> failwith "try get field from functor"
 
 and check_field me x env =
   let me_typed = check_mod me env in
   match get_mod_ty me_typed with
-  | I.MTMod { val_defs; _ } ->
-      EField (me_typed, x, P.inst (List.assoc x val_defs))
+  | I.MTMod st -> EField (me_typed, x, P.inst (R.find_val_comp x st))
   | I.MTFun _ -> failwith "try get field from functor"
 
 and check_ann e te env =
@@ -452,8 +452,7 @@ and check_functor name ext_mt0 me1 env =
 and check_mod_field me name env =
   let me_typed = check_mod me env in
   match get_mod_ty me_typed with
-  | I.MTMod { mod_defs; _ } ->
-      MEField (me_typed, name, List.assoc name mod_defs)
+  | I.MTMod st -> MEField (me_typed, name, R.find_mod_comp name st)
   | I.MTFun _ -> failwith "try get field from functor"
 
 and check_mod_apply me0 me1 env =
@@ -525,26 +524,13 @@ and shift_mt (mt : I.mod_ty) env : I.mod_ty =
         (* todo: remove this object *)
         inherit [_] Types_in.map as super
 
-        method! visit_MTMod ()
-            {
-              id;
-              val_defs;
-              constr_defs;
-              ty_defs;
-              mod_sigs;
-              mod_defs;
-              owned_mods;
-            } =
-          let shifted_id = get_id_or_default id in
+        method! visit_MTMod () st =
+          let shifted_id = get_id_or_default st.id in
           super#visit_MTMod ()
             {
+              st with
               id = shifted_id;
-              val_defs;
-              constr_defs;
-              ty_defs;
-              mod_sigs;
-              mod_defs;
-              owned_mods = List.map get_id_or_default owned_mods;
+              owned_mods = List.map get_id_or_default st.owned_mods;
             }
 
         method! visit_ty_id () (id, name) = (get_id_or_default id, name)
@@ -589,12 +575,12 @@ and normalize (t : T.ty) (ctx : norm_ctx) (env : Env.t) : I.ty =
       let me_typed = check_mod me env in
       let mod_ty = get_mod_ty me_typed in
       match mod_ty with
-      | I.MTMod { id; ty_defs; _ } -> (
-          match I.get_def n ty_defs with
+      | I.MTMod st -> (
+          match R.find_ty_def n st with
           | I.TDOpaque (_, _)
           | I.TDAdt (_, _, _)
           | I.TDRecord (_, _, _) ->
-              TCons ((id, n), tes)
+              TCons ((st.id, n), tes)
           | I.TDAlias (_, te) -> (
               match tes with
               | [] -> te
@@ -628,7 +614,7 @@ and normalize_mt (me : T.mod_ty) env : I.mod_ty =
       let me_typed = check_mod me env in
       let mt = get_mod_ty me_typed in
       match mt with
-      | I.MTMod mt -> List.assoc name mt.mod_sigs
+      | I.MTMod st -> R.find_mod_sig_comp name st
       | I.MTFun (_mt0, _mt1) -> failwith "try get field from functor")
   | T.MTSig comps ->
       let env' = normalize_msig comps (Env.enter_env env) in

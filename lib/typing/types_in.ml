@@ -88,26 +88,3 @@ let string_ty = TCons (mk_root_tid "string", [])
 let bool_ty = TCons (mk_root_tid "bool", [])
 
 let unit_ty = TCons (mk_root_tid "unit", [])
-
-let same_def td0 td1 = td0 = td1
-
-let get_def_name (td : ty_def) =
-  match td with
-  | TDOpaque (name, _)
-  | TDAdt (name, _, _)
-  | TDRecord (name, _, _)
-  | TDAlias (name, _) ->
-      name
-
-let get_def name ty_def_group =
-  List.find
-    (fun td ->
-      match td with
-      | TDOpaque (name', _)
-      | TDAdt (name', _, _)
-      | TDRecord (name', _, _)
-      | TDAlias (name', _)
-        when name' = name ->
-          true
-      | _ -> false)
-    ty_def_group

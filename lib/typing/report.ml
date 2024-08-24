@@ -5,12 +5,24 @@ exception UnificationError of (T.ty * T.ty)
 
 exception OccurError of string * T.ty
 
-exception ComponentInCompatible of string * T.bind_ty * T.bind_ty
+type incompatible_kind =
+  | Value
+  | Type
+  | Mod
+  | ModSig
+  | Constructor
+
+exception ComponentInCompatible0 of string * T.bind_ty * T.bind_ty
+
+exception ComponentNotFound of incompatible_kind * string * T.structure
 
 exception LocatedErr of exn * Lexing.position * Lexing.position * Env.t
 
-let error_incompatible name vt0 vt1 =
-  raise (ComponentInCompatible (name, vt0, vt1))
+let error_incompatible0 name vt0 vt1 =
+  raise (ComponentInCompatible0 (name, vt0, vt1))
+
+let error_comp_not_found kind name mt =
+  raise (ComponentNotFound (kind, name, mt))
 
 let error_unification t0 t1 = raise (UnificationError (t0, t1))
 
@@ -42,10 +54,26 @@ let report_error ?env (err : exn) =
       Printf.printf "type variable %s occured in " tvn;
       PP.pp_ty Format.std_formatter te;
       None
-  | ComponentInCompatible (name, (_, t0), (_, t1)) ->
+  | ComponentInCompatible0 (name, (_, t0), (_, t1)) ->
       Printf.printf
         "Value component %s has type `%s`, which is not compatible with `%s`"
         name (PP.pp_str_of_ty t0) (PP.pp_str_of_ty t1);
+      None
+  | ComponentNotFound (kind, name, { id = mid; _ }) ->
+      Printf.printf "%s component %s not exists in module %s"
+        (match kind with
+        | Value -> "Value"
+        | Type -> "Type definition"
+        | Mod -> "Module"
+        | ModSig -> "Module Signature"
+        | Constructor -> "Constructor")
+        name
+        (match env with
+        | Some env -> (
+            match Env.lookup_hint mid env with
+            | Some me -> PP.pp_str_of_mod_expr me
+            | None -> Printf.sprintf "{ id = %d}" mid)
+        | None -> Printf.sprintf "%d" mid);
       None
   | Failure msg ->
       Printf.printf "%s\n" msg;
