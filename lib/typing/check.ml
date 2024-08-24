@@ -645,5 +645,8 @@ and normalize_msig comps env =
         | T.SpecMod (name, ext_mt) ->
             let mt = normalize_mt ext_mt env in
             Env.add_module name mt env
+        | T.SpecModSig (name, ext_mt) ->
+            let mt = normalize_mt ext_mt env in
+            Env.add_module_sig name mt env
       in
       normalize_msig comps env

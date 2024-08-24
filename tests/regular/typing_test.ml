@@ -1344,6 +1344,59 @@ let x = assert true
     {|
     ((TopLet x
        (EAssert (EConst (CBool true) (TCons (0 bool) ())) (TCons (0 unit) ()))))
+    |}];
+  print_typed
+    {|
+               module type S = sig
+                 module type S1 = sig
+                 end
+               end
+               module X = (struct
+                 module type S1 = sig end
+               end : S)
+               |};
+  [%expect
+    {|
+    ((TopModSig S
+       (MTMod
+         ((id 1) (val_defs ()) (constr_defs ()) (ty_defs ())
+           (mod_sigs
+             ((S1
+                (MTMod
+                  ((id 2) (val_defs ()) (constr_defs ()) (ty_defs ())
+                    (mod_sigs ()) (mod_defs ()) (owned_mods ()))))))
+           (mod_defs ()) (owned_mods (2)))))
+      (TopMod X
+        (MERestrict
+          (MEStruct
+            ((TopModSig S1
+               (MTMod
+                 ((id 4) (val_defs ()) (constr_defs ()) (ty_defs ())
+                   (mod_sigs ()) (mod_defs ()) (owned_mods ())))))
+            (MTMod
+              ((id 3) (val_defs ()) (constr_defs ()) (ty_defs ())
+                (mod_sigs
+                  ((S1
+                     (MTMod
+                       ((id 4) (val_defs ()) (constr_defs ()) (ty_defs ())
+                         (mod_sigs ()) (mod_defs ()) (owned_mods ()))))))
+                (mod_defs ()) (owned_mods (4)))))
+          (MTMod
+            ((id 1) (val_defs ()) (constr_defs ()) (ty_defs ())
+              (mod_sigs
+                ((S1
+                   (MTMod
+                     ((id 2) (val_defs ()) (constr_defs ()) (ty_defs ())
+                       (mod_sigs ()) (mod_defs ()) (owned_mods ()))))))
+              (mod_defs ()) (owned_mods (2))))
+          (MTMod
+            ((id 5) (val_defs ()) (constr_defs ()) (ty_defs ())
+              (mod_sigs
+                ((S1
+                   (MTMod
+                     ((id 6) (val_defs ()) (constr_defs ()) (ty_defs ())
+                       (mod_sigs ()) (mod_defs ()) (owned_mods ()))))))
+              (mod_defs ()) (owned_mods (6)))))))
     |}]
 
 let%expect_test "Error reporting test" =
@@ -1851,4 +1904,19 @@ module L2 = (K: M)
      module X = (struct let x = "" end : S)
      |};
   [%expect
-    {| 6:17-6:17 Value component x has type `() string`, which is not compatible with `() int` |}]
+    {| 6:17-6:17 Value component x has type `() string`, which is not compatible with `() int` |}];
+  print_typed
+    {|
+               module type S = sig
+                 module type S1 = sig
+                 end
+               end
+               module X = (struct
+               end : S)
+               |};
+  [%expect
+    {|
+    6:27-7:27 Module Signature component S1 not exists in module struct
+
+    end
+    |}]
