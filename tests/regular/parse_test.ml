@@ -1351,7 +1351,19 @@ let x = 1
           (start_loc ((pos_fname "") (pos_lnum 4) (pos_bol 33) (pos_cnum 41)))
           (end_loc ((pos_fname "") (pos_lnum 4) (pos_bol 33) (pos_cnum 42)))
           (attrs ()))))
-    |}]
+    |}];
+
+  print_parsed_program
+    {|
+                        module type X = sig
+                          type t
+                        end
+                        |};
+  [%expect {| ((TopModSig X (MTSig ((SpecAbstTy t ()))))) |}];
+  print_parsed_program {|
+     type t = | Nil
+     |};
+  [%expect {| ((TopTypeDef ((TDAdt t () ((Nil ())))))) |}]
 
 let%expect_test "Test: path parsing" =
   print_parsed_mod_expr {|X|};

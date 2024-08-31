@@ -188,8 +188,6 @@ let captured_scope (s : scope) (tpv : Types_in.tv ref) =
 
 let captured (env : t) tpv = List.exists (fun s -> captured_scope s tpv) env
 
-let size = List.length
-
 (**********Debug Function*************)
 let dbg (env : t) =
   let scope_values s =
